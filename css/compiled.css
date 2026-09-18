@@ -1,0 +1,322 @@
+/*!**************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/app.scss ***!
+  \**************************************************************************************************************************************************************/
+html, body {
+  padding: 0;
+  margin: 0;
+  background-color: black;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.pre-wrap {
+  white-space: pre-wrap;
+}
+
+div.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.horizontal-scroll {
+  overflow-x: auto;
+}
+
+.el-button > span,
+.el-tag__content,
+.el-dropdown-menu__item,
+.el-menu-item,
+.el-menu-item,
+.el-sub-menu__title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 10px;
+}
+.el-button > span > .material-icons,
+.el-tag__content > .material-icons,
+.el-dropdown-menu__item > .material-icons,
+.el-menu-item > .material-icons,
+.el-menu-item > .material-icons,
+.el-sub-menu__title > .material-icons {
+  font-size: larger;
+}
+
+.el-checkbox > .el-checkbox__label, .el-radio > .el-radio__label {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.el-checkbox-group {
+  display: flex;
+  flex-direction: row;
+  row-gap: 10px;
+  column-gap: 5px;
+}
+.el-checkbox-group .el-checkbox {
+  flex-wrap: nowrap;
+}
+.el-checkbox-group .el-checkbox > .el-checkbox__label {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.el-alert > .el-alert__content {
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.el-alert > .el-alert__content > .el-alert__title + .el-alert__description {
+  margin-top: 10px;
+}
+.el-alert > .el-alert__content > .el-alert__description {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  align-items: flex-start;
+  white-space: normal;
+  word-break: normal;
+}
+.el-alert > .el-alert__content > .el-alert__description > * {
+  margin: 0;
+}
+.el-alert > .el-alert__content > .el-alert__description:empty {
+  display: none;
+}
+.el-alert > .el-alert__content > .el-alert__description:first-child {
+  margin: 0;
+}
+.el-alert.is-light.el-alert--warning {
+  border: thin solid var(--el-color-warning);
+}
+.el-alert.is-light.el-alert--warning .el-alert__description {
+  color: black;
+}
+
+.el-drawer .el-drawer__header {
+  background-color: gray;
+  color: white;
+  padding-bottom: var(--el-drawer-padding-primary);
+}
+.el-drawer .el-drawer__footer {
+  background-color: gray;
+  color: white;
+}
+
+.spin {
+  animation-name: spin;
+  animation-duration: 2000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/*!******************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/layouts.scss ***!
+  \******************************************************************************************************************************************************************/
+.flex-row, .flex-row-sm, .flex-row-md, .flex-row-lg {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.flex-row.nowrap, .flex-row-sm.nowrap, .flex-row-md.nowrap, .flex-row-lg.nowrap {
+  flex-wrap: nowrap;
+}
+.flex-row.flex-inline, .flex-row-sm.flex-inline, .flex-row-md.flex-inline, .flex-row-lg.flex-inline {
+  display: inline-flex;
+}
+.flex-row > .flex-1, .flex-row-sm > .flex-1, .flex-row-md > .flex-1, .flex-row-lg > .flex-1 {
+  flex: 1;
+}
+.flex-row > .flex-100, .flex-row-sm > .flex-100, .flex-row-md > .flex-100, .flex-row-lg > .flex-100 {
+  flex-basis: 100%;
+}
+.flex-row > *, .flex-row > .el-button + .el-button, .flex-row-sm > *, .flex-row-sm > .el-button + .el-button, .flex-row-md > *, .flex-row-md > .el-button + .el-button, .flex-row-lg > *, .flex-row-lg > .el-button + .el-button {
+  margin: 0;
+}
+.flex-row > .align-end, .flex-row-sm > .align-end, .flex-row-md > .align-end, .flex-row-lg > .align-end {
+  align-self: flex-end;
+}
+
+.flex-row {
+  row-gap: 5px;
+  column-gap: 10px;
+}
+
+.flex-row-sm {
+  row-gap: 5px;
+  column-gap: 5px;
+}
+
+.flex-row-md {
+  row-gap: 10px;
+  column-gap: 20px;
+}
+
+.flex-row-lg {
+  row-gap: 20px;
+  column-gap: 40px;
+}
+
+.flex-column, .flex-column-sm, .flex-column-md, .flex-column-lg, .flex-column-xl {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.flex-column.flex-align-end, .flex-column-sm.flex-align-end, .flex-column-md.flex-align-end, .flex-column-lg.flex-align-end, .flex-column-xl.flex-align-end {
+  align-items: flex-end;
+}
+.flex-column > *, .flex-column > .el-button + .el-button, .flex-column-sm > *, .flex-column-sm > .el-button + .el-button, .flex-column-md > *, .flex-column-md > .el-button + .el-button, .flex-column-lg > *, .flex-column-lg > .el-button + .el-button, .flex-column-xl > *, .flex-column-xl > .el-button + .el-button {
+  margin: 0;
+}
+
+.flex-column {
+  row-gap: 10px;
+}
+
+.flex-column-sm {
+  row-gap: 5px;
+}
+
+.flex-column-md {
+  row-gap: 20px;
+}
+
+.flex-column-lg {
+  row-gap: 40px;
+}
+
+.flex-column-xl {
+  row-gap: 60px;
+}
+
+.page-width-sm {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-width-md {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-width-lg {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.page-width-xl {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/app.vue?vue&type=style&index=0&id=5ef48958&lang=scss ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.pocket-app > header {
+  margin: 0;
+  padding: 20px;
+  background-color: #1C3144;
+  color: white;
+}
+.pocket-app > header > h1 {
+  font-size: 2em;
+}
+.pocket-app > header a:link, .pocket-app > header a:visited {
+  color: white;
+}
+.pocket-app > .body {
+  color: white;
+  padding: 40px 40px 80px;
+  background: linear-gradient(to bottom, rgb(226, 103, 15), transparent 10px), transparent;
+}
+.pocket-app > .body a:link, .pocket-app > .body a:visited {
+  color: white;
+}
+.pocket-app.is-mobile > header {
+  padding: 10px;
+}
+.pocket-app.is-mobile > header > h1 {
+  font-size: 1.5em;
+}
+.pocket-app.is-mobile > .body {
+  padding: 20px 10px 60px;
+}
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/dashboard.vue?vue&type=style&index=0&id=7cc04280&lang=scss ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.dashboard-page {
+  color: white;
+}
+.dashboard-page > .horizontal-controls {
+  padding: 10px;
+  border-radius: 5px;
+}
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.material-icon {
+  font-family: "Material Icons";
+  font-size: 24px;
+}
+.material-icon.large {
+  font-size: 48px;
+}
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/loading-message.vue?vue&type=style&index=0&id=68380766&lang=scss ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.loading-message {
+  font-size: larger;
+}
+.loading-message.left {
+  justify-content: flex-start;
+}
+.loading-message.center {
+  justify-content: center;
+}
+.loading-message.right {
+  justify-content: flex-end;
+}
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-layout.vue?vue&type=style&index=0&id=27e1292a&lang=scss ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-layout {
+  align-items: stretch;
+}
+.form-layout > h2 {
+  text-shadow: 2px 2px 3px white;
+}
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-field.vue?vue&type=style&index=0&id=09e9792a&lang=scss ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-layout-form-field > .title-row {
+  font-weight: bold;
+}
+.form-layout-form-field > .form-field-body {
+  padding: 10px;
+  border: thin solid black;
+  border-radius: 5px;
+}
+.form-layout-form-field > .form-field-body > .form-value {
+  font-size: larger;
+}
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-actions.vue?vue&type=style&index=0&id=8321bca6&lang=scss ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-actions {
+  padding: 10px;
+  border: thin solid black;
+  border-radius: 5px;
+}
