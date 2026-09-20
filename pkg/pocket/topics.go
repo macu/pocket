@@ -3,9 +3,11 @@ package pocket
 import (
 	"database/sql"
 	"fmt"
-	"pocket/pkg/utils/ajax"
 	"strconv"
 	"strings"
+
+	"pocket/pkg/utils/ajax"
+	"pocket/pkg/utils/db"
 )
 
 type Topic struct {
@@ -31,9 +33,24 @@ func ValidateTopicName(name string) error {
 	return nil
 }
 
-func CheckTopicExists(db *sql.DB, name string) (bool, error) {
+func ParseTopicNames(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	items := make([]string, 0, len(parts))
+	for _, part := range parts {
+		item := NormalizeTopicName(part)
+		if item != "" {
+			items = append(items, item)
+		}
+	}
+	return items
+}
+
+func CheckTopicExists(conn db.DBConn, name string) (bool, error) {
 	var exists bool
-	err := db.QueryRow(`SELECT EXISTS(SELECT 1 FROM topic WHERE name = $1)`, name).Scan(&exists)
+	err := conn.QueryRow(`SELECT EXISTS(SELECT 1 FROM topic WHERE name = $1)`, name).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
@@ -44,7 +61,7 @@ func LoadTopTopics(db *sql.DB, auth *ajax.Auth, offset uint) ([]Topic, error) {
 
 	var topics []Topic
 
-	pageSize := MAX_TOPIC_PAGE_SIZE
+	pageSize := MaxTopicPageSize
 
 	rows, err := db.Query(`SELECT id, name,
 		COALESCE(post_topic_sum.sum, 0)
@@ -76,7 +93,7 @@ func LoadTopTopics(db *sql.DB, auth *ajax.Auth, offset uint) ([]Topic, error) {
 
 }
 
-func CreateTopic(db *sql.DB, name string, createdBy uint) (*Topic, error) {
+func CreateTopic(conn db.DBConn, name string, createdBy uint) (*Topic, error) {
 	var topic = &Topic{}
 
 	// Normalize the topic name
@@ -88,13 +105,13 @@ func CreateTopic(db *sql.DB, name string, createdBy uint) (*Topic, error) {
 	}
 
 	// Check if exists
-	if exists, err := CheckTopicExists(db, name); err != nil {
+	if exists, err := CheckTopicExists(conn, name); err != nil {
 		return nil, err
 	} else if exists {
 		return nil, fmt.Errorf("topic with name %s already exists", name)
 	}
 
-	err := db.QueryRow(`INSERT INTO topic (name, created_by, created_at)
+	err := conn.QueryRow(`INSERT INTO topic (name, created_by, created_at)
 		VALUES ($1, $2, CURRENT_TIMESTAMP)
 		RETURNING id, name`,
 		name, createdBy,

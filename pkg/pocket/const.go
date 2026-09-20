@@ -1,3 +1,5 @@
 package pocket
 
-const MAX_TOPIC_PAGE_SIZE = 20
+const MaxTopicPageSize = 20
+
+const MaxPostLength = 1024

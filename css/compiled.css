@@ -254,6 +254,52 @@ div.center {
 .pocket-app.is-mobile > .body {
   padding: 20px 10px 60px;
 }
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/post.vue?vue&type=style&index=0&id=d2d2ff4e&lang=scss ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.top-post {
+  padding: 12px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: thin solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+}
+.top-post.clickable {
+  cursor: pointer;
+}
+.top-post .top-post-header {
+  justify-content: space-between;
+  align-items: center;
+}
+.top-post .top-post-header .top-post-author {
+  font-weight: bold;
+}
+.top-post .top-post-header .top-post-score {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background-color: rgba(86, 86, 211, 0.2);
+}
+.top-post .top-post-text {
+  cursor: pointer;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
+}
+.top-post .top-post-text.expanded {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+.top-post .topic-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/dashboard/index.vue?vue&type=style&index=0&id=363a5543&lang=scss ***!
   \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -264,27 +310,27 @@ div.center {
   padding: 10px;
   border-radius: 5px;
 }
-.dashboard-page .top-topics {
-  margin-top: 20px;
-}
-.dashboard-page .top-topics .top-topic {
-  padding: 10px;
-  border-radius: 5px;
-  background-color: rgb(86, 86, 211);
-  color: white;
-}
-.dashboard-page .top-topics .top-topic.negative {
-  background-color: rgb(211, 86, 86);
-  color: white;
-}
-.dashboard-page .top-topics .top-topic > .count {
-  font-weight: bold;
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 2px 6px;
-  border-radius: 5px;
-}
 .dashboard-page .add-topic-form {
   background-color: rgb(86, 86, 211);
+  color: white;
+}
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/posts/add-post.vue?vue&type=style&index=0&id=738a608c&lang=scss ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.add-post-page {
+  color: white;
+}
+.add-post-page .parent-post-preview {
+  padding: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/posts/post.vue?vue&type=style&index=0&id=698b7640&lang=scss ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.post-page {
   color: white;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
@@ -339,4 +385,40 @@ div.center {
   padding: 12px;
   border: thin solid white;
   border-radius: 5px;
+}
+/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/topic.vue?vue&type=style&index=0&id=42c52174&lang=scss ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: rgb(86, 86, 211);
+  color: white;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.topic.negative {
+  background-color: rgb(211, 86, 86);
+}
+.topic.size-small {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.85em;
+  gap: 6px;
+}
+.topic.size-large {
+  padding: 10px;
+  font-size: 1rem;
+}
+.topic .topic-name {
+  display: inline-block;
+}
+.topic .topic-count {
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 6px;
 }

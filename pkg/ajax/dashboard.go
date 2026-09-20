@@ -19,8 +19,15 @@ func AjaxLoadDashboard(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
+	topPosts, err := pocket.LoadTopPosts(db, auth, 0)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
 	return map[string]any{
 		"topTopics": topTopics,
+		"topPosts":  topPosts,
 	}, 200
 
 }

@@ -8,6 +8,7 @@ import (
 
 	"pocket/pkg/auth"
 	"pocket/pkg/env"
+	"pocket/pkg/pocket"
 	"pocket/pkg/utils/ajax"
 )
 
@@ -19,10 +20,12 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		VersionStamp      string
 		PasswordMinLength uint
 		HandlePattern     string
+		MaxPostLength     int
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
 		auth.PasswordMinLength,
 		auth.UserHandlePattern,
+		pocket.MaxPostLength,
 	})
 }

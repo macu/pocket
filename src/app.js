@@ -17,6 +17,7 @@ import FormField from '@/widgets/form-field.vue';
 import FormActions from '@/widgets/form-actions.vue';
 import Moment from '@/widgets/moment.vue';
 import ReturnToTop from '@/widgets/return-to-top.vue';
+import Topic from '@/widgets/topic.vue';
 
 const app = createApp(App);
 
@@ -38,5 +39,6 @@ app.component('form-field', FormField);
 app.component('form-actions', FormActions);
 app.component('moment', Moment);
 app.component('return-to-top', ReturnToTop);
+app.component('topic', Topic);
 
 app.mount("#app");

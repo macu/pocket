@@ -41,20 +41,40 @@
 
 		<loading-message v-else-if="loading"/>
 
-		<div v-else class="flex-column">
+		<template v-else>
 
 			<h2>Top Topics</h2>
 
 			<div v-if="topTopics.length > 0" class="top-topics flex-row-lg">
-				<div v-for="topic in topTopics" :key="topic.id" class="top-topic flex-row" :class="{'negative': topic.sum < 0}">
-					<div>{{topic.name}}</div>
-					<div class="count">{{topic.sum}}</div>
-				</div>
+				<topic v-for="topic in topTopics" :key="topic.id" size="large" :count="topic.sum" :negative="topic.sum < 0">
+					{{topic.name}}
+				</topic>
+				<el-button v-if="showLoadMoreTopics" @click="loadMoreTopics()" type="primary">
+					Load More
+				</el-button>
 			</div>
 
 			<p v-else>No topics available.</p>
 
-		</div>
+			<h2>Top Posts</h2>
+
+			<div v-if="topPosts.length > 0" class="top-posts flex-column-lg">
+				<post
+					v-for="post in topPosts"
+					:key="post.id"
+					:post="post"
+					clickable
+					@click="openPost(post.id)"
+				/>
+
+				<el-button v-if="showLoadMorePosts" @click="loadMorePosts()" type="primary">
+					Load More
+				</el-button>
+			</div>
+
+			<p v-else>No posts available.</p>
+
+		</template>
 
 	</div>
 
@@ -62,10 +82,13 @@
 </template>
 
 <script>
+import Post from '@/widgets/post.vue';
+
 import {
 	ajaxGet,
 	ajaxPost,
 } from '@/utils/ajax.js';
+
 import {
 	alertSuccess,
 	showError,
@@ -73,12 +96,15 @@ import {
 
 export default {
 	components: {
+		Post,
 	},
 	data() {
 		return {
 			loading: true,
+			topPosts: [],
 			topTopics: [],
 			lastTopicsLength: 0,
+			lastPostsLength: 0,
 
 			showingAddTopic: false,
 			newTopicName: '',
@@ -91,6 +117,9 @@ export default {
 		},
 		showLoadMoreTopics() {
 			return this.lastTopicsLength > 0;
+		},
+		showLoadMorePosts() {
+			return this.lastPostsLength > 0;
 		},
 		addTopicDisabled() {
 			return this.addTopicLoading || !this.newTopicName.trim();
@@ -111,6 +140,22 @@ export default {
 		this.loadDashboard();
 	},
 	methods: {
+		loadDashboard() {
+			this.loading = true;
+			ajaxGet('/ajax/dashboard').then(response => {
+				this.topPosts = response.topPosts || [];
+				this.topTopics = response.topTopics || [];
+				this.lastTopicsLength = this.topTopics.length;
+				this.lastPostsLength = this.topPosts.length;
+			}).finally(() => {
+				this.loading = false;
+			});
+		},
+		loadMoreTopics() {
+		},
+		loadMorePosts() {
+		},
+
 		addTopic() {
 			this.showingAddTopic = true;
 			this.newTopicName = '';
@@ -145,17 +190,11 @@ export default {
 				this.addTopicLoading = false;
 			});
 		},
-		loadDashboard() {
-			this.loading = true;
-			ajaxGet('/ajax/dashboard').then(response => {
-				this.topTopics = response.topTopics || [];
-				this.lastTopicsLength = this.topTopics.length;
-			}).finally(() => {
-				this.loading = false;
-			});
+		openPost(postId) {
+			this.$router.push({name: 'post', params: {id: postId}});
 		},
 		createPost() {
-			// TODO
+			this.$router.push({name: 'add-post'});
 		},
 	},
 };
@@ -172,29 +211,10 @@ export default {
 		border-radius: $border-radius;
 	}
 
-	.top-topics {
-		margin-top: 20px;
-		.top-topic {
-			padding: 10px;
-			border-radius: $border-radius;
-				background-color: $topic-bg-color;
-			color: $topic-fg-color;
-			&.negative {
-				background-color: $topic-negative-bg-color;
-				color: $topic-negative-fg-color;
-			}
-			>.count {
-				font-weight: bold;
-				background-color: $topic-count-bg-color;
-				padding: 2px 6px;
-				border-radius: $border-radius;
-			}
-		}
-	}
-
 	.add-topic-form {
 		background-color: $topic-bg-color;
 		color: $topic-fg-color;
 	}
+
 }
 </style>

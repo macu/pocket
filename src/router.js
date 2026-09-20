@@ -9,6 +9,8 @@ import DashboardPage from '@/pages/dashboard/index.vue';
 import LoginPage from '@/pages/user-account/login.vue';
 import SignupPage from '@/pages/user-account/signup.vue';
 import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
+import AddPostPage from '@/pages/posts/add-post.vue';
+import PostPage from '@/pages/posts/post.vue';
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -32,6 +34,16 @@ const router = createRouter({
 			path: '/verify-signup',
 			name: 'signup-verify',
 			component: SignupVerifyPage,
+		},
+		{
+			path: '/add-post',
+			name: 'add-post',
+			component: AddPostPage,
+		},
+		{
+			path: '/post/:id',
+			name: 'post',
+			component: PostPage,
 		},
 	],
 });
