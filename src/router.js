@@ -5,7 +5,7 @@ import {
 
 import store from './store.js';
 
-import DashboardPage from '@/pages/dashboard.vue';
+import DashboardPage from '@/pages/dashboard/index.vue';
 import LoginPage from '@/pages/user-account/login.vue';
 import SignupPage from '@/pages/user-account/signup.vue';
 import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';

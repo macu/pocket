@@ -17,6 +17,8 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 	http.MethodGet: {
 		"/ajax/load-login":  auth.AjaxLoadLogin,
 		"/ajax/load-signup": auth.AjaxLoadSignup,
+
+		"/ajax/dashboard": AjaxLoadDashboard,
 	},
 	http.MethodPost: {
 		"/ajax/login":         auth.AjaxLogin,
@@ -28,6 +30,7 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 	http.MethodPost: {
 		"/ajax/logout": auth.AjaxLogout,
+		"/ajax/topic":  AjaxPostTopic,
 	},
 }
 

@@ -27,9 +27,6 @@ export const store = createStore({
 		loginLoaded(state) {
 			return state.user !== null;
 		},
-		authenticated(state) {
-			return !!state.user;
-		},
 		createDisabled(state) {
 			return !state.user;
 		},

@@ -1,7 +1,12 @@
 -- Clean up previous instance
 
 DROP INDEX IF EXISTS post_text_fulltext_idx;
+-- DROP TABLE IF EXISTS topic_score CASCADE;
+-- DROP TABLE IF EXISTS post_topic_score CASCADE;
+-- DROP TABLE IF EXISTS post_topic_pin CASCADE;
+DROP TABLE IF EXISTS post_topic_sum CASCADE;
 DROP TABLE IF EXISTS topic CASCADE;
+DROP TABLE IF EXISTS post_topic_vote CASCADE;
 DROP TABLE IF EXISTS post_topic CASCADE;
 DROP TABLE IF EXISTS post CASCADE;
 DROP TYPE IF EXISTS vote_type;
@@ -79,8 +84,8 @@ CREATE COLLATION case_insensitive (
 
 CREATE TABLE topic (
 	id SERIAL PRIMARY KEY,
-	topic_label VARCHAR(50) COLLATE case_insensitive NOT NULL UNIQUE,
-	author INTEGER NOT NULL REFERENCES user_account (id),
+	name VARCHAR(50) NOT NULL,
+	created_by INTEGER NOT NULL REFERENCES user_account (id),
 	created_at TIMESTAMPTZ NOT NULL
 );
 
@@ -99,10 +104,37 @@ CREATE TYPE vote_type AS ENUM (
 	'downvote'
 );
 
-CREATE TABLE post_topic (
+CREATE TABLE post_topic_vote (
 	post_id INTEGER NOT NULL REFERENCES post (id) ON DELETE CASCADE,
-	author INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE, -- pin author's
+	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
 	topic_id INTEGER NOT NULL REFERENCES topic (id) ON DELETE CASCADE,
 	vote_type vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE TABLE post_topic_sum (
+	post_id INTEGER NOT NULL REFERENCES post (id) ON DELETE CASCADE,
+	topic_id INTEGER NOT NULL REFERENCES topic (id) ON DELETE CASCADE,
+	upvotes INTEGER NOT NULL,
+	downvotes INTEGER NOT NULL,
+	sum INTEGER NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+	PRIMARY KEY (post_id, topic_id)
+);
+
+-- CREATE TABLE post_topic_pin (
+-- 	post_id INTEGER NOT NULL REFERENCES post (id) ON DELETE CASCADE,
+-- 	topic_id INTEGER NOT NULL REFERENCES topic (id) ON DELETE CASCADE,
+-- 	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+-- 	created_at TIMESTAMPTZ NOT NULL,
+-- 	PRIMARY KEY (post_id, topic_id, user_id)
+-- );
+
+-- CREATE TABLE topic_score (
+-- 	topic_id INTEGER NOT NULL REFERENCES topic (id) ON DELETE CASCADE,
+-- 	upvotes INTEGER NOT NULL,
+-- 	downvotes INTEGER NOT NULL,
+-- 	sum INTEGER NOT NULL,
+-- 	created_at TIMESTAMPTZ NOT NULL,
+-- 	PRIMARY KEY (topic_id)
+-- );

@@ -1,0 +1,26 @@
+package ajax
+
+import (
+	"database/sql"
+	"net/http"
+
+	"pocket/pkg/pocket"
+	"pocket/pkg/utils/ajax"
+	"pocket/pkg/utils/logging"
+)
+
+func AjaxLoadDashboard(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	topTopics, err := pocket.LoadTopTopics(db, auth, 0)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return map[string]any{
+		"topTopics": topTopics,
+	}, 200
+
+}

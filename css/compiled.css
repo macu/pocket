@@ -228,7 +228,7 @@ div.center {
 .pocket-app > header {
   margin: 0;
   padding: 20px;
-  background-color: #1C3144;
+  background-color: rgb(226, 103, 15);
   color: white;
 }
 .pocket-app > header > h1 {
@@ -254,14 +254,42 @@ div.center {
 .pocket-app.is-mobile > .body {
   padding: 20px 10px 60px;
 }
-/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/dashboard.vue?vue&type=style&index=0&id=7cc04280&lang=scss ***!
-  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/dashboard/index.vue?vue&type=style&index=0&id=363a5543&lang=scss ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .dashboard-page {
   color: white;
 }
 .dashboard-page > .horizontal-controls {
   padding: 10px;
+  border-radius: 5px;
+}
+.dashboard-page .add-topic-form {
+  padding: 12px;
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.dashboard-page .add-topic-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.dashboard-page .top-topics {
+  margin-top: 20px;
+}
+.dashboard-page .top-topics .top-topic {
+  padding: 10px;
+  border-radius: 5px;
+  background-color: rgb(86, 86, 211);
+  color: white;
+}
+.dashboard-page .top-topics .top-topic.negative {
+  background-color: rgb(211, 86, 86);
+}
+.dashboard-page .top-topics .top-topic > .count {
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
   border-radius: 5px;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
