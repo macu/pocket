@@ -18,7 +18,9 @@
 	<div class="flex-column-lg">
 
 		<template v-if="showingAddTopic">
-			<div class="add-topic-form">
+
+			<form-layout class="add-topic-form" title="Add topic">
+
 				<form-field title="Topic name">
 					<el-input v-model="newTopicName" type="text" maxlength="50"
 						autocapitalize="words"
@@ -26,13 +28,15 @@
 					/>
 				</form-field>
 
-				<div class="add-topic-actions">
+				<form-actions>
 					<el-button @click="submitAddTopic()" :disabled="addTopicDisabled" type="primary">
 						Save Topic
 					</el-button>
-					<el-button @click="cancelAddTopic()">Cancel</el-button>
-				</div>
-			</div>
+					<el-button @click="cancelAddTopic()" :disabled="cancelAddTopicDisabled">Cancel</el-button>
+				</form-actions>
+
+			</form-layout>
+
 		</template>
 
 		<loading-message v-else-if="loading"/>
@@ -168,35 +172,29 @@ export default {
 		border-radius: $border-radius;
 	}
 
-	.add-topic-form {
-		padding: 12px;
-		border-radius: $border-radius;
-		background-color: rgba(255, 255, 255, 0.04);
-	}
-
-	.add-topic-actions {
-		display: flex;
-		gap: 8px;
-		margin-top: 12px;
-	}
-
 	.top-topics {
 		margin-top: 20px;
 		.top-topic {
 			padding: 10px;
 			border-radius: $border-radius;
-			background-color: rgb(86, 86, 211);
-			color: white;
+				background-color: $topic-bg-color;
+			color: $topic-fg-color;
 			&.negative {
-				background-color: rgb(211, 86, 86);
+				background-color: $topic-negative-bg-color;
+				color: $topic-negative-fg-color;
 			}
 			>.count {
 				font-weight: bold;
-				background-color: rgba(255, 255, 255, 0.1);
+				background-color: $topic-count-bg-color;
 				padding: 2px 6px;
 				border-radius: $border-radius;
 			}
 		}
+	}
+
+	.add-topic-form {
+		background-color: $topic-bg-color;
+		color: $topic-fg-color;
 	}
 }
 </style>

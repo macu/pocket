@@ -8,8 +8,8 @@
 @import '@/styles/vars.scss';
 
 .form-actions {
-	padding: 10px;
-	border: thin solid black;
+	padding: 12px;
+	border: thin solid white;
 	border-radius: $border-radius;
 }
 </style>

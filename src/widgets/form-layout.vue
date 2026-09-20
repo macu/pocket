@@ -22,10 +22,12 @@ export default {
 </script>
 
 <style lang="scss">
+@import '@/styles/vars.scss';
+
 .form-layout {
 	align-items: stretch;
-	>h2 {
-		text-shadow: 2px 2px 3px white;
-	}
+	border: thin solid white;
+	padding: 12px;
+	border-radius: $border-radius;
 }
 </style>
