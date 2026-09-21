@@ -21,11 +21,13 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		PasswordMinLength uint
 		HandlePattern     string
 		MaxPostLength     int
+		MaxTopicPageSize  int
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
 		auth.PasswordMinLength,
 		auth.UserHandlePattern,
 		pocket.MaxPostLength,
+		pocket.MaxTopicPageSize,
 	})
 }

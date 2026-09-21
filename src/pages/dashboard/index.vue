@@ -117,7 +117,8 @@ export default {
 			return this.$store.getters.loginLoaded;
 		},
 		showLoadMoreTopics() {
-			return this.lastTopicsLength > 0;
+			return this.lastTopicsLength > 0 &&
+				this.lastTopicsLength % this.$const.maxTopicPageSize === 0;
 		},
 		showLoadMorePosts() {
 			return this.lastPostsLength > 0;

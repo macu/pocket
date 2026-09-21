@@ -41,6 +41,9 @@
 				<topic v-for="topic in topTopics" :key="topic.id" size="medium" :count="topic.sum">
 					{{topic.name}}
 				</topic>
+				<el-button v-if="showLoadMoreTopics" @click="loadMoreTopics()" type="primary">
+					Load More
+				</el-button>
 			</div>
 			<p v-else>No topics available.</p>
 
@@ -89,6 +92,10 @@ export default {
 		addSubPostDisabled() {
 			return !this.subPostText.trim();
 		},
+		showLoadMoreTopics() {
+			return this.topTopics.length > 0 &&
+				this.topTopics.length % this.$const.maxTopicPageSize === 0;
+		},
 		postId() {
 			return this.$route.params.id;
 		},
@@ -129,6 +136,8 @@ export default {
 			if (this.showAddTopicForm) {
 				this.focusAddTopicInput();
 			}
+		},
+		loadMoreTopics() {
 		},
 
 		openPost(postId) {
