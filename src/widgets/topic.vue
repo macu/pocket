@@ -2,11 +2,31 @@
 <div class="topic" :class="[sizeClass, {negative: negative}]">
 	<span class="topic-name"><slot/></span>
 	<span v-if="showCount" class="topic-count">{{count}}</span>
+	<span v-if="votable" class="topic-votes" @click.stop>
+		<material-icon
+			v-if="!userVote || userVote === 'upvote'"
+			icon="thumb_up" class="vote-btn"
+			:fill="userVote === 'upvote'"
+			:class="{active: userVote === 'upvote'}"
+			@click="$emit('vote', 'upvote')"/>
+		<material-icon
+			v-if="!userVote || userVote === 'downvote'"
+			icon="thumb_down" class="vote-btn"
+			:fill="userVote === 'downvote'"
+			:class="{active: userVote === 'downvote'}"
+			@click="$emit('vote', 'downvote')"/>
+	</span>
 </div>
 </template>
 
 <script>
+import MaterialIcon from '@/widgets/material-icon.vue';
+
 export default {
+	components: {
+		MaterialIcon,
+	},
+	emits: ['vote'],
 	props: {
 		size: {
 			type: String,
@@ -23,6 +43,17 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		votable: {
+			type: Boolean,
+			default: false,
+		},
+		userVote: {
+			type: String,
+			default: null,
+			validator(value) {
+				return value === null || ['upvote', 'downvote'].includes(value);
+			},
+		},
 	},
 	computed: {
 		sizeClass() {
@@ -30,7 +61,15 @@ export default {
 		},
 		showCount() {
 			return this.count !== null && this.count !== undefined;
-		}
+		},
+	},
+	methods: {
+		setVote(vote) {
+			this.$emit('vote', vote);
+		},
+		undoVote() {
+			this.$emit('vote', null);
+		},
 	},
 };
 </script>
@@ -72,6 +111,27 @@ export default {
 		background-color: rgba(255, 255, 255, 0.1);
 		padding: 2px 6px;
 		border-radius: 6px;
+	}
+
+	.topic-votes {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+
+		.vote-btn {
+			cursor: pointer;
+			font-size: 18px;
+			opacity: 0.6;
+			border-radius: 999px;
+
+			&:hover {
+				opacity: 0.85;
+			}
+
+			&.active {
+				opacity: 1;
+			}
+		}
 	}
 }
 </style>

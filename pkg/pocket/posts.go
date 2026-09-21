@@ -40,6 +40,11 @@ func LoadTopPosts(db *sql.DB, auth *ajax.Auth, offset uint) ([]Post, error) {
 
 	// offset is uint, so it cannot be negative
 
+	var userID *uint
+	if auth != nil {
+		userID = &auth.UserID
+	}
+
 	rows, err := db.Query(`
 		SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
 			COALESCE(SUM(CASE WHEN pts.sum IS NULL THEN 0 ELSE pts.sum END), 0) AS total_topic_score
@@ -70,7 +75,7 @@ func LoadTopPosts(db *sql.DB, auth *ajax.Auth, offset uint) ([]Post, error) {
 		if displayName.Valid {
 			post.AuthorDisplayName = displayName.String
 		}
-		post.Topics, err = LoadPostTopics(db, post.ID)
+		post.Topics, err = LoadPostTopics(db, post.ID, userID)
 		if err != nil {
 			return nil, err
 		}
@@ -81,6 +86,11 @@ func LoadTopPosts(db *sql.DB, auth *ajax.Auth, offset uint) ([]Post, error) {
 }
 
 func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint) ([]Post, error) {
+
+	var userID *uint
+	if auth != nil {
+		userID = &auth.UserID
+	}
 
 	rows, err := db.Query(`
 		SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
@@ -114,7 +124,7 @@ func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint
 		if displayName.Valid {
 			post.AuthorDisplayName = displayName.String
 		}
-		post.Topics, err = LoadPostTopics(db, post.ID)
+		post.Topics, err = LoadPostTopics(db, post.ID, userID)
 		if err != nil {
 			return nil, err
 		}
@@ -124,14 +134,21 @@ func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint
 	return posts, nil
 }
 
-func LoadPostTopics(db *sql.DB, postID uint) ([]Topic, error) {
+func LoadPostTopics(db *sql.DB, postID uint, userID *uint) ([]Topic, error) {
+	var userIDParam any
+	if userID != nil {
+		userIDParam = *userID
+	}
+
 	rows, err := db.Query(`
-		SELECT t.id, t.name, COALESCE(pts.sum, 0)
+		SELECT t.id, t.name, COALESCE(pts.sum, 0), ptv.vote_type
 		FROM post_topic_sum pts
 		JOIN topic t ON t.id = pts.topic_id
+		LEFT JOIN post_topic_vote ptv
+			ON ptv.post_id = pts.post_id AND ptv.topic_id = pts.topic_id AND ptv.user_id = $2
 		WHERE pts.post_id = $1
 		ORDER BY t.name ASC
-	`, postID)
+	`, postID, userIDParam)
 	if err != nil {
 		return nil, err
 	}
@@ -141,16 +158,21 @@ func LoadPostTopics(db *sql.DB, postID uint) ([]Topic, error) {
 	for rows.Next() {
 		var topic Topic
 		var sum int
-		if err := rows.Scan(&topic.ID, &topic.Name, &sum); err != nil {
+		var voteType sql.NullString
+		if err := rows.Scan(&topic.ID, &topic.Name, &sum, &voteType); err != nil {
 			continue
 		}
 		topic.Sum = sum
+		if voteType.Valid {
+			v := voteType.String
+			topic.UserVote = &v
+		}
 		topics = append(topics, topic)
 	}
 	return topics, nil
 }
 
-func LoadPost(db *sql.DB, postID uint) (*Post, error) {
+func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 	var post Post
 	var parentID sql.NullInt64
 	var displayName sql.NullString
@@ -173,7 +195,7 @@ func LoadPost(db *sql.DB, postID uint) (*Post, error) {
 		post.AuthorDisplayName = displayName.String
 	}
 
-	post.Topics, err = LoadPostTopics(db, post.ID)
+	post.Topics, err = LoadPostTopics(db, post.ID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("loading post topics for post %d: %w", post.ID, err)
 	}
@@ -224,7 +246,7 @@ func CreatePost(conn *sql.DB, parentPostID *uint, authorID uint, text string, to
 		return nil, fmt.Errorf("creating post: %w", err)
 	}
 
-	return LoadPost(conn, postID)
+	return LoadPost(conn, postID, &authorID)
 }
 
 func EnsureTopicOnPost(conn db.DBConn, postID uint, topicName string, createdBy uint) (Topic, error) {

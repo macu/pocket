@@ -11,9 +11,10 @@ import (
 )
 
 type Topic struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
-	Sum  int    `json:"sum"`
+	ID       uint    `json:"id"`
+	Name     string  `json:"name"`
+	Sum      int     `json:"sum"`
+	UserVote *string `json:"userVote"`
 }
 
 func NormalizeTopicName(name string) string {
@@ -88,6 +89,149 @@ func LoadTopTopics(db *sql.DB, auth *ajax.Auth, offset uint) ([]Topic, error) {
 	}
 
 	return topics, nil
+}
+
+func SetPostTopicVote(conn *sql.DB, postID uint, topicID uint, userID uint, voteType string) (*Topic, error) {
+
+	if !IsValidVote(voteType) {
+		return nil, fmt.Errorf("invalid vote type: %s", voteType)
+	}
+
+	var topic Topic
+	var userVote *string
+
+	err := db.InTransaction(conn, func(tx *sql.Tx) error {
+
+		var sumExists bool
+		if err := tx.QueryRow(`
+			SELECT EXISTS(SELECT 1 FROM post_topic_sum WHERE post_id = $1 AND topic_id = $2)
+		`, postID, topicID).Scan(&sumExists); err != nil {
+			return fmt.Errorf("checking topic on post: %w", err)
+		}
+		if !sumExists {
+			return fmt.Errorf("topic %d is not associated with post %d", topicID, postID)
+		}
+
+		var existingVote sql.NullString
+		err := tx.QueryRow(`
+			SELECT vote_type FROM post_topic_vote WHERE post_id = $1 AND user_id = $2 AND topic_id = $3
+		`, postID, userID, topicID).Scan(&existingVote)
+		if err != nil && err != sql.ErrNoRows {
+			return fmt.Errorf("loading existing vote: %w", err)
+		}
+
+		if existingVote.Valid && existingVote.String == voteType {
+			if _, err := tx.Exec(`
+				DELETE FROM post_topic_vote WHERE post_id = $1 AND user_id = $2 AND topic_id = $3
+			`, postID, userID, topicID); err != nil {
+				return fmt.Errorf("deleting vote: %w", err)
+			}
+			userVote = nil
+		} else {
+			if existingVote.Valid {
+				if _, err := tx.Exec(`
+					UPDATE post_topic_vote SET vote_type = $4, created_at = CURRENT_TIMESTAMP
+					WHERE post_id = $1 AND user_id = $2 AND topic_id = $3
+				`, postID, userID, topicID, voteType); err != nil {
+					return fmt.Errorf("updating vote: %w", err)
+				}
+			} else {
+				if _, err := tx.Exec(`
+					INSERT INTO post_topic_vote (post_id, user_id, topic_id, vote_type, created_at)
+					VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+				`, postID, userID, topicID, voteType); err != nil {
+					return fmt.Errorf("inserting vote: %w", err)
+				}
+			}
+			v := voteType
+			userVote = &v
+		}
+
+		if _, err := tx.Exec(`
+			UPDATE post_topic_sum SET
+				upvotes = (SELECT COUNT(*) FROM post_topic_vote WHERE post_id = $1 AND topic_id = $2 AND vote_type = 'upvote'),
+				downvotes = (SELECT COUNT(*) FROM post_topic_vote WHERE post_id = $1 AND topic_id = $2 AND vote_type = 'downvote'),
+				sum = (
+					SELECT COUNT(*) FILTER (WHERE vote_type = 'upvote') - COUNT(*) FILTER (WHERE vote_type = 'downvote')
+					FROM post_topic_vote WHERE post_id = $1 AND topic_id = $2
+				)
+			WHERE post_id = $1 AND topic_id = $2
+		`, postID, topicID); err != nil {
+			return fmt.Errorf("updating topic sum: %w", err)
+		}
+
+		if err := tx.QueryRow(`
+			SELECT t.id, t.name, pts.sum FROM post_topic_sum pts
+			JOIN topic t ON t.id = pts.topic_id
+			WHERE pts.post_id = $1 AND pts.topic_id = $2
+		`, postID, topicID).Scan(&topic.ID, &topic.Name, &topic.Sum); err != nil {
+			return fmt.Errorf("loading updated topic: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	topic.UserVote = userVote
+	return &topic, nil
+
+}
+
+func RemovePostTopicVote(conn *sql.DB, postID uint, topicID uint, userID uint) (*Topic, error) {
+
+	var topic Topic
+
+	err := db.InTransaction(conn, func(tx *sql.Tx) error {
+
+		var sumExists bool
+		if err := tx.QueryRow(`
+			SELECT EXISTS(SELECT 1 FROM post_topic_sum WHERE post_id = $1 AND topic_id = $2)
+		`, postID, topicID).Scan(&sumExists); err != nil {
+			return fmt.Errorf("checking topic on post: %w", err)
+		}
+		if !sumExists {
+			return fmt.Errorf("topic %d is not associated with post %d", topicID, postID)
+		}
+
+		if _, err := tx.Exec(`
+			DELETE FROM post_topic_vote WHERE post_id = $1 AND user_id = $2 AND topic_id = $3
+		`, postID, userID, topicID); err != nil {
+			return fmt.Errorf("deleting vote: %w", err)
+		}
+
+		if _, err := tx.Exec(`
+			UPDATE post_topic_sum SET
+				upvotes = (SELECT COUNT(*) FROM post_topic_vote WHERE post_id = $1 AND topic_id = $2 AND vote_type = 'upvote'),
+				downvotes = (SELECT COUNT(*) FROM post_topic_vote WHERE post_id = $1 AND topic_id = $2 AND vote_type = 'downvote'),
+				sum = (
+					SELECT COUNT(*) FILTER (WHERE vote_type = 'upvote') - COUNT(*) FILTER (WHERE vote_type = 'downvote')
+					FROM post_topic_vote WHERE post_id = $1 AND topic_id = $2
+				)
+			WHERE post_id = $1 AND topic_id = $2
+		`, postID, topicID); err != nil {
+			return fmt.Errorf("updating topic sum: %w", err)
+		}
+
+		if err := tx.QueryRow(`
+			SELECT t.id, t.name, pts.sum FROM post_topic_sum pts
+			JOIN topic t ON t.id = pts.topic_id
+			WHERE pts.post_id = $1 AND pts.topic_id = $2
+		`, postID, topicID).Scan(&topic.ID, &topic.Name, &topic.Sum); err != nil {
+			return fmt.Errorf("loading updated topic: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &topic, nil
+
 }
 
 func CreateTopic(conn db.DBConn, name string, createdBy uint) (*Topic, error) {

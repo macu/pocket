@@ -23,7 +23,12 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 
 	loadContent := types.AtoBool(r.FormValue("loadContent"))
 
-	post, err := pocket.LoadPost(db, uint(id))
+	var userID *uint
+	if auth != nil {
+		userID = &auth.UserID
+	}
+
+	post, err := pocket.LoadPost(db, uint(id), userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound
@@ -34,7 +39,7 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 
 	var parentPost any
 	if post.ParentPostID != nil {
-		parent, err := pocket.LoadPost(db, *post.ParentPostID)
+		parent, err := pocket.LoadPost(db, *post.ParentPostID, userID)
 		if err != nil && err != sql.ErrNoRows {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -119,7 +124,7 @@ func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	post, err := pocket.LoadPost(db, uint(postID))
+	post, err := pocket.LoadPost(db, uint(postID), &auth.UserID)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -128,6 +133,49 @@ func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 	return map[string]any{
 		"topic": topic,
 		"post":  post,
+	}, http.StatusOK
+
+}
+
+func AjaxVotePostTopic(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	postID, err := types.AtoUint(r.FormValue("postId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	topicID, err := types.AtoUint(r.FormValue("topicId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	voteType := strings.TrimSpace(r.FormValue("voteType"))
+	if voteType == "" {
+		// Remove vote
+		topic, err := pocket.RemovePostTopicVote(db, postID, topicID, auth.UserID)
+		if err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		return map[string]any{
+			"topic": topic,
+		}, http.StatusOK
+	}
+
+	if !pocket.IsValidVote(voteType) {
+		return ajax.AjaxErrorPayload{ErrorCode: "invalid-vote-type"}, http.StatusBadRequest
+	}
+
+	topic, err := pocket.SetPostTopicVote(db, postID, topicID, auth.UserID, voteType)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return map[string]any{
+		"topic": topic,
 	}, http.StatusOK
 
 }

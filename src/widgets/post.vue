@@ -5,7 +5,7 @@
 		<div class="top-post-score">{{post.totalTopicScore}}</div>
 	</div>
 	<div class="topic-list flex-row-sm">
-		<topic v-for="topic in post.topics" :key="topic.id" size="small">
+		<topic v-for="topic in post.topics" :key="topic.id" size="small" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
 			{{topic.name}}
 		</topic>
 	</div>
@@ -14,6 +14,8 @@
 </template>
 
 <script>
+import {ajaxPost} from '@/utils/ajax.js';
+
 export default {
 	emits: ['click'],
 	props: {
@@ -34,6 +36,19 @@ export default {
 		return {
 			expanded: this.defaultExpanded,
 		};
+	},
+	methods: {
+		vote(topic, voteType) {
+			ajaxPost('/ajax/post/topic/vote', {
+				postId: this.post.id,
+				topicId: topic.id,
+				voteType,
+			}).then(response => {
+				if (response.topic) {
+					Object.assign(topic, response.topic);
+				}
+			});
+		},
 	},
 };
 </script>
