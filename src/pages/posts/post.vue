@@ -138,6 +138,13 @@ export default {
 			}
 		},
 		loadMoreTopics() {
+			ajaxGet('/ajax/topics/page', {
+				context: 'post',
+				postId: this.post.id,
+				offset: this.topTopics.length,
+			}).then(response => {
+				this.topTopics.push(...(response.topics || []));
+			});
 		},
 
 		openPost(postId) {

@@ -118,23 +118,14 @@ func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-topic-name"}, http.StatusBadRequest
 	}
 
-	existingTopics, err := pocket.LoadPostTopics(db, uint(postID), &auth.UserID)
-	if err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	}
-	existingNames := make(map[string]bool, len(existingTopics))
-	for _, existingTopic := range existingTopics {
-		existingNames[strings.ToLower(existingTopic.Name)] = true
-	}
-
+	existingNames := make(map[string]bool, len(topicNames))
 	addedTopics := make([]pocket.Topic, 0, len(topicNames))
 	for _, rawName := range topicNames {
 		topicName := pocket.NormalizeTopicName(rawName)
 		if err := pocket.ValidateTopicName(topicName); err != nil {
 			continue
 		}
-		// skip topics already attached to the post
+		// skip duplicate names within this submission; EnsureTopicOnPost is idempotent for topics already on the post
 		if existingNames[strings.ToLower(topicName)] {
 			continue
 		}

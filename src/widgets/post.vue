@@ -4,17 +4,20 @@
 		<div class="top-post-author" v-if="post.authorDisplayName">{{post.authorDisplayName}}</div>
 		<div class="top-post-score">{{post.totalTopicScore}}</div>
 	</div>
-	<div class="topic-list flex-row-sm">
+	<div class="topic-list flex-row">
 		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
 			{{topic.name}}
 		</topic>
+		<el-button v-if="showLoadMoreTopics" @click.stop="loadMoreTopics()" type="primary" size="small">
+			Load More
+		</el-button>
 	</div>
 	<div class="top-post-text" :class="{expanded}" @click.stop="expanded = !expanded">{{post.postText}}</div>
 </div>
 </template>
 
 <script>
-import {ajaxPost} from '@/utils/ajax.js';
+import {ajaxGet, ajaxPost} from '@/utils/ajax.js';
 
 export default {
 	emits: ['click'],
@@ -46,8 +49,23 @@ export default {
 		sizeClass() {
 			return 'size-' + this.size;
 		},
+		showLoadMoreTopics() {
+			return this.post.topics &&
+				this.post.topics.length > 0 &&
+				this.post.topics.length %
+					this.$const.maxTopicPageSize === 0;
+		},
 	},
 	methods: {
+		loadMoreTopics() {
+			ajaxGet('/ajax/topics/page', {
+				context: 'post',
+				postId: this.post.id,
+				offset: this.post.topics.length,
+			}).then(response => {
+				this.post.topics.push(...(response.topics || []));
+			});
+		},
 		vote(topic, voteType) {
 			ajaxPost('/ajax/post/topic/vote', {
 				postId: this.post.id,
@@ -84,30 +102,18 @@ export default {
 		padding: 8px;
 		row-gap: 6px;
 		font-size: 0.85em;
-
-		.topic-list {
-			gap: 4px;
-		}
 	}
 
 	&.size-medium {
 		padding: 12px;
 		row-gap: 10px;
 		font-size: 1em;
-
-		.topic-list {
-			gap: 6px;
-		}
 	}
 
 	&.size-large {
 		padding: 20px;
 		row-gap: 24px;
 		font-size: 1.3em;
-
-		.topic-list {
-			gap: 10px;
-		}
 	}
 
 	.top-post-header {
@@ -136,12 +142,6 @@ export default {
 			-webkit-line-clamp: unset;
 			line-clamp: unset;
 		}
-	}
-
-	.topic-list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
 	}
 }
 </style>

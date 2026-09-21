@@ -117,11 +117,11 @@ export default {
 			return this.$store.getters.loginLoaded;
 		},
 		showLoadMoreTopics() {
-			return this.lastTopicsLength > 0 &&
-				this.lastTopicsLength % this.$const.maxTopicPageSize === 0;
+			return this.topTopics.length > 0 &&
+				this.topTopics.length % this.$const.maxTopicPageSize === 0;
 		},
 		showLoadMorePosts() {
-			return this.lastPostsLength > 0;
+			return this.topPosts.length > 0;
 		},
 		addTopicDisabled() {
 			return this.addTopicLoading || !this.newTopicName.trim();
@@ -147,13 +147,17 @@ export default {
 			ajaxGet('/ajax/dashboard').then(response => {
 				this.topPosts = response.topPosts || [];
 				this.topTopics = response.topTopics || [];
-				this.lastTopicsLength = this.topTopics.length;
-				this.lastPostsLength = this.topPosts.length;
 			}).finally(() => {
 				this.loading = false;
 			});
 		},
 		loadMoreTopics() {
+			ajaxGet('/ajax/topics/page', {
+				context: 'dashboard',
+				offset: this.topTopics.length,
+			}).then(response => {
+				this.topTopics.push(...(response.topics || []));
+			});
 		},
 		loadMorePosts() {
 		},

@@ -75,7 +75,7 @@ func LoadTopPosts(db *sql.DB, auth *ajax.Auth, offset uint) ([]Post, error) {
 		if displayName.Valid {
 			post.AuthorDisplayName = displayName.String
 		}
-		post.Topics, err = LoadPostTopics(db, post.ID, userID)
+		post.Topics, err = LoadPostTopics(db, post.ID, userID, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +124,7 @@ func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint
 		if displayName.Valid {
 			post.AuthorDisplayName = displayName.String
 		}
-		post.Topics, err = LoadPostTopics(db, post.ID, userID)
+		post.Topics, err = LoadPostTopics(db, post.ID, userID, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +134,7 @@ func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint
 	return posts, nil
 }
 
-func LoadPostTopics(db *sql.DB, postID uint, userID *uint) ([]Topic, error) {
+func LoadPostTopics(db *sql.DB, postID uint, userID *uint, offset uint) ([]Topic, error) {
 	var userIDParam any
 	if userID != nil {
 		userIDParam = *userID
@@ -147,8 +147,9 @@ func LoadPostTopics(db *sql.DB, postID uint, userID *uint) ([]Topic, error) {
 		LEFT JOIN post_topic_vote ptv
 			ON ptv.post_id = pts.post_id AND ptv.topic_id = pts.topic_id AND ptv.user_id = $2
 		WHERE pts.post_id = $1
-		ORDER BY t.name ASC
-	`, postID, userIDParam)
+		ORDER BY pts.sum DESC, t.name ASC
+		LIMIT $3 OFFSET $4
+	`, postID, userIDParam, MaxTopicPageSize, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -206,12 +207,13 @@ func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 		post.AuthorDisplayName = displayName.String
 	}
 
-	post.Topics, err = LoadPostTopics(db, post.ID, userID)
+	post.Topics, err = LoadPostTopics(db, post.ID, userID, 0)
 	if err != nil {
 		return nil, fmt.Errorf("loading post topics for post %d: %w", post.ID, err)
 	}
-	for _, topic := range post.Topics {
-		post.TotalTopicScore += topic.Sum
+	post.TotalTopicScore, err = LoadPostTotalTopicScore(db, post.ID)
+	if err != nil {
+		return nil, fmt.Errorf("loading total topic score for post %d: %w", post.ID, err)
 	}
 	return &post, nil
 }

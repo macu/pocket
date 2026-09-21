@@ -274,24 +274,15 @@ div.center {
   row-gap: 6px;
   font-size: 0.85em;
 }
-.top-post.size-small .topic-list {
-  gap: 4px;
-}
 .top-post.size-medium {
   padding: 12px;
   row-gap: 10px;
   font-size: 1em;
 }
-.top-post.size-medium .topic-list {
-  gap: 6px;
-}
 .top-post.size-large {
   padding: 20px;
   row-gap: 24px;
   font-size: 1.3em;
-}
-.top-post.size-large .topic-list {
-  gap: 10px;
 }
 .top-post .top-post-header {
   justify-content: space-between;
@@ -318,11 +309,6 @@ div.center {
 .top-post .top-post-text.expanded {
   -webkit-line-clamp: unset;
   line-clamp: unset;
-}
-.top-post .topic-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/dashboard/index.vue?vue&type=style&index=0&id=363a5543&lang=scss ***!
