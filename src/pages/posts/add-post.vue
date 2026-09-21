@@ -1,12 +1,13 @@
 <template>
 <form-layout class="add-post-page page-width-md" title="Add post">
 	<form-field title="Post text" required>
-		<el-input v-model="text" type="textarea" :maxlength="$const.postMaxLength"
+		<el-input v-model="text" type="textarea" size="large" :maxlength="$const.postMaxLength"
 			autocapitalize="sentences" :rows="6"/>
 	</form-field>
 
-	<form-field title="Topics (comma separated)">
-		<el-input v-model="topics" type="text" maxlength="200"/>
+	<form-field title="Topics">
+		<el-select v-model="topics" multiple clearable filterable allow-create default-first-option :reserve-keyword="false"
+			size="large" style="width: 100%"/>
 	</form-field>
 
 	<form-field v-if="parentPost" title="Replying to">
@@ -37,7 +38,7 @@ export default {
 	data() {
 		return {
 			text: '',
-			topics: '',
+			topics: [],
 			parentId: null,
 			parentPost: null,
 			loading: false,
@@ -70,7 +71,7 @@ export default {
 			this.loading = true;
 			ajaxPost('/ajax/post', {
 				text: this.text,
-				topics: this.topics,
+				topics: JSON.stringify(this.topics),
 				parentId: this.parentId,
 			}, {
 				'invalid-post-text': 'The post text is invalid or too long.',

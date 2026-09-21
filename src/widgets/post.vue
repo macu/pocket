@@ -70,7 +70,7 @@ export default {
 .top-post {
 	padding: 12px;
 	border-radius: 10px;
-	background-color: rgba(255, 255, 255, 0.04);
+	background-color: rgba(255, 255, 255, 0.1);
 	border: thin solid rgba(255, 255, 255, 0.15);
 	display: flex;
 	flex-direction: column;

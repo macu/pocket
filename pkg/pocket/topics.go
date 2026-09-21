@@ -2,6 +2,7 @@ package pocket
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -39,6 +40,25 @@ func ParseTopicNames(raw string) []string {
 		return nil
 	}
 	parts := strings.Split(raw, ",")
+	items := make([]string, 0, len(parts))
+	for _, part := range parts {
+		item := NormalizeTopicName(part)
+		if item != "" {
+			items = append(items, item)
+		}
+	}
+	return items
+}
+
+// ParseTopicNamesJSON parses a JSON-encoded array of topic name strings.
+func ParseTopicNamesJSON(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	var parts []string
+	if err := json.Unmarshal([]byte(raw), &parts); err != nil {
+		return nil
+	}
 	items := make([]string, 0, len(parts))
 	for _, part := range parts {
 		item := NormalizeTopicName(part)

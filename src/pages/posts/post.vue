@@ -14,12 +14,13 @@
 			<post-widget :post="post" default-expanded size="large" />
 		</div>
 
-		<form-layout v-if="showAddTopicForm" title="Add topic">
-			<form-field title="Topic name">
-				<el-input ref="addTopicInput" v-model="newTopic" type="text" maxlength="50" @keyup.enter.native="addTopic()"/>
+		<form-layout v-if="showAddTopicForm" title="Add topics" class="add-topic-form">
+			<form-field title="Topic names">
+				<el-select ref="addTopicInput" v-model="newTopics" multiple clearable filterable allow-create default-first-option :reserve-keyword="false"
+					size="large" style="width: 100%"/>
 			</form-field>
 			<form-actions>
-				<el-button @click="addTopic()" type="primary" :disabled="addTopicDisabled">Add topic</el-button>
+				<el-button @click="addTopic()" type="primary" :disabled="addTopicDisabled">Add topics</el-button>
 				<el-button @click="toggleAddTopicForm()" type="default">Cancel</el-button>
 			</form-actions>
 		</form-layout>
@@ -27,7 +28,7 @@
 		<template v-else>
 			<horizontal-controls v-if="post">
 				<el-button @click="toggleAddTopicForm()" type="primary">
-					Add topic
+					Add topics
 				</el-button>
 				<el-button @click="goToAddSubPost()" type="primary">
 					Add sub-post
@@ -75,7 +76,7 @@ export default {
 			topTopics: [],
 			topSubPosts: [],
 			loading: true,
-			newTopic: '',
+			newTopics: [],
 			subPostText: '',
 			showAddTopicForm: false,
 			showAddSubPostForm: false,
@@ -83,7 +84,7 @@ export default {
 	},
 	computed: {
 		addTopicDisabled() {
-			return !this.newTopic.trim();
+			return this.newTopics.length === 0;
 		},
 		addSubPostDisabled() {
 			return !this.subPostText.trim();
@@ -134,15 +135,16 @@ export default {
 			this.$router.push({name: 'post', params: {id: postId}});
 		},
 		addTopic() {
-			if (!this.newTopic.trim()) {
+			if (this.addTopicDisabled) {
 				return;
 			}
 			ajaxPost('/ajax/post/topic', {
 				postId: this.post.id,
-				topic: this.newTopic,
+				topics: JSON.stringify(this.newTopics),
 			}).then(response => {
-				this.newTopic = '';
+				this.newTopics = [];
 				this.post = response.post || this.post;
+				this.showAddTopicForm = false;
 			});
 		},
 		goToAddSubPost() {
@@ -160,5 +162,10 @@ export default {
 
 .post-page {
 	color: $app-fg-color;
+
+	.add-topic-form {
+		background-color: $topic-bg-color;
+		color: $topic-fg-color;
+	}
 }
 </style>

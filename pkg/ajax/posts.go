@@ -89,7 +89,7 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 
 	topicNames := pocket.ParseTopicNames(r.FormValue("tags"))
 	if len(topicNames) == 0 {
-		topicNames = pocket.ParseTopicNames(r.FormValue("topics"))
+		topicNames = pocket.ParseTopicNamesJSON(r.FormValue("topics"))
 	}
 
 	post, err := pocket.CreatePost(db, parentPostID, auth.UserID, text, topicNames)
@@ -113,15 +113,38 @@ func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	topicName := pocket.NormalizeTopicName(r.FormValue("topic"))
-	if err := pocket.ValidateTopicName(topicName); err != nil {
+	topicNames := pocket.ParseTopicNamesJSON(r.FormValue("topics"))
+	if len(topicNames) == 0 {
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-topic-name"}, http.StatusBadRequest
 	}
 
-	topic, err := pocket.EnsureTopicOnPost(db, uint(postID), topicName, auth.UserID)
+	existingTopics, err := pocket.LoadPostTopics(db, uint(postID), &auth.UserID)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
+	}
+	existingNames := make(map[string]bool, len(existingTopics))
+	for _, existingTopic := range existingTopics {
+		existingNames[strings.ToLower(existingTopic.Name)] = true
+	}
+
+	addedTopics := make([]pocket.Topic, 0, len(topicNames))
+	for _, rawName := range topicNames {
+		topicName := pocket.NormalizeTopicName(rawName)
+		if err := pocket.ValidateTopicName(topicName); err != nil {
+			continue
+		}
+		// skip topics already attached to the post
+		if existingNames[strings.ToLower(topicName)] {
+			continue
+		}
+		topic, err := pocket.EnsureTopicOnPost(db, uint(postID), topicName, auth.UserID)
+		if err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		existingNames[strings.ToLower(topicName)] = true
+		addedTopics = append(addedTopics, topic)
 	}
 
 	post, err := pocket.LoadPost(db, uint(postID), &auth.UserID)
@@ -131,8 +154,8 @@ func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 	}
 
 	return map[string]any{
-		"topic": topic,
-		"post":  post,
+		"topics": addedTopics,
+		"post":   post,
 	}, http.StatusOK
 
 }

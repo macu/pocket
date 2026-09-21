@@ -260,7 +260,7 @@ div.center {
 .top-post {
   padding: 12px;
   border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.1);
   border: thin solid rgba(255, 255, 255, 0.15);
   display: flex;
   flex-direction: column;
@@ -355,6 +355,10 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/posts/post.vue?vue&type=style&index=0&id=698b7640&lang=scss ***!
   \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .post-page {
+  color: white;
+}
+.post-page .add-topic-form {
+  background-color: rgb(86, 86, 211);
   color: white;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
