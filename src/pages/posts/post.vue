@@ -88,9 +88,17 @@ export default {
 		addSubPostDisabled() {
 			return !this.subPostText.trim();
 		},
+		postId() {
+			return this.$route.params.id;
+		},
 	},
 	mounted() {
 		this.load();
+	},
+	watch: {
+		postId() {
+			this.load();
+		},
 	},
 	methods: {
 		load() {

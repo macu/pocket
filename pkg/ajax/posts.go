@@ -159,8 +159,14 @@ func AjaxVotePostTopic(db *sql.DB, auth ajax.Auth,
 			logging.LogError(r, &auth, err)
 			return nil, http.StatusInternalServerError
 		}
+		totalTopicScore, err := pocket.LoadPostTotalTopicScore(db, postID)
+		if err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		}
 		return map[string]any{
-			"topic": topic,
+			"topic":           topic,
+			"totalTopicScore": totalTopicScore,
 		}, http.StatusOK
 	}
 
@@ -174,8 +180,15 @@ func AjaxVotePostTopic(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
+	totalTopicScore, err := pocket.LoadPostTotalTopicScore(db, postID)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
 	return map[string]any{
-		"topic": topic,
+		"topic":           topic,
+		"totalTopicScore": totalTopicScore,
 	}, http.StatusOK
 
 }

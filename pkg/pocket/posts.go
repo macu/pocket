@@ -172,6 +172,17 @@ func LoadPostTopics(db *sql.DB, postID uint, userID *uint) ([]Topic, error) {
 	return topics, nil
 }
 
+func LoadPostTotalTopicScore(conn db.DBConn, postID uint) (int, error) {
+	var total int
+	err := conn.QueryRow(`
+		SELECT COALESCE(SUM(sum), 0) FROM post_topic_sum WHERE post_id = $1
+	`, postID).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("loading total topic score for post %d: %w", postID, err)
+	}
+	return total, nil
+}
+
 func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 	var post Post
 	var parentID sql.NullInt64

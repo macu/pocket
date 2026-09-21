@@ -5,7 +5,7 @@
 		<div class="top-post-score">{{post.totalTopicScore}}</div>
 	</div>
 	<div class="topic-list flex-row-sm">
-		<topic v-for="topic in post.topics" :key="topic.id" size="small" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
+		<topic v-for="topic in post.topics" :key="topic.id" size="small" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
 			{{topic.name}}
 		</topic>
 	</div>
@@ -46,6 +46,9 @@ export default {
 			}).then(response => {
 				if (response.topic) {
 					Object.assign(topic, response.topic);
+				}
+				if (response.totalTopicScore !== undefined) {
+					this.post.totalTopicScore = response.totalTopicScore;
 				}
 			});
 		},
