@@ -97,9 +97,16 @@ export default {
 		gap: 6px;
 	}
 
+	&.size-medium {
+		padding: 8px 10px;
+		font-size: 0.95em;
+		gap: 8px;
+	}
+
 	&.size-large {
-		padding: 10px;
-		font-size: 1rem;
+		padding: 11px 14px;
+		font-size: 1.15rem;
+		gap: 10px;
 	}
 
 	.topic-name {

@@ -1,11 +1,11 @@
 <template>
-<div class="top-post" :class="{clickable}" @click="$emit('click', $event)">
+<div class="top-post" :class="[sizeClass, {clickable}]" @click="$emit('click', $event)">
 	<div class="top-post-header flex-row-md">
 		<div class="top-post-author" v-if="post.authorDisplayName">{{post.authorDisplayName}}</div>
 		<div class="top-post-score">{{post.totalTopicScore}}</div>
 	</div>
 	<div class="topic-list flex-row-sm">
-		<topic v-for="topic in post.topics" :key="topic.id" size="small" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
+		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
 			{{topic.name}}
 		</topic>
 	</div>
@@ -31,11 +31,21 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		size: {
+			type: String,
+			default: 'small',
+			validator: value => ['small', 'medium', 'large'].includes(value),
+		},
 	},
 	data() {
 		return {
 			expanded: this.defaultExpanded,
 		};
+	},
+	computed: {
+		sizeClass() {
+			return 'size-' + this.size;
+		},
 	},
 	methods: {
 		vote(topic, voteType) {
@@ -68,6 +78,36 @@ export default {
 
 	&.clickable {
 		cursor: pointer;
+	}
+
+	&.size-small {
+		padding: 8px;
+		row-gap: 6px;
+		font-size: 0.85em;
+
+		.topic-list {
+			gap: 4px;
+		}
+	}
+
+	&.size-medium {
+		padding: 12px;
+		row-gap: 10px;
+		font-size: 1em;
+
+		.topic-list {
+			gap: 6px;
+		}
+	}
+
+	&.size-large {
+		padding: 20px;
+		row-gap: 24px;
+		font-size: 1.3em;
+
+		.topic-list {
+			gap: 10px;
+		}
 	}
 
 	.top-post-header {

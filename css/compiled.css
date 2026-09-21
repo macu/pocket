@@ -269,6 +269,30 @@ div.center {
 .top-post.clickable {
   cursor: pointer;
 }
+.top-post.size-small {
+  padding: 8px;
+  row-gap: 6px;
+  font-size: 0.85em;
+}
+.top-post.size-small .topic-list {
+  gap: 4px;
+}
+.top-post.size-medium {
+  padding: 12px;
+  row-gap: 10px;
+  font-size: 1em;
+}
+.top-post.size-medium .topic-list {
+  gap: 6px;
+}
+.top-post.size-large {
+  padding: 20px;
+  row-gap: 24px;
+  font-size: 1.3em;
+}
+.top-post.size-large .topic-list {
+  gap: 10px;
+}
 .top-post .top-post-header {
   justify-content: space-between;
   align-items: center;
@@ -412,9 +436,15 @@ div.center {
   font-size: 0.85em;
   gap: 6px;
 }
+.topic.size-medium {
+  padding: 8px 10px;
+  font-size: 0.95em;
+  gap: 8px;
+}
 .topic.size-large {
-  padding: 10px;
-  font-size: 1rem;
+  padding: 11px 14px;
+  font-size: 1.15rem;
+  gap: 10px;
 }
 .topic .topic-name {
   display: inline-block;

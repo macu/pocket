@@ -7,11 +7,11 @@
 
 		<div v-if="parentPost" class="parent-post-card flex-column-sm">
 			<small>Parent post</small>
-			<post-widget :post="parentPost" clickable @click="openPost(parentPost.id)" />
+			<post-widget :post="parentPost" clickable @click="openPost(parentPost.id)" size="small" />
 		</div>
 
 		<div class="post-card">
-			<post-widget :post="post" default-expanded />
+			<post-widget :post="post" default-expanded size="large" />
 		</div>
 
 		<form-layout v-if="showAddTopicForm" title="Add topic">
@@ -46,7 +46,7 @@
 			<h3>Top Sub-Posts</h3>
 
 			<div v-if="topSubPosts.length" class="top-sub-posts">
-				<post-widget v-for="subPost in topSubPosts" :key="subPost.id" :post="subPost" clickable @click="openPost(subPost.id)" />
+				<post-widget v-for="subPost in topSubPosts" :key="subPost.id" :post="subPost" clickable size="medium" @click="openPost(subPost.id)" />
 			</div>
 			<p v-else>No sub-posts available.</p>
 
