@@ -5,46 +5,51 @@
 
 	<template v-else-if="post">
 
-		<template v-if="parentPost">
-			<div class="parent-post-card">
-				<small>Parent post</small>
-				<post-widget :post="parentPost" />
-			</div>
-		</template>
+		<div v-if="parentPost" class="parent-post-card flex-column-sm">
+			<small>Parent post</small>
+			<post-widget :post="parentPost" clickable @click="openPost(parentPost.id)" />
+		</div>
 
 		<div class="post-card">
 			<post-widget :post="post" default-expanded />
 		</div>
 
-		<form-layout v-if="showAddTagForm" title="Add tag">
-			<form-field title="Tag name">
-				<el-input ref="addTagInput" v-model="newTag" type="text" maxlength="50" @keyup.enter.native="addTag()"/>
+		<form-layout v-if="showAddTopicForm" title="Add topic">
+			<form-field title="Topic name">
+				<el-input ref="addTopicInput" v-model="newTopic" type="text" maxlength="50" @keyup.enter.native="addTopic()"/>
 			</form-field>
 			<form-actions>
-				<el-button @click="addTag()" type="primary" :disabled="addTagDisabled">Add tag</el-button>
-				<el-button @click="toggleAddTagForm()" type="default">Cancel</el-button>
-			</form-actions>
-		</form-layout>
-
-		<form-layout v-else-if="showAddSubPostForm" title="Add sub-post">
-			<form-field title="Sub-post text" required>
-				<el-input ref="addPostInput" v-model="subPostText" type="textarea" :maxlength="$const.postMaxLength" :rows="4"/>
-			</form-field>
-			<form-actions>
-				<el-button @click="addSubPost()" :disabled="addSubPostDisabled" type="primary">Add sub-post</el-button>
-				<el-button @click="toggleAddSubPostForm()" type="default">Cancel</el-button>
+				<el-button @click="addTopic()" type="primary" :disabled="addTopicDisabled">Add topic</el-button>
+				<el-button @click="toggleAddTopicForm()" type="default">Cancel</el-button>
 			</form-actions>
 		</form-layout>
 
 		<template v-else>
 			<horizontal-controls v-if="post">
-				<el-button @click="toggleAddTagForm()" type="primary">
-					{{showAddTagForm ? 'Hide tag form' : 'Add tag'}}
+				<el-button @click="toggleAddTopicForm()" type="primary">
+					Add topic
 				</el-button>
-				<el-button @click="toggleAddSubPostForm()" type="primary">
-					{{showAddSubPostForm ? 'Hide sub-post form' : 'Add sub-post'}}
+				<el-button @click="goToAddSubPost()" type="primary">
+					Add sub-post
 				</el-button>
 			</horizontal-controls>
+
+			<h3>Top Topics in this Space</h3>
+
+			<div v-if="topTopics.length" class="top-topics flex-row-md">
+				<topic v-for="topic in topTopics" :key="topic.id" size="medium" :count="topic.sum">
+					{{topic.name}}
+				</topic>
+			</div>
+			<p v-else>No topics available.</p>
+
+			<h3>Top Sub-Posts</h3>
+
+			<div v-if="topSubPosts.length" class="top-sub-posts">
+				<post-widget v-for="subPost in topSubPosts" :key="subPost.id" :post="subPost" clickable @click="openPost(subPost.id)" />
+			</div>
+			<p v-else>No sub-posts available.</p>
+
 		</template>
 
 	</template>
@@ -67,16 +72,18 @@ export default {
 		return {
 			post: null,
 			parentPost: null,
+			topTopics: [],
+			topSubPosts: [],
 			loading: true,
-			newTag: '',
+			newTopic: '',
 			subPostText: '',
-			showAddTagForm: false,
+			showAddTopicForm: false,
 			showAddSubPostForm: false,
 		};
 	},
 	computed: {
-		addTagDisabled() {
-			return !this.newTag.trim();
+		addTopicDisabled() {
+			return !this.newTopic.trim();
 		},
 		addSubPostDisabled() {
 			return !this.subPostText.trim();
@@ -86,59 +93,51 @@ export default {
 		this.load();
 	},
 	methods: {
-		focusAddTagInput() {
-			this.$nextTick(() => {
-				if (this.$refs.addTagInput && this.$refs.addTagInput.focus) {
-					this.$refs.addTagInput.focus();
-				}
-			});
-		},
-		focusAddPostInput() {
-			this.$nextTick(() => {
-				if (this.$refs.addPostInput && this.$refs.addPostInput.focus) {
-					this.$refs.addPostInput.focus();
-				}
-			});
-		},
-		toggleAddTagForm() {
-			this.showAddTagForm = !this.showAddTagForm;
-			if (this.showAddTagForm) {
-				this.focusAddTagInput();
-			}
-		},
-		toggleAddSubPostForm() {
-			this.showAddSubPostForm = !this.showAddSubPostForm;
-			if (this.showAddSubPostForm) {
-				this.focusAddPostInput();
-			}
-		},
 		load() {
 			this.loading = true;
 			ajaxGet('/ajax/post', {
 				id: this.$route.params.id,
+				loadContent: true,
 			}).then(response => {
 				this.post = response.post || null;
 				this.parentPost = response.parentPost || null;
+				this.topTopics = response.topTopics || [];
+				this.topSubPosts = response.topSubPosts || [];
 			}).finally(() => {
 				this.loading = false;
 			});
 		},
-		addTag() {
-			if (!this.newTag.trim()) {
+
+		focusAddTopicInput() {
+			this.$nextTick(() => {
+				if (this.$refs.addTopicInput && this.$refs.addTopicInput.focus) {
+					this.$refs.addTopicInput.focus();
+				}
+			});
+		},
+		toggleAddTopicForm() {
+			this.showAddTopicForm = !this.showAddTopicForm;
+			if (this.showAddTopicForm) {
+				this.focusAddTopicInput();
+			}
+		},
+
+		openPost(postId) {
+			this.$router.push({name: 'post', params: {id: postId}});
+		},
+		addTopic() {
+			if (!this.newTopic.trim()) {
 				return;
 			}
-			ajaxPost('/ajax/post/tag', {
+			ajaxPost('/ajax/post/topic', {
 				postId: this.post.id,
-				tag: this.newTag,
+				topic: this.newTopic,
 			}).then(response => {
-				this.newTag = '';
+				this.newTopic = '';
 				this.post = response.post || this.post;
 			});
 		},
-		addSubPost() {
-			if (!this.subPostText.trim()) {
-				return;
-			}
+		goToAddSubPost() {
 			this.$router.push({
 				name: 'add-post',
 				query: {parentId: this.post.id},

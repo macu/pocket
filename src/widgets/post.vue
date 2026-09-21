@@ -1,5 +1,5 @@
 <template>
-<div class="top-post" :class="{clickable}">
+<div class="top-post" :class="{clickable}" @click="$emit('click', $event)">
 	<div class="top-post-header flex-row-md">
 		<div class="top-post-author" v-if="post.authorDisplayName">{{post.authorDisplayName}}</div>
 		<div class="top-post-score">{{post.totalTopicScore}}</div>
@@ -9,12 +9,13 @@
 			{{topic.name}}
 		</topic>
 	</div>
-	<div class="top-post-text" :class="{expanded}" @click="expanded = !expanded">{{post.postText}}</div>
+	<div class="top-post-text" :class="{expanded}" @click.stop="expanded = !expanded">{{post.postText}}</div>
 </div>
 </template>
 
 <script>
 export default {
+	emits: ['click'],
 	props: {
 		post: {
 			type: Object,

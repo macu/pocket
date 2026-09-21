@@ -12,7 +12,7 @@ export default {
 			type: String,
 			default: 'medium',
 			validator(value) {
-				return ['small', 'large'].includes(value);
+				return ['small', 'medium', 'large'].includes(value);
 			},
 		},
 		count: {

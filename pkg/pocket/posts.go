@@ -46,13 +46,57 @@ func LoadTopPosts(db *sql.DB, auth *ajax.Auth, offset uint) ([]Post, error) {
 		FROM post p
 		LEFT JOIN user_account u ON u.id = p.author
 		LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
-		GROUP BY p.id, u.display_name
+		GROUP BY p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
 		ORDER BY total_topic_score DESC, p.created_at DESC
 		LIMIT $1 OFFSET $2
 	`, MaxTopicPageSize, offset)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
+	posts := make([]Post, 0)
+	for rows.Next() {
+		var post Post
+		var parentID sql.NullInt64
+		var displayName sql.NullString
+		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &post.PostText, &post.CreatedAt, &post.TotalTopicScore); err != nil {
+			continue
+		}
+		if parentID.Valid {
+			v := uint(parentID.Int64)
+			post.ParentPostID = &v
+		}
+		if displayName.Valid {
+			post.AuthorDisplayName = displayName.String
+		}
+		post.Topics, err = LoadPostTopics(db, post.ID)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
+
+func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint) ([]Post, error) {
+
+	rows, err := db.Query(`
+		SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
+			COALESCE(SUM(CASE WHEN pts.sum IS NULL THEN 0 ELSE pts.sum END), 0) AS total_topic_score
+		FROM post p
+		LEFT JOIN user_account u ON u.id = p.author
+		LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
+		WHERE p.parent_post_id = $1
+		GROUP BY p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
+		ORDER BY total_topic_score DESC, p.created_at DESC
+		LIMIT $2 OFFSET $3
+	`, parentPostID, MaxTopicPageSize, offset)
+	if err != nil {
+		return nil, err
+	}
+
 	defer rows.Close()
 
 	posts := make([]Post, 0)

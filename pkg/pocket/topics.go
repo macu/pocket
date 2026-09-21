@@ -60,18 +60,16 @@ func CheckTopicExists(conn db.DBConn, name string) (bool, error) {
 func LoadTopTopics(db *sql.DB, auth *ajax.Auth, offset uint) ([]Topic, error) {
 
 	var topics []Topic
-
 	pageSize := MaxTopicPageSize
 
-	rows, err := db.Query(`SELECT id, name,
-		COALESCE(post_topic_sum.sum, 0)
-		FROM topic
-		LEFT JOIN post_topic_sum ON topic.id = post_topic_sum.topic_id
-		ORDER BY id DESC
-		LIMIT $1 OFFSET $2`,
-		pageSize,
-		offset,
-	)
+	rows, err := db.Query(`
+		SELECT t.id, t.name, COALESCE(SUM(pts.sum), 0) AS total_sum
+		FROM topic t
+		LEFT JOIN post_topic_sum pts ON pts.topic_id = t.id
+		GROUP BY t.id, t.name
+		ORDER BY total_sum DESC, t.name ASC
+		LIMIT $1 OFFSET $2
+	`, pageSize, offset)
 	if err != nil {
 		return topics, fmt.Errorf("loading top topics: %w", err)
 	}
@@ -90,7 +88,6 @@ func LoadTopTopics(db *sql.DB, auth *ajax.Auth, offset uint) ([]Topic, error) {
 	}
 
 	return topics, nil
-
 }
 
 func CreateTopic(conn db.DBConn, name string, createdBy uint) (*Topic, error) {

@@ -32,9 +32,9 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 	http.MethodPost: {
 		"/ajax/logout": auth.AjaxLogout,
 
-		"/ajax/topic":    AjaxPostTopic,
-		"/ajax/post":     AjaxCreatePost,
-		"/ajax/post/tag": AjaxAddPostTag,
+		"/ajax/topic":      AjaxPostTopic,
+		"/ajax/post":       AjaxCreatePost,
+		"/ajax/post/topic": AjaxAddPostTopic,
 	},
 }
 

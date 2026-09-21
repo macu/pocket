@@ -75,7 +75,12 @@ export default {
 			}, {
 				'invalid-post-text': 'The post text is invalid or too long.',
 			}).then(response => {
-				this.$router.push({name: 'post', params: {id: response.post.id}});
+				const newPostId = response && response.post ? response.post.id : null;
+				if (newPostId) {
+					this.$router.push({name: 'post', params: {id: newPostId}});
+					return;
+				}
+				this.$router.push({name: 'dashboard'});
 			}).finally(() => {
 				this.loading = false;
 			});

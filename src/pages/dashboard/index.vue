@@ -46,7 +46,7 @@
 			<h2>Top Topics</h2>
 
 			<div v-if="topTopics.length > 0" class="top-topics flex-row-lg">
-				<topic v-for="topic in topTopics" :key="topic.id" size="large" :count="topic.sum" :negative="topic.sum < 0">
+				<topic v-for="topic in topTopics" :key="topic.id" size="large" :count="topic.sum">
 					{{topic.name}}
 				</topic>
 				<el-button v-if="showLoadMoreTopics" @click="loadMoreTopics()" type="primary">

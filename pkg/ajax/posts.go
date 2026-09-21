@@ -9,20 +9,19 @@ import (
 	"pocket/pkg/pocket"
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/logging"
+	"pocket/pkg/utils/types"
 )
 
 func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (any, int) {
-	idValue := strings.TrimSpace(r.FormValue("id"))
-	if idValue == "" {
-		return nil, http.StatusBadRequest
-	}
 
-	id, err := strconv.ParseUint(idValue, 10, 64)
+	id, err := types.AtoUint(r.FormValue("id"))
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
+
+	loadContent := types.AtoBool(r.FormValue("loadContent"))
 
 	post, err := pocket.LoadPost(db, uint(id))
 	if err != nil {
@@ -45,15 +44,29 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 		}
 	}
 
-	return map[string]any{
+	payload := map[string]any{
 		"post":       post,
 		"parentPost": parentPost,
-	}, http.StatusOK
+	}
+
+	if loadContent {
+		payload["topTopics"] = post.Topics
+		topSubPosts, err := pocket.LoadTopSubPosts(db, auth, id, 0)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		payload["topSubPosts"] = topSubPosts
+	}
+
+	return payload, http.StatusOK
+
 }
 
 func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (any, int) {
+
 	text := strings.TrimSpace(r.FormValue("text"))
 	if err := pocket.ValidatePostText(text); err != nil {
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-post-text"}, http.StatusBadRequest
@@ -83,27 +96,24 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 	return map[string]any{
 		"post": post,
 	}, http.StatusOK
+
 }
 
-func AjaxAddPostTag(db *sql.DB, auth ajax.Auth,
+func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (any, int) {
-	postIDValue := strings.TrimSpace(r.FormValue("postId"))
-	if postIDValue == "" {
-		return nil, http.StatusBadRequest
-	}
 
-	postID, err := strconv.ParseUint(postIDValue, 10, 64)
+	postID, err := types.AtoUint(r.FormValue("postId"))
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
 
-	tagName := pocket.NormalizeTopicName(r.FormValue("tag"))
-	if err := pocket.ValidateTopicName(tagName); err != nil {
+	topicName := pocket.NormalizeTopicName(r.FormValue("topic"))
+	if err := pocket.ValidateTopicName(topicName); err != nil {
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-topic-name"}, http.StatusBadRequest
 	}
 
-	topic, err := pocket.EnsureTopicOnPost(db, uint(postID), tagName, auth.UserID)
+	topic, err := pocket.EnsureTopicOnPost(db, uint(postID), topicName, auth.UserID)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -119,4 +129,5 @@ func AjaxAddPostTag(db *sql.DB, auth ajax.Auth,
 		"topic": topic,
 		"post":  post,
 	}, http.StatusOK
+
 }
