@@ -112,24 +112,55 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 	return posts, nil
 }
 
-func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint) ([]Post, error) {
+// LoadTopSubPosts loads a page of the top sub-posts of parentPostID, ordered
+// by total topic score (sum of net votes across all topics). If
+// selectedTopicIDs is non-empty, results are restricted to sub-posts that
+// have all of the selected topics present, ordered by the sum of net votes
+// across just those topics.
+func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint, selectedTopicIDs []uint) ([]Post, error) {
 
 	var userID *uint
 	if auth != nil {
 		userID = &auth.UserID
 	}
 
-	rows, err := db.Query(`
-		SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
-			COALESCE(SUM(CASE WHEN pts.sum IS NULL THEN 0 ELSE pts.sum END), 0) AS total_topic_score
-		FROM post p
-		LEFT JOIN user_account u ON u.id = p.author
-		LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
-		WHERE p.parent_post_id = $1
-		GROUP BY p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
-		ORDER BY total_topic_score DESC, p.created_at DESC
-		LIMIT $2 OFFSET $3
-	`, parentPostID, MaxPostPageSize, offset)
+	var args []interface{}
+	var query string
+
+	parentArg := db.Arg(&args, parentPostID)
+
+	if len(selectedTopicIDs) == 0 {
+		query = `
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
+				COALESCE(SUM(CASE WHEN pts.sum IS NULL THEN 0 ELSE pts.sum END), 0) AS total_topic_score
+			FROM post p
+			LEFT JOIN user_account u ON u.id = p.author
+			LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
+			WHERE p.parent_post_id = ` + parentArg + `
+			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
+			ORDER BY total_topic_score DESC, p.created_at DESC
+			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
+	} else {
+		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
+		selectedCount := db.Arg(&args, len(selectedTopicIDs))
+		query = `
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
+				topic_scores.selected_sum AS total_topic_score
+			FROM post p
+			LEFT JOIN user_account u ON u.id = p.author
+			JOIN (
+				SELECT post_id, SUM(sum) AS selected_sum
+				FROM post_topic_sum
+				WHERE ` + selectedClause + `
+				GROUP BY post_id
+				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
+			) topic_scores ON topic_scores.post_id = p.id
+			WHERE p.parent_post_id = ` + parentArg + `
+			ORDER BY topic_scores.selected_sum DESC, p.created_at DESC
+			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
+	}
+
+	rows, err := conn.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +182,7 @@ func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint
 		if displayName.Valid {
 			post.AuthorDisplayName = displayName.String
 		}
-		post.Topics, err = LoadPostTopics(db, post.ID, userID, 0)
+		post.Topics, err = LoadPostTopics(conn, post.ID, userID, 0)
 		if err != nil {
 			return nil, err
 		}

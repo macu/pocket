@@ -55,8 +55,13 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 	}
 
 	if loadContent {
-		payload["topTopics"] = post.Topics
-		topSubPosts, err := pocket.LoadTopSubPosts(db, auth, id, 0)
+		topTopics, err := pocket.LoadSpaceTopics(db, id, 0, nil)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		payload["topTopics"] = topTopics
+		topSubPosts, err := pocket.LoadTopSubPosts(db, auth, id, 0, nil)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -239,7 +244,11 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 		if err != nil {
 			return nil, http.StatusBadRequest
 		}
-		posts, err = pocket.LoadTopSubPosts(db, auth, postID, offset)
+		selectedTopicIDs, err := types.AtoUintList(r.FormValue("topicIds"))
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+		posts, err = pocket.LoadTopSubPosts(db, auth, postID, offset, selectedTopicIDs)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError

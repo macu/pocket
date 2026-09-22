@@ -36,12 +36,33 @@
 
 			<h3>Top Topics in this Space</h3>
 
-			<div v-if="topTopics.length" class="top-topics flex-row-md">
-				<topic v-for="topic in topTopics" :key="topic.id" size="medium" :count="topic.sum">
+			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row-md">
+				<topic
+					v-for="topic in selectedTopics"
+					:key="'selected-' + topic.id"
+					size="medium"
+					:count="topic.sum"
+					checkable
+					checked
+					@check="uncheckTopic(topic)"
+				>
+					{{topic.name}}
+				</topic>
+				<topic
+					v-for="topic in topTopics"
+					:key="topic.id"
+					size="medium"
+					:count="topic.sum"
+					checkable
+					@check="checkTopic(topic)"
+				>
 					{{topic.name}}
 				</topic>
 				<el-button v-if="showLoadMoreTopics" @click="loadMoreTopics()" type="primary">
 					Load More
+				</el-button>
+				<el-button v-if="selectedTopics.length > 0" @click="clearSelectedTopics()">
+					Clear selected
 				</el-button>
 			</div>
 			<p v-else>No topics available.</p>
@@ -82,6 +103,7 @@ export default {
 			parentPost: null,
 			topTopics: [],
 			hasMoreTopics: true,
+			selectedTopics: [],
 			topSubPosts: [],
 			hasMoreSubPosts: true,
 			loading: true,
@@ -123,6 +145,7 @@ export default {
 	methods: {
 		load() {
 			this.loading = true;
+			this.selectedTopics = [];
 			ajaxGet('/ajax/post', {
 				id: this.$route.params.id,
 				loadContent: true,
@@ -153,9 +176,10 @@ export default {
 		},
 		loadMoreTopics() {
 			ajaxGet('/ajax/topics/page', {
-				context: 'post',
+				context: 'space',
 				postId: this.post.id,
 				offset: this.topTopics.length,
+				topicIds: this.selectedTopicIds(),
 			}).then(response => {
 				const topics = response.topics || [];
 				this.topTopics.push(...topics);
@@ -167,9 +191,51 @@ export default {
 				context: 'subposts',
 				postId: this.post.id,
 				offset: this.topSubPosts.length,
+				topicIds: this.selectedTopicIds(),
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topSubPosts.push(...posts);
+				this.hasMoreSubPosts = posts.length > 0;
+			});
+		},
+		selectedTopicIds() {
+			return this.selectedTopics.map(topic => topic.id).join(',');
+		},
+		checkTopic(topic) {
+			this.topTopics = this.topTopics.filter(t => t.id !== topic.id);
+			this.selectedTopics.push(topic);
+			this.reloadFiltered();
+		},
+		uncheckTopic(topic) {
+			this.selectedTopics = this.selectedTopics.filter(t => t.id !== topic.id);
+			this.reloadFiltered();
+		},
+		clearSelectedTopics() {
+			this.selectedTopics = [];
+			this.reloadFiltered();
+		},
+		reloadFiltered() {
+			const topicIds = this.selectedTopicIds();
+
+			ajaxGet('/ajax/topics/page', {
+				context: 'space',
+				postId: this.post.id,
+				offset: 0,
+				topicIds,
+			}).then(response => {
+				const topics = response.topics || [];
+				this.topTopics = topics;
+				this.hasMoreTopics = topics.length > 0;
+			});
+
+			ajaxGet('/ajax/posts/page', {
+				context: 'subposts',
+				postId: this.post.id,
+				offset: 0,
+				topicIds,
+			}).then(response => {
+				const posts = response.posts || [];
+				this.topSubPosts = posts;
 				this.hasMoreSubPosts = posts.length > 0;
 			});
 		},

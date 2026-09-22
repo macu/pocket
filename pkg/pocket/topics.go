@@ -78,12 +78,13 @@ func CheckTopicExists(conn db.DBConn, name string) (bool, error) {
 	return exists, nil
 }
 
-// LoadTopTopics loads a page of the site's top topics, ordered by total sum
-// (net votes) across all posts. If selectedTopicIDs is non-empty, the
-// selected topics are excluded and the results are restricted to topics that
-// are co-present with the selected topics on the same posts (i.e. posts that
-// have all of the selected topics present).
-func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint) ([]Topic, error) {
+// loadTopicsPage loads a page of topics ordered by total sum (net votes). If
+// scopePostID is non-nil, results are restricted to topics tagged on the
+// sub-posts of that post (rather than all posts). If selectedTopicIDs is
+// non-empty, the selected topics are excluded and the results are restricted
+// to topics that are co-present with the selected topics on the same posts
+// (within scopePostID's sub-posts, if scoped).
+func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePostID *uint) ([]Topic, error) {
 
 	var topics []Topic
 	pageSize := MaxTopicPageSize
@@ -91,11 +92,27 @@ func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs 
 	var args []interface{}
 	var query string
 
+	var scopeArg string
+	if scopePostID != nil {
+		scopeArg = db.Arg(&args, *scopePostID)
+	}
+
 	if len(selectedTopicIDs) == 0 {
+		topicJoin := "LEFT JOIN post_topic_sum pts ON pts.topic_id = t.id"
+		scopeJoin := ""
+		scopeWhere := ""
+		if scopePostID != nil {
+			// only topics actually tagged on a sub-post are of interest, so use an inner join
+			topicJoin = "JOIN post_topic_sum pts ON pts.topic_id = t.id"
+			scopeJoin = "JOIN post p ON p.id = pts.post_id"
+			scopeWhere = "WHERE p.parent_post_id = " + scopeArg
+		}
 		query = `
 			SELECT t.id, t.name, COALESCE(SUM(pts.sum), 0) AS total_sum
 			FROM topic t
-			LEFT JOIN post_topic_sum pts ON pts.topic_id = t.id
+			` + topicJoin + `
+			` + scopeJoin + `
+			` + scopeWhere + `
 			GROUP BY t.id, t.name
 			ORDER BY COALESCE(SUM(pts.sum), 0) DESC, t.name ASC
 			LIMIT ` + db.Arg(&args, pageSize) + ` OFFSET ` + db.Arg(&args, offset)
@@ -103,18 +120,34 @@ func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs 
 		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
 		excludeClause := db.In("t.id", &args, selectedTopicIDs)
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
+
+		totalsScopeJoin := ""
+		totalsScopeWhere := ""
+		selfScopeJoin := ""
+		selfScopeWhere := ""
+		if scopePostID != nil {
+			totalsScopeJoin = "JOIN post p ON p.id = pts.post_id"
+			totalsScopeWhere = "WHERE p.parent_post_id = " + scopeArg
+			selfScopeJoin = "JOIN post p_self ON p_self.id = pts_self.post_id"
+			selfScopeWhere = "AND p_self.parent_post_id = " + scopeArg
+		}
+
 		query = `
 			SELECT t.id, t.name, COALESCE(topic_totals.total_sum, 0)
 			FROM topic t
-			LEFT JOIN (
-				SELECT topic_id, SUM(sum) AS total_sum
-				FROM post_topic_sum
-				GROUP BY topic_id
+			JOIN (
+				SELECT pts.topic_id, SUM(pts.sum) AS total_sum
+				FROM post_topic_sum pts
+				` + totalsScopeJoin + `
+				` + totalsScopeWhere + `
+				GROUP BY pts.topic_id
 			) topic_totals ON topic_totals.topic_id = t.id
 			WHERE NOT (` + excludeClause + `)
 				AND EXISTS (
 					SELECT 1 FROM post_topic_sum pts_self
+					` + selfScopeJoin + `
 					WHERE pts_self.topic_id = t.id
+					` + selfScopeWhere + `
 					AND pts_self.post_id IN (
 						SELECT post_id FROM post_topic_sum
 						WHERE ` + selectedClause + `
@@ -128,7 +161,7 @@ func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs 
 
 	rows, err := conn.Query(query, args...)
 	if err != nil {
-		return topics, fmt.Errorf("loading top topics: %w", err)
+		return topics, fmt.Errorf("loading topics: %w", err)
 	}
 	defer rows.Close()
 
@@ -145,6 +178,25 @@ func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs 
 	}
 
 	return topics, nil
+}
+
+// LoadTopTopics loads a page of the site's top topics, ordered by total sum
+// (net votes) across all posts. If selectedTopicIDs is non-empty, the
+// selected topics are excluded and the results are restricted to topics that
+// are co-present with the selected topics on the same posts (i.e. posts that
+// have all of the selected topics present).
+func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint) ([]Topic, error) {
+	return loadTopicsPage(conn, offset, selectedTopicIDs, nil)
+}
+
+// LoadSpaceTopics loads a page of the top topics tagged on the sub-posts of
+// parentPostID, ordered by total sum (net votes) across those sub-posts. If
+// selectedTopicIDs is non-empty, the selected topics are excluded and the
+// results are restricted to topics that are co-present with the selected
+// topics on the same sub-posts (i.e. sub-posts that have all of the selected
+// topics present).
+func LoadSpaceTopics(conn *sql.DB, parentPostID uint, offset uint, selectedTopicIDs []uint) ([]Topic, error) {
+	return loadTopicsPage(conn, offset, selectedTopicIDs, &parentPostID)
 }
 
 func SetPostTopicVote(conn *sql.DB, postID uint, topicID uint, userID uint, voteType string) (*Topic, error) {
