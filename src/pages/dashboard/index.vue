@@ -89,6 +89,7 @@
 					:key="post.id"
 					:post="post"
 					clickable
+					:expandable="false"
 					size="medium"
 					@click="openPost(post.id)"
 				/>

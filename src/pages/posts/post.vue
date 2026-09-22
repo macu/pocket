@@ -283,5 +283,11 @@ export default {
 		background-color: $topic-bg-color;
 		color: $topic-fg-color;
 	}
+
+	.post-card {
+		border-top: thin solid white;
+		border-bottom: thin solid white;
+		padding: 10px 0;
+	}
 }
 </style>

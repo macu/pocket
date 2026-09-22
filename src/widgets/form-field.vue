@@ -42,11 +42,11 @@ export default {
 @import '@/styles/vars.scss';
 
 .form-layout-form-field {
-	// >.title-row {
-	// 	font-weight: bold;
-	// }
+	>.title-row, >.tip {
+		padding: 0 10px;
+	}
 	>.form-field-body {
-		padding: 12px 0;
+		padding: 12px 10px;
 		border-top: thin solid white;
 		border-radius: $border-radius;
 		>.form-value {

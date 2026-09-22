@@ -1,5 +1,12 @@
 <template>
 <form-layout class="add-post-page page-width-md" title="Add post">
+
+	<form-field v-if="parentPost" title="Replying to">
+		<div class="parent-post-preview">
+			<post-widget :post="parentPost" />
+		</div>
+	</form-field>
+
 	<form-field title="Post text" required>
 		<el-input v-model="text" type="textarea" size="large" :maxlength="$const.postMaxLength"
 			autocapitalize="sentences" :rows="6"/>
@@ -9,16 +16,11 @@
 		<topics-input v-model="topics"/>
 	</form-field>
 
-	<form-field v-if="parentPost" title="Replying to">
-		<div class="parent-post-preview">
-			<post-widget :post="parentPost" />
-		</div>
-	</form-field>
-
 	<form-actions>
 		<el-button @click="submit()" type="primary" :disabled="submitDisabled">Post</el-button>
 		<el-button @click="cancel()">Cancel</el-button>
 	</form-actions>
+
 </form-layout>
 </template>
 
@@ -101,7 +103,6 @@ export default {
 	color: $app-fg-color;
 
 	.parent-post-preview {
-		padding: 10px;
 		border-radius: $border-radius;
 		background: rgba(255, 255, 255, 0.04);
 		white-space: pre-wrap;

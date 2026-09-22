@@ -12,7 +12,7 @@
 			Load More
 		</el-button>
 	</div>
-	<div class="top-post-text" :class="{expanded}" @click.stop="expanded = !expanded">{{post.postText}}</div>
+	<div class="top-post-text" :class="{expanded}" @click.stop="toggleExpanded($event)">{{post.postText}}</div>
 </div>
 </template>
 
@@ -29,6 +29,10 @@ export default {
 		clickable: {
 			type: Boolean,
 			default: false,
+		},
+		expandable: {
+			type: Boolean,
+			default: true,
 		},
 		defaultExpanded: {
 			type: Boolean,
@@ -83,6 +87,19 @@ export default {
 					this.post.totalTopicScore = response.totalTopicScore;
 				}
 			});
+		},
+		toggleExpanded(event) {
+			if (!this.expandable) {
+				if (this.clickable) {
+					this.$emit('click', event);
+				}
+				return;
+			}
+			if (!this.expanded) {
+				this.expanded = true;
+			} else {
+				this.expanded = false;
+			}
 		},
 	},
 };

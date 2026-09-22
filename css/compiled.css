@@ -393,7 +393,6 @@ div.center {
   color: white;
 }
 .add-post-page .parent-post-preview {
-  padding: 10px;
   border-radius: 5px;
   background: rgba(255, 255, 255, 0.04);
   white-space: pre-wrap;
@@ -408,6 +407,11 @@ div.center {
 .post-page .add-topic-form {
   background-color: rgb(86, 86, 211);
   color: white;
+}
+.post-page .post-card {
+  border-top: thin solid white;
+  border-bottom: thin solid white;
+  padding: 10px 0;
 }
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/loading-message.vue?vue&type=style&index=0&id=68380766&lang=scss ***!
@@ -436,8 +440,11 @@ div.center {
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-field.vue?vue&type=style&index=0&id=09e9792a&lang=scss ***!
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-layout-form-field > .title-row, .form-layout-form-field > .tip {
+  padding: 0 10px;
+}
 .form-layout-form-field > .form-field-body {
-  padding: 12px 0;
+  padding: 12px 10px;
   border-top: thin solid white;
   border-radius: 5px;
 }
