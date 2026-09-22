@@ -6,7 +6,6 @@
 		:icon="checked ? 'check_box' : 'check_box_outline_blank'"
 		:fill="checked"/>
 	<span class="topic-name"><slot/></span>
-	<span v-if="showCount" class="topic-count">{{count}}</span>
 	<span v-if="votable && authenticated" class="topic-votes" @click.stop>
 		<material-icon
 			v-if="!userVote || userVote === 'upvote'"
@@ -21,6 +20,7 @@
 			:class="{active: userVote === 'downvote'}"
 			@click="$emit('vote', 'downvote')"/>
 	</span>
+	<span v-if="showCount" class="topic-count">{{formattedCount}}</span>
 </div>
 </template>
 
@@ -43,6 +43,10 @@ export default {
 		count: {
 			type: Number,
 			default: null,
+		},
+		countOutput: {
+			type: String,
+			default: '%d',
 		},
 		negative: {
 			type: Boolean,
@@ -74,6 +78,9 @@ export default {
 		},
 		showCount() {
 			return this.count !== null && this.count !== undefined;
+		},
+		formattedCount() {
+			return this.countOutput.replace('%d', this.count);
 		},
 		authenticated() {
 			return this.$store.getters.authenticated;

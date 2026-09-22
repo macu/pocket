@@ -75,7 +75,7 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 			JOIN (
 				SELECT post_id, SUM(CASE WHEN sum > 0 THEN sum ELSE 0 END) AS selected_sum
 				FROM post_topic_sum
-				WHERE ` + selectedClause + `
+				WHERE ` + selectedClause + ` AND sum >= 0
 				GROUP BY post_id
 				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 			) topic_scores ON topic_scores.post_id = p.id
@@ -154,7 +154,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 			JOIN (
 				SELECT post_id, SUM(CASE WHEN sum > 0 THEN sum ELSE 0 END) AS selected_sum
 				FROM post_topic_sum
-				WHERE ` + selectedClause + `
+				WHERE ` + selectedClause + ` AND sum >= 0
 				GROUP BY post_id
 				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 			) topic_scores ON topic_scores.post_id = p.id

@@ -41,7 +41,8 @@
 					v-for="topic in selectedTopics"
 					:key="'selected-' + topic.id"
 					size="medium"
-					:count="topic.sum"
+					:count="topic.postCount"
+					count-output="%d posts"
 					checkable
 					checked
 					@check="uncheckTopic(topic)">
@@ -51,23 +52,24 @@
 					v-for="topic in topTopics"
 					:key="topic.id"
 					size="medium"
-					:count="topic.sum"
+					:count="topic.postCount"
+					count-output="%d posts"
 					checkable
 					@check="checkTopic(topic)">
 					{{topic.name}}
 				</topic>
 				<el-button v-if="showLoadMoreTopics"
 					@click="loadMoreTopics()"
-					type="primary" size="small">
+					type="primary" text size="small">
 					Load More
 				</el-button>
 				<el-button v-if="selectedTopics.length > 0"
 					@click="clearSelectedTopics()"
-					type="warning" size="small">
+					type="warning" text size="small">
 					Clear selected
 				</el-button>
 			</div>
-			<p v-else>No topics available.</p>
+			<p v-else><em>No topics available.</em></p>
 
 			<h3>Top Sub-Posts</h3>
 
@@ -77,7 +79,7 @@
 					Load More
 				</el-button>
 			</div>
-			<p v-else>No sub-posts available.</p>
+			<p v-else><em>No sub-posts available.</em></p>
 
 		</template>
 

@@ -12,10 +12,11 @@ import (
 )
 
 type Topic struct {
-	ID       uint    `json:"id"`
-	Name     string  `json:"name"`
-	Sum      int     `json:"sum"`
-	UserVote *string `json:"userVote"`
+	ID        uint    `json:"id"`
+	Name      string  `json:"name"`
+	Sum       int     `json:"sum"`
+	PostCount int     `json:"postCount"`
+	UserVote  *string `json:"userVote"`
 }
 
 func NormalizeTopicName(name string) string {
@@ -78,12 +79,15 @@ func CheckTopicExists(conn db.DBConn, name string) (bool, error) {
 	return exists, nil
 }
 
-// loadTopicsPage loads a page of topics ordered by total sum (net votes). If
-// scopePostID is non-nil, results are restricted to topics tagged on the
+// loadTopicsPage loads a page of topics ordered by total sum (net votes),
+// along with each topic's post count (the number of posts where the topic
+// doesn't have a negative individual sum, i.e. isn't net-downvoted there).
+// If scopePostID is non-nil, results are restricted to topics tagged on the
 // sub-posts of that post (rather than all posts). If selectedTopicIDs is
 // non-empty, the selected topics are excluded and the results are restricted
 // to topics that are co-present with the selected topics on the same posts
-// (within scopePostID's sub-posts, if scoped).
+// (within scopePostID's sub-posts, if
+// scoped).
 func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePostID *uint) ([]Topic, error) {
 
 	var topics []Topic
@@ -108,12 +112,14 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 			scopeWhere = "WHERE p.parent_post_id = " + scopeArg
 		}
 		query = `
-			SELECT t.id, t.name, COALESCE(SUM(pts.sum), 0) AS total_sum
+			SELECT t.id, t.name, COALESCE(SUM(pts.sum), 0) AS total_sum,
+				COUNT(DISTINCT CASE WHEN pts.sum >= 0 THEN pts.post_id END) AS post_count
 			FROM topic t
 			` + topicJoin + `
 			` + scopeJoin + `
 			` + scopeWhere + `
 			GROUP BY t.id, t.name
+			HAVING COUNT(DISTINCT CASE WHEN pts.sum >= 0 THEN pts.post_id END) > 0
 			ORDER BY COALESCE(SUM(pts.sum), 0) DESC, t.name ASC
 			LIMIT ` + db.Arg(&args, pageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	} else {
@@ -133,10 +139,11 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 		}
 
 		query = `
-			SELECT t.id, t.name, COALESCE(topic_totals.total_sum, 0)
+			SELECT t.id, t.name, COALESCE(topic_totals.total_sum, 0), COALESCE(topic_totals.post_count, 0)
 			FROM topic t
 			JOIN (
-				SELECT pts.topic_id, SUM(pts.sum) AS total_sum
+				SELECT pts.topic_id, SUM(pts.sum) AS total_sum,
+					COUNT(DISTINCT CASE WHEN pts.sum >= 0 THEN pts.post_id END) AS post_count
 				FROM post_topic_sum pts
 				` + totalsScopeJoin + `
 				` + totalsScopeWhere + `
@@ -150,7 +157,7 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 					` + selfScopeWhere + `
 					AND pts_self.post_id IN (
 						SELECT post_id FROM post_topic_sum
-						WHERE ` + selectedClause + `
+						WHERE ` + selectedClause + ` AND sum >= 0
 						GROUP BY post_id
 						HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 					)
@@ -167,7 +174,7 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 
 	for rows.Next() {
 		var topic Topic
-		if err := rows.Scan(&topic.ID, &topic.Name, &topic.Sum); err != nil {
+		if err := rows.Scan(&topic.ID, &topic.Name, &topic.Sum, &topic.PostCount); err != nil {
 			return nil, fmt.Errorf("scanning topic row: %w", err)
 		}
 		topics = append(topics, topic)
