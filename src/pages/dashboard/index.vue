@@ -45,7 +45,7 @@
 
 			<h2>Top Topics</h2>
 
-			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row-lg">
+			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row">
 				<topic
 					v-for="topic in selectedTopics"
 					:key="'selected-' + topic.id"

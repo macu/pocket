@@ -152,7 +152,7 @@ div.center {
 }
 
 .flex-row {
-  row-gap: 5px;
+  row-gap: 10px;
   column-gap: 10px;
 }
 
