@@ -196,12 +196,14 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 				` + totalsScopeJoin + `
 				` + totalsScopeWhere + `
 				GROUP BY pts.topic_id
+				HAVING COUNT(DISTINCT CASE WHEN pts.sum >= 0 THEN pts.post_id END) > 0
 			) topic_totals ON topic_totals.topic_id = t.id
 			WHERE NOT (` + excludeClause + `)
 				AND EXISTS (
 					SELECT 1 FROM post_topic_sum pts_self
 					` + selfScopeJoin + `
 					WHERE pts_self.topic_id = t.id
+					AND pts_self.sum >= 0
 					` + selfScopeWhere + `
 					AND pts_self.post_id IN (
 						SELECT post_id FROM post_topic_sum
