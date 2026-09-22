@@ -22,7 +22,7 @@
 			<form-layout class="add-topic-form" title="Add topic">
 
 				<form-field title="Topic name">
-					<el-input v-model="newTopicName" type="text" maxlength="50"
+					<el-input v-model="newTopicName" type="text" :maxlength="$const.maxTopicLength"
 						autocapitalize="words"
 						@keyup.enter.native="submitAddTopic()"
 					/>

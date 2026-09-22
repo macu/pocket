@@ -16,8 +16,7 @@
 
 		<form-layout v-if="showAddTopicForm" title="Add topics" class="add-topic-form">
 			<form-field title="Topic names">
-				<el-select ref="addTopicInput" v-model="newTopics" multiple clearable filterable allow-create default-first-option :reserve-keyword="false"
-					size="large" style="width: 100%"/>
+				<topics-input ref="addTopicInput" v-model="newTopics"/>
 			</form-field>
 			<form-actions>
 				<el-button @click="addTopic()" type="primary" :disabled="addTopicDisabled">Add topics</el-button>
@@ -62,6 +61,7 @@
 
 <script>
 import PostWidget from '@/widgets/post.vue';
+import TopicsInput from '@/widgets/topics-input.vue';
 
 import {
 	ajaxGet,
@@ -71,6 +71,7 @@ import {
 export default {
 	components: {
 		PostWidget,
+		TopicsInput,
 	},
 	data() {
 		return {

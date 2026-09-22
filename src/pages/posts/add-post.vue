@@ -6,8 +6,7 @@
 	</form-field>
 
 	<form-field title="Topics">
-		<el-select v-model="topics" multiple clearable filterable allow-create default-first-option :reserve-keyword="false"
-			size="large" style="width: 100%"/>
+		<topics-input v-model="topics"/>
 	</form-field>
 
 	<form-field v-if="parentPost" title="Replying to">
@@ -25,6 +24,7 @@
 
 <script>
 import PostWidget from '@/widgets/post.vue';
+import TopicsInput from '@/widgets/topics-input.vue';
 
 import {
 	ajaxGet,
@@ -34,6 +34,7 @@ import {
 export default {
 	components: {
 		PostWidget,
+		TopicsInput,
 	},
 	data() {
 		return {
