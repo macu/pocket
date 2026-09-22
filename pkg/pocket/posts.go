@@ -37,9 +37,11 @@ func ValidatePostText(text string) error {
 }
 
 // LoadTopPosts loads a page of the site's top posts, ordered by total topic
-// score (sum of net votes across all topics). If selectedTopicIDs is
-// non-empty, results are restricted to posts that have all of the selected
-// topics present, ordered by the sum of net votes across just those topics.
+// score (sum of net votes across topics with a positive individual sum;
+// downvoted topics are excluded so they can't drag a post's score down). If
+// selectedTopicIDs is non-empty, results are restricted to posts that have
+// all of the selected topics present, ordered by the same positive-sum-only
+// total across just those topics.
 func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint) ([]Post, error) {
 
 	// offset is uint, so it cannot be negative
@@ -55,7 +57,7 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 	if len(selectedTopicIDs) == 0 {
 		query = `
 			SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
-				COALESCE(SUM(CASE WHEN pts.sum IS NULL THEN 0 ELSE pts.sum END), 0) AS total_topic_score
+				COALESCE(SUM(CASE WHEN pts.sum > 0 THEN pts.sum ELSE 0 END), 0) AS total_topic_score
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
@@ -71,7 +73,7 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			JOIN (
-				SELECT post_id, SUM(sum) AS selected_sum
+				SELECT post_id, SUM(CASE WHEN sum > 0 THEN sum ELSE 0 END) AS selected_sum
 				FROM post_topic_sum
 				WHERE ` + selectedClause + `
 				GROUP BY post_id
@@ -113,10 +115,11 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 }
 
 // LoadTopSubPosts loads a page of the top sub-posts of parentPostID, ordered
-// by total topic score (sum of net votes across all topics). If
-// selectedTopicIDs is non-empty, results are restricted to sub-posts that
-// have all of the selected topics present, ordered by the sum of net votes
-// across just those topics.
+// by total topic score (sum of net votes across topics with a positive
+// individual sum; downvoted topics are excluded so they can't drag a post's
+// score down). If selectedTopicIDs is non-empty, results are restricted to
+// sub-posts that have all of the selected topics present, ordered by the
+// same positive-sum-only total across just those topics.
 func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint, selectedTopicIDs []uint) ([]Post, error) {
 
 	var userID *uint
@@ -132,7 +135,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 	if len(selectedTopicIDs) == 0 {
 		query = `
 			SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
-				COALESCE(SUM(CASE WHEN pts.sum IS NULL THEN 0 ELSE pts.sum END), 0) AS total_topic_score
+				COALESCE(SUM(CASE WHEN pts.sum > 0 THEN pts.sum ELSE 0 END), 0) AS total_topic_score
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
@@ -149,7 +152,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			JOIN (
-				SELECT post_id, SUM(sum) AS selected_sum
+				SELECT post_id, SUM(CASE WHEN sum > 0 THEN sum ELSE 0 END) AS selected_sum
 				FROM post_topic_sum
 				WHERE ` + selectedClause + `
 				GROUP BY post_id
@@ -231,10 +234,12 @@ func LoadPostTopics(db *sql.DB, postID uint, userID *uint, offset uint) ([]Topic
 	return topics, nil
 }
 
+// LoadPostTotalTopicScore sums the post's topics that have a positive
+// individual sum, so a downvoted topic can't drag the post's score down.
 func LoadPostTotalTopicScore(conn db.DBConn, postID uint) (int, error) {
 	var total int
 	err := conn.QueryRow(`
-		SELECT COALESCE(SUM(sum), 0) FROM post_topic_sum WHERE post_id = $1
+		SELECT COALESCE(SUM(CASE WHEN sum > 0 THEN sum ELSE 0 END), 0) FROM post_topic_sum WHERE post_id = $1
 	`, postID).Scan(&total)
 	if err != nil {
 		return 0, fmt.Errorf("loading total topic score for post %d: %w", postID, err)

@@ -69,7 +69,7 @@
 
 			<h3>Top Sub-Posts</h3>
 
-			<div v-if="topSubPosts.length" class="top-sub-posts">
+			<div v-if="topSubPosts.length" class="top-sub-posts flex-column-md">
 				<post-widget v-for="subPost in topSubPosts" :key="subPost.id" :post="subPost" clickable size="medium" @click="openPost(subPost.id)" />
 				<el-button v-if="showLoadMoreSubPosts" @click="loadMoreSubPosts()" type="primary">
 					Load More

@@ -23,7 +23,7 @@ export default {
 			return {
 				large: this.large,
 				fill: !!this.fill,
-			}
+			};
 		},
 	},
 };
@@ -37,7 +37,11 @@ export default {
 		font-size: 48px;
 	}
 	&.fill {
-		font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+		font-variation-settings:
+			'FILL' 1,
+			'wght' 400,
+			'GRAD' 0,
+			'opsz' 48;
 	}
 }
 </style>

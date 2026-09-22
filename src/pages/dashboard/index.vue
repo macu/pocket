@@ -67,10 +67,14 @@
 				>
 					{{topic.name}}
 				</topic>
-				<el-button v-if="showLoadMoreTopics" @click="loadMoreTopics()" type="primary">
+				<el-button v-if="showLoadMoreTopics"
+					@click="loadMoreTopics()"
+					type="primary" size="small">
 					Load More
 				</el-button>
-				<el-button v-if="selectedTopics.length > 0" @click="clearSelectedTopics()">
+				<el-button v-if="selectedTopics.length > 0"
+					@click="clearSelectedTopics()"
+					size="small">
 					Clear selected
 				</el-button>
 			</div>
@@ -89,7 +93,9 @@
 					@click="openPost(post.id)"
 				/>
 
-				<el-button v-if="showLoadMorePosts" @click="loadMorePosts()" type="primary">
+				<el-button v-if="showLoadMorePosts"
+					@click="loadMorePosts()"
+					type="primary" size="small">
 					Load More
 				</el-button>
 			</div>
