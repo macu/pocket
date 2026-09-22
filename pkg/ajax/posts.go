@@ -109,6 +109,35 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 
 }
 
+func AjaxUpdatePost(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	id, err := types.AtoUint(r.FormValue("id"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	text := strings.TrimSpace(r.FormValue("text"))
+	if err := pocket.ValidatePostText(text); err != nil {
+		return ajax.AjaxErrorPayload{ErrorCode: "invalid-post-text"}, http.StatusBadRequest
+	}
+
+	post, err := pocket.UpdatePostText(db, id, auth.UserID, text)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound
+		}
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return map[string]any{
+		"post": post,
+	}, http.StatusOK
+
+}
+
 func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (any, int) {

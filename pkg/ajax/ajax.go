@@ -39,6 +39,7 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 
 		"/ajax/topic":      AjaxPostTopic,
 		"/ajax/post":       AjaxCreatePost,
+		"/ajax/post/edit":  AjaxUpdatePost,
 		"/ajax/post/topic": AjaxAddPostTopic,
 
 		"/ajax/post/topic/vote": AjaxVotePostTopic,

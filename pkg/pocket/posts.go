@@ -325,6 +325,35 @@ func CreatePost(conn *sql.DB, parentPostID *uint, authorID uint, text string, to
 	return LoadPost(conn, postID, &authorID)
 }
 
+// UpdatePostText updates the text of the post with postID, but only if
+// authorID matches the post's author. Returns sql.ErrNoRows if the post
+// doesn't exist or isn't owned by authorID.
+func UpdatePostText(conn *sql.DB, postID uint, authorID uint, text string) (*Post, error) {
+
+	text = NormalizePostText(text)
+
+	if err := ValidatePostText(text); err != nil {
+		return nil, fmt.Errorf("validating post text: %w", err)
+	}
+
+	result, err := conn.Exec(`
+		UPDATE post SET post_text = $1 WHERE id = $2 AND author = $3
+	`, text, postID, authorID)
+	if err != nil {
+		return nil, fmt.Errorf("updating post %d: %w", postID, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("checking rows affected for post %d: %w", postID, err)
+	}
+	if rowsAffected == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	return LoadPost(conn, postID, &authorID)
+}
+
 func EnsureTopicOnPost(conn db.DBConn, postID uint, topicName string, createdBy uint) (Topic, error) {
 
 	topicName = NormalizeTopicName(topicName)

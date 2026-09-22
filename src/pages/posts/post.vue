@@ -26,6 +26,9 @@
 
 		<template v-else>
 			<horizontal-controls v-if="post && authenticated">
+				<el-button v-if="isOwnPost" @click="goToEditPost()" type="primary">
+					Edit
+				</el-button>
 				<el-button @click="toggleAddTopicForm()" type="primary">
 					Add topics
 				</el-button>
@@ -120,6 +123,9 @@ export default {
 	computed: {
 		authenticated() {
 			return this.$store.getters.authenticated;
+		},
+		isOwnPost() {
+			return !!this.post && this.post.authorId === this.$store.getters.currentUserId;
 		},
 		addTopicDisabled() {
 			return this.newTopics.length === 0;
@@ -268,6 +274,9 @@ export default {
 				name: 'add-post',
 				query: {parentId: this.post.id},
 			});
+		},
+		goToEditPost() {
+			this.$router.push({name: 'edit-post', params: {id: this.post.id}});
 		},
 	},
 };

@@ -10,6 +10,7 @@ import LoginPage from '@/pages/user-account/login.vue';
 import SignupPage from '@/pages/user-account/signup.vue';
 import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 import AddPostPage from '@/pages/posts/add-post.vue';
+import EditPostPage from '@/pages/posts/edit-post.vue';
 import PostPage from '@/pages/posts/post.vue';
 
 const router = createRouter({
@@ -44,6 +45,11 @@ const router = createRouter({
 			path: '/post/:id',
 			name: 'post',
 			component: PostPage,
+		},
+		{
+			path: '/post/:id/edit',
+			name: 'edit-post',
+			component: EditPostPage,
 		},
 	],
 });
