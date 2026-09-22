@@ -1,6 +1,7 @@
 -- Clean up previous instance
 
 DROP INDEX IF EXISTS post_text_fulltext_idx;
+DROP INDEX IF EXISTS topic_name_trgm_idx;
 -- DROP TABLE IF EXISTS topic_score CASCADE;
 -- DROP TABLE IF EXISTS post_topic_score CASCADE;
 -- DROP TABLE IF EXISTS post_topic_pin CASCADE;
@@ -82,12 +83,16 @@ CREATE COLLATION case_insensitive (
 
 --------------------------------------------------
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE TABLE topic (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(50) NOT NULL,
 	created_by INTEGER NOT NULL REFERENCES user_account (id),
 	created_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE INDEX topic_name_trgm_idx ON topic USING GIN (name gin_trgm_ops);
 
 CREATE TABLE post (
 	id SERIAL PRIMARY KEY,

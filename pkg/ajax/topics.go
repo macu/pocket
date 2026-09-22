@@ -116,3 +116,21 @@ func AjaxLoadTopicsPage(db *sql.DB, auth *ajax.Auth,
 	}, http.StatusOK
 
 }
+
+// AjaxSearchTopics searches for topics whose name matches the given query,
+// ranked by their number of non-downvoted posts.
+func AjaxSearchTopics(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	topics, err := pocket.SearchTopics(db, r.FormValue("query"))
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return map[string]any{
+		"topics": topics,
+	}, http.StatusOK
+
+}

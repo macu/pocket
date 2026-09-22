@@ -79,6 +79,54 @@ func CheckTopicExists(conn db.DBConn, name string) (bool, error) {
 	return exists, nil
 }
 
+// escapeLikePattern escapes the LIKE/ILIKE wildcard characters in s so it can
+// be safely embedded in a '%...%' search pattern.
+func escapeLikePattern(s string) string {
+	replacer := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+	return replacer.Replace(s)
+}
+
+// SearchTopics finds up to MaxTopicSearchResults topics whose name contains
+// query (case-insensitive), ranked by the number of posts they're on with a
+// non-negative sum (i.e. not net-downvoted there), then by name.
+func SearchTopics(conn *sql.DB, query string) ([]Topic, error) {
+
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil, nil
+	}
+
+	rows, err := conn.Query(`
+		SELECT t.id, t.name, COALESCE(SUM(pts.sum), 0) AS total_sum,
+			COUNT(DISTINCT CASE WHEN pts.sum >= 0 THEN pts.post_id END) AS post_count
+		FROM topic t
+		LEFT JOIN post_topic_sum pts ON pts.topic_id = t.id
+		WHERE t.name ILIKE '%' || $1 || '%' ESCAPE '\'
+		GROUP BY t.id, t.name
+		ORDER BY post_count DESC, t.name ASC
+		LIMIT $2
+	`, escapeLikePattern(query), MaxTopicSearchResults)
+	if err != nil {
+		return nil, fmt.Errorf("searching topics: %w", err)
+	}
+	defer rows.Close()
+
+	topics := make([]Topic, 0)
+	for rows.Next() {
+		var topic Topic
+		if err := rows.Scan(&topic.ID, &topic.Name, &topic.Sum, &topic.PostCount); err != nil {
+			return nil, fmt.Errorf("scanning topic row: %w", err)
+		}
+		topics = append(topics, topic)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating topic rows: %w", err)
+	}
+
+	return topics, nil
+}
+
 // loadTopicsPage loads a page of topics ordered by total sum (net votes),
 // along with each topic's post count (the number of posts where the topic
 // doesn't have a negative individual sum, i.e. isn't net-downvoted there).

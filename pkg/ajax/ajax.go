@@ -23,6 +23,8 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 
 		"/ajax/topics/page": AjaxLoadTopicsPage,
 		"/ajax/posts/page":  AjaxLoadPostsPage,
+
+		"/ajax/topics/search": AjaxSearchTopics,
 	},
 	http.MethodPost: {
 		"/ajax/login":         auth.AjaxLogin,

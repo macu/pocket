@@ -342,6 +342,30 @@ div.center {
   \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .topics-input .topics-input-row {
   align-items: center;
+  position: relative;
+}
+.topics-input .topics-input-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  min-width: 200px;
+  max-height: 240px;
+  overflow-y: auto;
+  border-radius: 5px;
+  background-color: rgb(86, 86, 211);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.topics-input .topics-input-suggestions li {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.topics-input .topics-input-suggestions li:hover, .topics-input .topics-input-suggestions li.active {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 .topics-input .topics-input-tags {
   flex-wrap: wrap;
