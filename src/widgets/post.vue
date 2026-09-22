@@ -43,6 +43,7 @@ export default {
 	data() {
 		return {
 			expanded: this.defaultExpanded,
+			hasMoreTopics: true,
 		};
 	},
 	computed: {
@@ -50,7 +51,8 @@ export default {
 			return 'size-' + this.size;
 		},
 		showLoadMoreTopics() {
-			return this.post.topics &&
+			return this.hasMoreTopics &&
+				this.post.topics &&
 				this.post.topics.length > 0 &&
 				this.post.topics.length %
 					this.$const.maxTopicPageSize === 0;
@@ -63,7 +65,9 @@ export default {
 				postId: this.post.id,
 				offset: this.post.topics.length,
 			}).then(response => {
-				this.post.topics.push(...(response.topics || []));
+				const topics = response.topics || [];
+				this.post.topics.push(...topics);
+				this.hasMoreTopics = topics.length > 0;
 			});
 		},
 		vote(topic, voteType) {

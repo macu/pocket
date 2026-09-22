@@ -78,6 +78,7 @@ export default {
 			post: null,
 			parentPost: null,
 			topTopics: [],
+			hasMoreTopics: true,
 			topSubPosts: [],
 			loading: true,
 			newTopics: [],
@@ -94,7 +95,8 @@ export default {
 			return !this.subPostText.trim();
 		},
 		showLoadMoreTopics() {
-			return this.topTopics.length > 0 &&
+			return this.hasMoreTopics &&
+				this.topTopics.length > 0 &&
 				this.topTopics.length % this.$const.maxTopicPageSize === 0;
 		},
 		postId() {
@@ -119,6 +121,7 @@ export default {
 				this.post = response.post || null;
 				this.parentPost = response.parentPost || null;
 				this.topTopics = response.topTopics || [];
+				this.hasMoreTopics = true;
 				this.topSubPosts = response.topSubPosts || [];
 			}).finally(() => {
 				this.loading = false;
@@ -144,7 +147,9 @@ export default {
 				postId: this.post.id,
 				offset: this.topTopics.length,
 			}).then(response => {
-				this.topTopics.push(...(response.topics || []));
+				const topics = response.topics || [];
+				this.topTopics.push(...topics);
+				this.hasMoreTopics = topics.length > 0;
 			});
 		},
 
