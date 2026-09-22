@@ -224,7 +224,11 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 	switch r.FormValue("context") {
 
 	case "dashboard":
-		posts, err = pocket.LoadTopPosts(db, auth, offset)
+		selectedTopicIDs, err := types.AtoUintList(r.FormValue("topicIds"))
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+		posts, err = pocket.LoadTopPosts(db, auth, offset, selectedTopicIDs)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError

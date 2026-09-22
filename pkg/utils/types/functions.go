@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -65,6 +66,27 @@ func AtoUintNilIfEmpty(s string) (*uint, error) {
 	}
 	var u = uint(r)
 	return &u, nil
+}
+
+// AtoUintList parses a comma-separated list of base 10 uints, ignoring empty items.
+func AtoUintList(s string) ([]uint, error) {
+	if strings.TrimSpace(s) == "" {
+		return nil, nil
+	}
+	parts := strings.Split(s, ",")
+	items := make([]uint, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		u, err := AtoUint(part)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, u)
+	}
+	return items, nil
 }
 
 // AtoPointerNilIfEmpty returns a pointer to the given string, or nil if given an empty string.

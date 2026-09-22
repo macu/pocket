@@ -45,12 +45,33 @@
 
 			<h2>Top Topics</h2>
 
-			<div v-if="topTopics.length > 0" class="top-topics flex-row-lg">
-				<topic v-for="topic in topTopics" :key="topic.id" size="large" :count="topic.sum">
+			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row-lg">
+				<topic
+					v-for="topic in selectedTopics"
+					:key="'selected-' + topic.id"
+					size="large"
+					:count="topic.sum"
+					checkable
+					checked
+					@check="uncheckTopic(topic)"
+				>
+					{{topic.name}}
+				</topic>
+				<topic
+					v-for="topic in topTopics"
+					:key="topic.id"
+					size="large"
+					:count="topic.sum"
+					checkable
+					@check="checkTopic(topic)"
+				>
 					{{topic.name}}
 				</topic>
 				<el-button v-if="showLoadMoreTopics" @click="loadMoreTopics()" type="primary">
 					Load More
+				</el-button>
+				<el-button v-if="selectedTopics.length > 0" @click="clearSelectedTopics()">
+					Clear selected
 				</el-button>
 			</div>
 
@@ -106,6 +127,7 @@ export default {
 			hasMorePosts: true,
 			topTopics: [],
 			hasMoreTopics: true,
+			selectedTopics: [],
 
 			showingAddTopic: false,
 			newTopicName: '',
@@ -145,8 +167,12 @@ export default {
 		this.loadDashboard();
 	},
 	methods: {
+		selectedTopicIds() {
+			return this.selectedTopics.map(topic => topic.id).join(',');
+		},
 		loadDashboard() {
 			this.loading = true;
+			this.selectedTopics = [];
 			ajaxGet('/ajax/dashboard').then(response => {
 				this.topPosts = response.topPosts || [];
 				this.hasMorePosts = true;
@@ -160,6 +186,7 @@ export default {
 			ajaxGet('/ajax/topics/page', {
 				context: 'dashboard',
 				offset: this.topTopics.length,
+				topicIds: this.selectedTopicIds(),
 			}).then(response => {
 				const topics = response.topics || [];
 				this.topTopics.push(...topics);
@@ -170,9 +197,46 @@ export default {
 			ajaxGet('/ajax/posts/page', {
 				context: 'dashboard',
 				offset: this.topPosts.length,
+				topicIds: this.selectedTopicIds(),
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topPosts.push(...posts);
+				this.hasMorePosts = posts.length > 0;
+			});
+		},
+		checkTopic(topic) {
+			this.topTopics = this.topTopics.filter(t => t.id !== topic.id);
+			this.selectedTopics.push(topic);
+			this.reloadFiltered();
+		},
+		uncheckTopic(topic) {
+			this.selectedTopics = this.selectedTopics.filter(t => t.id !== topic.id);
+			this.reloadFiltered();
+		},
+		clearSelectedTopics() {
+			this.selectedTopics = [];
+			this.reloadFiltered();
+		},
+		reloadFiltered() {
+			const topicIds = this.selectedTopicIds();
+
+			ajaxGet('/ajax/topics/page', {
+				context: 'dashboard',
+				offset: 0,
+				topicIds,
+			}).then(response => {
+				const topics = response.topics || [];
+				this.topTopics = topics;
+				this.hasMoreTopics = topics.length > 0;
+			});
+
+			ajaxGet('/ajax/posts/page', {
+				context: 'dashboard',
+				offset: 0,
+				topicIds,
+			}).then(response => {
+				const posts = response.posts || [];
+				this.topPosts = posts;
 				this.hasMorePosts = posts.length > 0;
 			});
 		},

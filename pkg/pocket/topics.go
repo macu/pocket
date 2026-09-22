@@ -78,19 +78,55 @@ func CheckTopicExists(conn db.DBConn, name string) (bool, error) {
 	return exists, nil
 }
 
-func LoadTopTopics(db *sql.DB, auth *ajax.Auth, offset uint) ([]Topic, error) {
+// LoadTopTopics loads a page of the site's top topics, ordered by total sum
+// (net votes) across all posts. If selectedTopicIDs is non-empty, the
+// selected topics are excluded and the results are restricted to topics that
+// are co-present with the selected topics on the same posts (i.e. posts that
+// have all of the selected topics present).
+func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint) ([]Topic, error) {
 
 	var topics []Topic
 	pageSize := MaxTopicPageSize
 
-	rows, err := db.Query(`
-		SELECT t.id, t.name, COALESCE(SUM(pts.sum), 0) AS total_sum
-		FROM topic t
-		LEFT JOIN post_topic_sum pts ON pts.topic_id = t.id
-		GROUP BY t.id, t.name
-		ORDER BY total_sum DESC, t.name ASC
-		LIMIT $1 OFFSET $2
-	`, pageSize, offset)
+	var args []interface{}
+	var query string
+
+	if len(selectedTopicIDs) == 0 {
+		query = `
+			SELECT t.id, t.name, COALESCE(SUM(pts.sum), 0) AS total_sum
+			FROM topic t
+			LEFT JOIN post_topic_sum pts ON pts.topic_id = t.id
+			GROUP BY t.id, t.name
+			ORDER BY COALESCE(SUM(pts.sum), 0) DESC, t.name ASC
+			LIMIT ` + db.Arg(&args, pageSize) + ` OFFSET ` + db.Arg(&args, offset)
+	} else {
+		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
+		excludeClause := db.In("t.id", &args, selectedTopicIDs)
+		selectedCount := db.Arg(&args, len(selectedTopicIDs))
+		query = `
+			SELECT t.id, t.name, COALESCE(topic_totals.total_sum, 0)
+			FROM topic t
+			LEFT JOIN (
+				SELECT topic_id, SUM(sum) AS total_sum
+				FROM post_topic_sum
+				GROUP BY topic_id
+			) topic_totals ON topic_totals.topic_id = t.id
+			WHERE NOT (` + excludeClause + `)
+				AND EXISTS (
+					SELECT 1 FROM post_topic_sum pts_self
+					WHERE pts_self.topic_id = t.id
+					AND pts_self.post_id IN (
+						SELECT post_id FROM post_topic_sum
+						WHERE ` + selectedClause + `
+						GROUP BY post_id
+						HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
+					)
+				)
+			ORDER BY COALESCE(topic_totals.total_sum, 0) DESC, t.name ASC
+			LIMIT ` + db.Arg(&args, pageSize) + ` OFFSET ` + db.Arg(&args, offset)
+	}
+
+	rows, err := conn.Query(query, args...)
 	if err != nil {
 		return topics, fmt.Errorf("loading top topics: %w", err)
 	}

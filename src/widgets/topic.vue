@@ -1,5 +1,10 @@
 <template>
-<div class="topic" :class="[sizeClass, {negative: negative}]">
+<div class="topic" :class="[sizeClass, {negative: negative, checkable: checkable, checked: checked}]" @click="toggleCheck()">
+	<material-icon
+		v-if="checkable"
+		class="topic-checkbox"
+		:icon="checked ? 'check_box' : 'check_box_outline_blank'"
+		:fill="checked"/>
 	<span class="topic-name"><slot/></span>
 	<span v-if="showCount" class="topic-count">{{count}}</span>
 	<span v-if="votable" class="topic-votes" @click.stop>
@@ -26,7 +31,7 @@ export default {
 	components: {
 		MaterialIcon,
 	},
-	emits: ['vote'],
+	emits: ['vote', 'check'],
 	props: {
 		size: {
 			type: String,
@@ -44,6 +49,14 @@ export default {
 			default: false,
 		},
 		votable: {
+			type: Boolean,
+			default: false,
+		},
+		checkable: {
+			type: Boolean,
+			default: false,
+		},
+		checked: {
 			type: Boolean,
 			default: false,
 		},
@@ -70,6 +83,12 @@ export default {
 		undoVote() {
 			this.$emit('vote', null);
 		},
+		toggleCheck() {
+			if (!this.checkable) {
+				return;
+			}
+			this.$emit('check', !this.checked);
+		},
 	},
 };
 </script>
@@ -88,6 +107,19 @@ export default {
 
 	&.negative {
 		background-color: rgb(211, 86, 86);
+	}
+
+	&.checkable {
+		cursor: pointer;
+	}
+
+	&.checked {
+		outline: 2px solid white;
+		outline-offset: 1px;
+	}
+
+	.topic-checkbox {
+		font-size: 1.1em;
 	}
 
 	&.size-small {
