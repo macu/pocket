@@ -7,16 +7,16 @@
 		:fill="checked"/>
 	<span class="topic-name"><slot/></span>
 	<span v-if="showCount" class="topic-count">{{count}}</span>
-	<span v-if="votable" class="topic-votes" @click.stop>
+	<span v-if="votable && authenticated" class="topic-votes" @click.stop>
 		<material-icon
 			v-if="!userVote || userVote === 'upvote'"
-			icon="thumb_up" class="vote-btn"
+			icon="thumb_up" class="vote-btn upvote"
 			:fill="userVote === 'upvote'"
 			:class="{active: userVote === 'upvote'}"
 			@click="$emit('vote', 'upvote')"/>
 		<material-icon
 			v-if="!userVote || userVote === 'downvote'"
-			icon="thumb_down" class="vote-btn"
+			icon="thumb_down" class="vote-btn downvote"
 			:fill="userVote === 'downvote'"
 			:class="{active: userVote === 'downvote'}"
 			@click="$emit('vote', 'downvote')"/>
@@ -74,6 +74,9 @@ export default {
 		},
 		showCount() {
 			return this.count !== null && this.count !== undefined;
+		},
+		authenticated() {
+			return this.$store.getters.authenticated;
 		},
 	},
 	methods: {
@@ -169,6 +172,13 @@ export default {
 
 			&.active {
 				opacity: 1;
+				color: white;
+				padding: 4px;
+				background-color: rgb(76, 175, 80);
+
+				&.downvote {
+					background-color: rgb(211, 86, 86);
+				}
 			}
 		}
 	}

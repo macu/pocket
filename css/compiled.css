@@ -496,4 +496,10 @@ div.center {
 }
 .topic .topic-votes .vote-btn.active {
   opacity: 1;
+  color: white;
+  padding: 4px;
+  background-color: rgb(76, 175, 80);
+}
+.topic .topic-votes .vote-btn.active.downvote {
+  background-color: rgb(211, 86, 86);
 }

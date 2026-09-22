@@ -25,7 +25,7 @@
 		</form-layout>
 
 		<template v-else>
-			<horizontal-controls v-if="post">
+			<horizontal-controls v-if="post && authenticated">
 				<el-button @click="toggleAddTopicForm()" type="primary">
 					Add topics
 				</el-button>
@@ -44,8 +44,7 @@
 					:count="topic.sum"
 					checkable
 					checked
-					@check="uncheckTopic(topic)"
-				>
+					@check="uncheckTopic(topic)">
 					{{topic.name}}
 				</topic>
 				<topic
@@ -54,14 +53,17 @@
 					size="medium"
 					:count="topic.sum"
 					checkable
-					@check="checkTopic(topic)"
-				>
+					@check="checkTopic(topic)">
 					{{topic.name}}
 				</topic>
-				<el-button v-if="showLoadMoreTopics" @click="loadMoreTopics()" type="primary">
+				<el-button v-if="showLoadMoreTopics"
+					@click="loadMoreTopics()"
+					type="primary" size="small">
 					Load More
 				</el-button>
-				<el-button v-if="selectedTopics.length > 0" @click="clearSelectedTopics()">
+				<el-button v-if="selectedTopics.length > 0"
+					@click="clearSelectedTopics()"
+					type="warning" size="small">
 					Clear selected
 				</el-button>
 			</div>
@@ -114,6 +116,9 @@ export default {
 		};
 	},
 	computed: {
+		authenticated() {
+			return this.$store.getters.authenticated;
+		},
 		addTopicDisabled() {
 			return this.newTopics.length === 0;
 		},

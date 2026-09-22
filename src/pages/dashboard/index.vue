@@ -3,7 +3,7 @@
 
 	<return-to-top/>
 
-	<horizontal-controls v-if="loginLoaded">
+	<horizontal-controls v-if="authenticated">
 
 		<el-button @click="addTopic()" type="primary">
 			Add Topic
@@ -53,8 +53,7 @@
 					:count="topic.sum"
 					checkable
 					checked
-					@check="uncheckTopic(topic)"
-				>
+					@check="uncheckTopic(topic)">
 					{{topic.name}}
 				</topic>
 				<topic
@@ -63,8 +62,7 @@
 					size="large"
 					:count="topic.sum"
 					checkable
-					@check="checkTopic(topic)"
-				>
+					@check="checkTopic(topic)">
 					{{topic.name}}
 				</topic>
 				<el-button v-if="showLoadMoreTopics"
@@ -74,7 +72,7 @@
 				</el-button>
 				<el-button v-if="selectedTopics.length > 0"
 					@click="clearSelectedTopics()"
-					size="small">
+					type="warning" size="small">
 					Clear selected
 				</el-button>
 			</div>
@@ -141,8 +139,8 @@ export default {
 		};
 	},
 	computed: {
-		loginLoaded() {
-			return this.$store.getters.loginLoaded;
+		authenticated() {
+			return this.$store.getters.authenticated;
 		},
 		showLoadMoreTopics() {
 			return this.hasMoreTopics &&
