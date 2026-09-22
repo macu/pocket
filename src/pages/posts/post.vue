@@ -50,6 +50,9 @@
 
 			<div v-if="topSubPosts.length" class="top-sub-posts">
 				<post-widget v-for="subPost in topSubPosts" :key="subPost.id" :post="subPost" clickable size="medium" @click="openPost(subPost.id)" />
+				<el-button v-if="showLoadMoreSubPosts" @click="loadMoreSubPosts()" type="primary">
+					Load More
+				</el-button>
 			</div>
 			<p v-else>No sub-posts available.</p>
 
@@ -80,6 +83,7 @@ export default {
 			topTopics: [],
 			hasMoreTopics: true,
 			topSubPosts: [],
+			hasMoreSubPosts: true,
 			loading: true,
 			newTopics: [],
 			subPostText: '',
@@ -98,6 +102,11 @@ export default {
 			return this.hasMoreTopics &&
 				this.topTopics.length > 0 &&
 				this.topTopics.length % this.$const.maxTopicPageSize === 0;
+		},
+		showLoadMoreSubPosts() {
+			return this.hasMoreSubPosts &&
+				this.topSubPosts.length > 0 &&
+				this.topSubPosts.length % this.$const.maxPostPageSize === 0;
 		},
 		postId() {
 			return this.$route.params.id;
@@ -123,6 +132,7 @@ export default {
 				this.topTopics = response.topTopics || [];
 				this.hasMoreTopics = true;
 				this.topSubPosts = response.topSubPosts || [];
+				this.hasMoreSubPosts = true;
 			}).finally(() => {
 				this.loading = false;
 			});
@@ -150,6 +160,17 @@ export default {
 				const topics = response.topics || [];
 				this.topTopics.push(...topics);
 				this.hasMoreTopics = topics.length > 0;
+			});
+		},
+		loadMoreSubPosts() {
+			ajaxGet('/ajax/posts/page', {
+				context: 'subposts',
+				postId: this.post.id,
+				offset: this.topSubPosts.length,
+			}).then(response => {
+				const posts = response.posts || [];
+				this.topSubPosts.push(...posts);
+				this.hasMoreSubPosts = posts.length > 0;
 			});
 		},
 

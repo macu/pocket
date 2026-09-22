@@ -54,7 +54,7 @@ func LoadTopPosts(db *sql.DB, auth *ajax.Auth, offset uint) ([]Post, error) {
 		GROUP BY p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
 		ORDER BY total_topic_score DESC, p.created_at DESC
 		LIMIT $1 OFFSET $2
-	`, MaxTopicPageSize, offset)
+	`, MaxPostPageSize, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func LoadTopSubPosts(db *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint
 		GROUP BY p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
 		ORDER BY total_topic_score DESC, p.created_at DESC
 		LIMIT $2 OFFSET $3
-	`, parentPostID, MaxTopicPageSize, offset)
+	`, parentPostID, MaxPostPageSize, offset)
 	if err != nil {
 		return nil, err
 	}

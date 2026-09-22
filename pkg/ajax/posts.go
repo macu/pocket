@@ -206,3 +206,48 @@ func AjaxVotePostTopic(db *sql.DB, auth ajax.Auth,
 	}, http.StatusOK
 
 }
+
+// AjaxLoadPostsPage loads a page of posts for one of several contexts:
+//   - context=dashboard: the site's top posts, paged by offset
+//   - context=subposts: the sub-posts of a given postId, paged by offset
+func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	offset, err := types.AtoUint(r.FormValue("offset"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	var posts []pocket.Post
+
+	switch r.FormValue("context") {
+
+	case "dashboard":
+		posts, err = pocket.LoadTopPosts(db, auth, offset)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+
+	case "subposts":
+		postID, err := types.AtoUint(r.FormValue("postId"))
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+		posts, err = pocket.LoadTopSubPosts(db, auth, postID, offset)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+
+	default:
+		return nil, http.StatusBadRequest
+	}
+
+	return map[string]any{
+		"posts":   posts,
+		"hasMore": len(posts) == pocket.MaxPostPageSize,
+	}, http.StatusOK
+
+}

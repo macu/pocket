@@ -103,10 +103,9 @@ export default {
 		return {
 			loading: true,
 			topPosts: [],
+			hasMorePosts: true,
 			topTopics: [],
 			hasMoreTopics: true,
-			lastTopicsLength: 0,
-			lastPostsLength: 0,
 
 			showingAddTopic: false,
 			newTopicName: '',
@@ -123,7 +122,9 @@ export default {
 				this.topTopics.length % this.$const.maxTopicPageSize === 0;
 		},
 		showLoadMorePosts() {
-			return this.topPosts.length > 0;
+			return this.hasMorePosts &&
+				this.topPosts.length > 0 &&
+				this.topPosts.length % this.$const.maxPostPageSize === 0;
 		},
 		addTopicDisabled() {
 			return this.addTopicLoading || !this.newTopicName.trim();
@@ -148,6 +149,7 @@ export default {
 			this.loading = true;
 			ajaxGet('/ajax/dashboard').then(response => {
 				this.topPosts = response.topPosts || [];
+				this.hasMorePosts = true;
 				this.topTopics = response.topTopics || [];
 				this.hasMoreTopics = true;
 			}).finally(() => {
@@ -165,6 +167,14 @@ export default {
 			});
 		},
 		loadMorePosts() {
+			ajaxGet('/ajax/posts/page', {
+				context: 'dashboard',
+				offset: this.topPosts.length,
+			}).then(response => {
+				const posts = response.posts || [];
+				this.topPosts.push(...posts);
+				this.hasMorePosts = posts.length > 0;
+			});
 		},
 
 		addTopic() {

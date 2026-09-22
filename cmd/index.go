@@ -23,6 +23,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		MaxPostLength     int
 		MaxTopicPageSize  int
 		MaxTopicLength    int
+		MaxPostPageSize   int
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
@@ -31,5 +32,6 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		pocket.MaxPostLength,
 		pocket.MaxTopicPageSize,
 		pocket.MaxTopicLength,
+		pocket.MaxPostPageSize,
 	})
 }
