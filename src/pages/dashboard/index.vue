@@ -131,7 +131,6 @@ export default {
 		return {
 			loading: true,
 			topPosts: [],
-			hasMorePosts: true,
 			totalPosts: 0,
 			topTopics: [],
 			hasMoreTopics: true,
@@ -152,7 +151,7 @@ export default {
 				this.topTopics.length % this.$const.maxTopicPageSize === 0;
 		},
 		showLoadMorePosts() {
-			return this.hasMorePosts && this.topPosts.length < this.totalPosts;
+			return this.topPosts.length < this.totalPosts;
 		},
 		addTopicDisabled() {
 			return this.addTopicLoading || !this.newTopicName.trim();
@@ -182,7 +181,6 @@ export default {
 			ajaxGet('/ajax/dashboard').then(response => {
 				this.topPosts = response.topPosts || [];
 				this.totalPosts = response.totalPosts || 0;
-				this.hasMorePosts = this.topPosts.length < this.totalPosts;
 				this.topTopics = response.topTopics || [];
 				this.hasMoreTopics = true;
 			}).finally(() => {
@@ -209,7 +207,6 @@ export default {
 				const posts = response.posts || [];
 				this.topPosts.push(...posts);
 				this.totalPosts = response.totalPosts || 0;
-				this.hasMorePosts = response.hasMore || false;
 			});
 		},
 		checkTopic(topic) {
@@ -246,7 +243,6 @@ export default {
 				const posts = response.posts || [];
 				this.topPosts = posts;
 				this.totalPosts = response.totalPosts || 0;
-				this.hasMorePosts = response.hasMore || false;
 			});
 		},
 

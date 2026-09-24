@@ -306,7 +306,6 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 
 	return map[string]any{
 		"posts":      posts,
-		"hasMore":    len(posts) == pocket.MaxPostPageSize,
 		"totalPosts": totalPosts,
 	}, http.StatusOK
 

@@ -112,7 +112,6 @@ export default {
 			hasMoreTopics: true,
 			selectedTopics: [],
 			topSubPosts: [],
-			hasMoreSubPosts: true,
 			totalSubPosts: 0,
 			loading: true,
 			newTopics: [],
@@ -140,7 +139,7 @@ export default {
 				this.topTopics.length % this.$const.maxTopicPageSize === 0;
 		},
 		showLoadMoreSubPosts() {
-			return this.hasMoreSubPosts && this.topSubPosts.length < this.totalSubPosts;
+			return this.topSubPosts.length < this.totalSubPosts;
 		},
 		postId() {
 			return this.$route.params.id;
@@ -168,7 +167,6 @@ export default {
 				this.hasMoreTopics = true;
 				this.topSubPosts = response.topSubPosts || [];
 				this.totalSubPosts = response.totalSubPosts || 0;
-				this.hasMoreSubPosts = this.topSubPosts.length < this.totalSubPosts;
 			}).finally(() => {
 				this.loading = false;
 			});
@@ -209,7 +207,6 @@ export default {
 				const posts = response.posts || [];
 				this.topSubPosts.push(...posts);
 				this.totalSubPosts = response.totalPosts || 0;
-				this.hasMoreSubPosts = response.hasMore || false;
 			});
 		},
 		selectedTopicIds() {
@@ -251,7 +248,6 @@ export default {
 				const posts = response.posts || [];
 				this.topSubPosts = posts;
 				this.totalSubPosts = response.totalPosts || 0;
-				this.hasMoreSubPosts = response.hasMore || false;
 			});
 		},
 
