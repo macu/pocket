@@ -102,6 +102,9 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 	if len(topicNames) == 0 {
 		topicNames = pocket.ParseTopicNamesJSON(r.FormValue("topics"))
 	}
+	if len(topicNames) > pocket.MaxNewPostTopics {
+		return ajax.AjaxErrorPayload{ErrorCode: "too-many-topics"}, http.StatusBadRequest
+	}
 
 	post, err := pocket.CreatePost(db, parentPostID, auth.UserID, text, topicNames)
 	if err != nil {
@@ -156,6 +159,9 @@ func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 	topicNames := pocket.ParseTopicNamesJSON(r.FormValue("topics"))
 	if len(topicNames) == 0 {
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-topic-name"}, http.StatusBadRequest
+	}
+	if len(topicNames) > pocket.MaxNewPostTopics {
+		return ajax.AjaxErrorPayload{ErrorCode: "too-many-topics"}, http.StatusBadRequest
 	}
 
 	existingNames := make(map[string]bool, len(topicNames))

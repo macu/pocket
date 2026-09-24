@@ -13,7 +13,7 @@
 	</form-field>
 
 	<form-field title="Topics">
-		<topics-input v-model="topics"/>
+		<topics-input v-model="topics" :max="$const.maxNewPostTopics"/>
 	</form-field>
 
 	<form-actions>

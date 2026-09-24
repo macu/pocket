@@ -16,7 +16,7 @@
 
 		<form-layout v-if="showAddTopicForm" title="Add topics" class="add-topic-form">
 			<form-field title="Topic names">
-				<topics-input ref="addTopicInput" v-model="newTopics"/>
+				<topics-input ref="addTopicInput" v-model="newTopics" :max="$const.maxNewPostTopics"/>
 			</form-field>
 			<form-actions>
 				<el-button @click="addTopic()" type="primary" :disabled="addTopicDisabled">Add topics</el-button>

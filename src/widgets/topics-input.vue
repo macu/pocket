@@ -5,7 +5,8 @@
 			v-model="pendingValue"
 			type="text" size="large"
 			:maxlength="$const.maxTopicLength"
-			placeholder="Add a topic"
+			:disabled="atMax"
+			:placeholder="atMax ? 'Max topics reached' : 'Add a topic'"
 			@input="scheduleSearch()"
 			@focus="showSuggestions = true"
 			@blur="hideSuggestionsDelayed()"
@@ -51,6 +52,10 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+		max: {
+			type: Number,
+			default: null,
+		},
 	},
 	emits: ['update:modelValue'],
 	data() {
@@ -63,8 +68,11 @@ export default {
 		};
 	},
 	computed: {
+		atMax() {
+			return this.max !== null && this.modelValue.length >= this.max;
+		},
 		addDisabled() {
-			return !this.pendingValue.trim();
+			return this.atMax || !this.pendingValue.trim();
 		},
 	},
 	methods: {
@@ -122,6 +130,9 @@ export default {
 			this.addName(this.pendingValue);
 		},
 		addName(rawName) {
+			if (this.atMax) {
+				return;
+			}
 			const name = rawName.trim();
 			if (!name || this.modelValue.includes(name)) {
 				this.pendingValue = '';
