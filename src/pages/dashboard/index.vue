@@ -50,8 +50,6 @@
 					v-for="topic in selectedTopics"
 					:key="'selected-' + topic.id"
 					size="large"
-					:count="topic.postCount"
-					count-output="%d posts"
 					checkable
 					checked
 					@check="uncheckTopic(topic)">
@@ -82,6 +80,8 @@
 			<p v-else><em>No topics available.</em></p>
 
 			<h2>Top Posts</h2>
+
+			<p v-if="topPosts.length > 0" class="total-posts">{{totalPosts}} matching posts</p>
 
 			<div v-if="topPosts.length > 0" class="top-posts flex-column-lg">
 				<post
@@ -132,6 +132,7 @@ export default {
 			loading: true,
 			topPosts: [],
 			hasMorePosts: true,
+			totalPosts: 0,
 			topTopics: [],
 			hasMoreTopics: true,
 			selectedTopics: [],
@@ -151,9 +152,7 @@ export default {
 				this.topTopics.length % this.$const.maxTopicPageSize === 0;
 		},
 		showLoadMorePosts() {
-			return this.hasMorePosts &&
-				this.topPosts.length > 0 &&
-				this.topPosts.length % this.$const.maxPostPageSize === 0;
+			return this.hasMorePosts && this.topPosts.length < this.totalPosts;
 		},
 		addTopicDisabled() {
 			return this.addTopicLoading || !this.newTopicName.trim();
@@ -182,7 +181,8 @@ export default {
 			this.selectedTopics = [];
 			ajaxGet('/ajax/dashboard').then(response => {
 				this.topPosts = response.topPosts || [];
-				this.hasMorePosts = true;
+				this.totalPosts = response.totalPosts || 0;
+				this.hasMorePosts = this.topPosts.length < this.totalPosts;
 				this.topTopics = response.topTopics || [];
 				this.hasMoreTopics = true;
 			}).finally(() => {
@@ -208,7 +208,8 @@ export default {
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topPosts.push(...posts);
-				this.hasMorePosts = posts.length > 0;
+				this.totalPosts = response.totalPosts || 0;
+				this.hasMorePosts = response.hasMore || false;
 			});
 		},
 		checkTopic(topic) {
@@ -244,7 +245,8 @@ export default {
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topPosts = posts;
-				this.hasMorePosts = posts.length > 0;
+				this.totalPosts = response.totalPosts || 0;
+				this.hasMorePosts = response.hasMore || false;
 			});
 		},
 
@@ -306,6 +308,11 @@ export default {
 	.add-topic-form {
 		background-color: $topic-bg-color;
 		color: $topic-fg-color;
+	}
+
+	.total-posts {
+		opacity: 0.7;
+		font-size: 0.9em;
 	}
 
 }

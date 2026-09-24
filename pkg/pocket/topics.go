@@ -132,10 +132,11 @@ func SearchTopics(conn *sql.DB, query string) ([]Topic, error) {
 // doesn't have a negative individual sum, i.e. isn't net-downvoted there).
 // If scopePostID is non-nil, results are restricted to topics tagged on the
 // sub-posts of that post (rather than all posts). If selectedTopicIDs is
-// non-empty, the selected topics are excluded and the results are restricted
-// to topics that are co-present with the selected topics on the same posts
-// (within scopePostID's sub-posts, if
-// scoped).
+// non-empty, the selected topics are excluded, the results are restricted to
+// topics that are co-present with the selected topics on the same posts
+// (within scopePostID's sub-posts, if scoped), and each topic's sum/post
+// count are limited to those same posts (i.e. posts matching the selected
+// topics plus that topic), not the topic's totals across all posts.
 func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePostID *uint) ([]Topic, error) {
 
 	var topics []Topic
@@ -175,43 +176,35 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 		excludeClause := db.In("t.id", &args, selectedTopicIDs)
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
 
-		totalsScopeJoin := ""
-		totalsScopeWhere := ""
 		selfScopeJoin := ""
 		selfScopeWhere := ""
 		if scopePostID != nil {
-			totalsScopeJoin = "JOIN post p ON p.id = pts.post_id"
-			totalsScopeWhere = "WHERE p.parent_post_id = " + scopeArg
 			selfScopeJoin = "JOIN post p_self ON p_self.id = pts_self.post_id"
 			selfScopeWhere = "AND p_self.parent_post_id = " + scopeArg
 		}
 
+		// topic_totals is restricted to the posts that also match all of the
+		// selected topics, so the sum/count reflect the selected topics plus
+		// this candidate topic, not this topic's totals across all posts.
 		query = `
 			SELECT t.id, t.name, COALESCE(topic_totals.total_sum, 0), COALESCE(topic_totals.post_count, 0)
 			FROM topic t
 			JOIN (
-				SELECT pts.topic_id, SUM(pts.sum) AS total_sum,
-					COUNT(DISTINCT CASE WHEN pts.sum >= 0 THEN pts.post_id END) AS post_count
-				FROM post_topic_sum pts
-				` + totalsScopeJoin + `
-				` + totalsScopeWhere + `
-				GROUP BY pts.topic_id
-				HAVING COUNT(DISTINCT CASE WHEN pts.sum >= 0 THEN pts.post_id END) > 0
+				SELECT pts_self.topic_id, SUM(pts_self.sum) AS total_sum,
+					COUNT(DISTINCT pts_self.post_id) AS post_count
+				FROM post_topic_sum pts_self
+				` + selfScopeJoin + `
+				WHERE pts_self.sum >= 0
+				` + selfScopeWhere + `
+				AND pts_self.post_id IN (
+					SELECT post_id FROM post_topic_sum
+					WHERE ` + selectedClause + ` AND sum >= 0
+					GROUP BY post_id
+					HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
+				)
+				GROUP BY pts_self.topic_id
 			) topic_totals ON topic_totals.topic_id = t.id
 			WHERE NOT (` + excludeClause + `)
-				AND EXISTS (
-					SELECT 1 FROM post_topic_sum pts_self
-					` + selfScopeJoin + `
-					WHERE pts_self.topic_id = t.id
-					AND pts_self.sum >= 0
-					` + selfScopeWhere + `
-					AND pts_self.post_id IN (
-						SELECT post_id FROM post_topic_sum
-						WHERE ` + selectedClause + ` AND sum >= 0
-						GROUP BY post_id
-						HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
-					)
-				)
 			ORDER BY COALESCE(topic_totals.total_sum, 0) DESC, t.name ASC
 			LIMIT ` + db.Arg(&args, pageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	}

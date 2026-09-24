@@ -195,6 +195,54 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 	return posts, nil
 }
 
+// countTopPosts counts the total number of posts matching selectedTopicIDs
+// (all of them must be present on a post for it to match; if empty, all
+// posts match), optionally restricted to the sub-posts of scopePostID.
+func countTopPosts(conn *sql.DB, selectedTopicIDs []uint, scopePostID *uint) (int, error) {
+
+	var args []interface{}
+	var query string
+
+	var scopeWhere string
+	if scopePostID != nil {
+		scopeWhere = "WHERE p.parent_post_id = " + db.Arg(&args, *scopePostID)
+	}
+
+	if len(selectedTopicIDs) == 0 {
+		query = `SELECT COUNT(*) FROM post p ` + scopeWhere
+	} else {
+		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
+		selectedCount := db.Arg(&args, len(selectedTopicIDs))
+		query = `
+			SELECT COUNT(*) FROM post p
+			JOIN (
+				SELECT post_id FROM post_topic_sum
+				WHERE ` + selectedClause + ` AND sum >= 0
+				GROUP BY post_id
+				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
+			) matching ON matching.post_id = p.id
+			` + scopeWhere
+	}
+
+	var total int
+	if err := conn.QueryRow(query, args...).Scan(&total); err != nil {
+		return 0, fmt.Errorf("counting posts: %w", err)
+	}
+	return total, nil
+}
+
+// CountTopPosts counts the total number of the site's posts matching
+// selectedTopicIDs (see LoadTopPosts).
+func CountTopPosts(conn *sql.DB, selectedTopicIDs []uint) (int, error) {
+	return countTopPosts(conn, selectedTopicIDs, nil)
+}
+
+// CountTopSubPosts counts the total number of sub-posts of parentPostID
+// matching selectedTopicIDs (see LoadTopSubPosts).
+func CountTopSubPosts(conn *sql.DB, parentPostID uint, selectedTopicIDs []uint) (int, error) {
+	return countTopPosts(conn, selectedTopicIDs, &parentPostID)
+}
+
 func LoadPostTopics(db *sql.DB, postID uint, userID *uint, offset uint) ([]Topic, error) {
 	var userIDParam any
 	if userID != nil {

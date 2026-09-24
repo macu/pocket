@@ -67,6 +67,12 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 			return nil, http.StatusInternalServerError
 		}
 		payload["topSubPosts"] = topSubPosts
+		totalSubPosts, err := pocket.CountTopSubPosts(db, id, nil)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		payload["totalSubPosts"] = totalSubPosts
 	}
 
 	return payload, http.StatusOK
@@ -254,6 +260,7 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 	}
 
 	var posts []pocket.Post
+	var totalPosts int
 
 	switch r.FormValue("context") {
 
@@ -263,6 +270,11 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 			return nil, http.StatusBadRequest
 		}
 		posts, err = pocket.LoadTopPosts(db, auth, offset, selectedTopicIDs)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		totalPosts, err = pocket.CountTopPosts(db, selectedTopicIDs)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -282,14 +294,20 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
 		}
+		totalPosts, err = pocket.CountTopSubPosts(db, postID, selectedTopicIDs)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
 
 	default:
 		return nil, http.StatusBadRequest
 	}
 
 	return map[string]any{
-		"posts":   posts,
-		"hasMore": len(posts) == pocket.MaxPostPageSize,
+		"posts":      posts,
+		"hasMore":    len(posts) == pocket.MaxPostPageSize,
+		"totalPosts": totalPosts,
 	}, http.StatusOK
 
 }

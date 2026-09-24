@@ -44,8 +44,6 @@
 					v-for="topic in selectedTopics"
 					:key="'selected-' + topic.id"
 					size="medium"
-					:count="topic.postCount"
-					count-output="%d posts"
 					checkable
 					checked
 					@check="uncheckTopic(topic)">
@@ -75,6 +73,8 @@
 			<p v-else><em>No topics available.</em></p>
 
 			<h3>Top Sub-Posts</h3>
+
+			<p v-if="topSubPosts.length > 0" class="total-posts">{{totalSubPosts}} matching posts</p>
 
 			<div v-if="topSubPosts.length" class="top-sub-posts flex-column-md">
 				<post-widget v-for="subPost in topSubPosts" :key="subPost.id" :post="subPost" clickable size="medium" @click="openPost(subPost.id)" />
@@ -113,6 +113,7 @@ export default {
 			selectedTopics: [],
 			topSubPosts: [],
 			hasMoreSubPosts: true,
+			totalSubPosts: 0,
 			loading: true,
 			newTopics: [],
 			subPostText: '',
@@ -139,9 +140,7 @@ export default {
 				this.topTopics.length % this.$const.maxTopicPageSize === 0;
 		},
 		showLoadMoreSubPosts() {
-			return this.hasMoreSubPosts &&
-				this.topSubPosts.length > 0 &&
-				this.topSubPosts.length % this.$const.maxPostPageSize === 0;
+			return this.hasMoreSubPosts && this.topSubPosts.length < this.totalSubPosts;
 		},
 		postId() {
 			return this.$route.params.id;
@@ -168,7 +167,8 @@ export default {
 				this.topTopics = response.topTopics || [];
 				this.hasMoreTopics = true;
 				this.topSubPosts = response.topSubPosts || [];
-				this.hasMoreSubPosts = true;
+				this.totalSubPosts = response.totalSubPosts || 0;
+				this.hasMoreSubPosts = this.topSubPosts.length < this.totalSubPosts;
 			}).finally(() => {
 				this.loading = false;
 			});
@@ -208,7 +208,8 @@ export default {
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topSubPosts.push(...posts);
-				this.hasMoreSubPosts = posts.length > 0;
+				this.totalSubPosts = response.totalPosts || 0;
+				this.hasMoreSubPosts = response.hasMore || false;
 			});
 		},
 		selectedTopicIds() {
@@ -249,7 +250,8 @@ export default {
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topSubPosts = posts;
-				this.hasMoreSubPosts = posts.length > 0;
+				this.totalSubPosts = response.totalPosts || 0;
+				this.hasMoreSubPosts = response.hasMore || false;
 			});
 		},
 
@@ -291,6 +293,11 @@ export default {
 	.add-topic-form {
 		background-color: $topic-bg-color;
 		color: $topic-fg-color;
+	}
+
+	.total-posts {
+		opacity: 0.7;
+		font-size: 0.9em;
 	}
 
 	.post-card {

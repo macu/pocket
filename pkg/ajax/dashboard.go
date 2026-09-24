@@ -25,9 +25,16 @@ func AjaxLoadDashboard(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
+	totalPosts, err := pocket.CountTopPosts(db, nil)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
 	return map[string]any{
-		"topTopics": topTopics,
-		"topPosts":  topPosts,
+		"topTopics":  topTopics,
+		"topPosts":   topPosts,
+		"totalPosts": totalPosts,
 	}, 200
 
 }

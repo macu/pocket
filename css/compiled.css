@@ -324,6 +324,10 @@ div.center {
   background-color: rgb(86, 86, 211);
   color: white;
 }
+.dashboard-page .total-posts {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
   \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -407,6 +411,10 @@ div.center {
 .post-page .add-topic-form {
   background-color: rgb(86, 86, 211);
   color: white;
+}
+.post-page .total-posts {
+  opacity: 0.7;
+  font-size: 0.9em;
 }
 .post-page .post-card {
   border-top: thin solid white;
