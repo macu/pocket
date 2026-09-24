@@ -170,7 +170,7 @@ export default {
 		},
 		timeframe(timeframe) {
 			setStorage(TIMEFRAME_STORAGE_KEY, timeframe);
-			this.load();
+			this.reloadFiltered();
 		},
 	},
 	methods: {
