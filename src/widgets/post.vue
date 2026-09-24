@@ -1,7 +1,10 @@
 <template>
 <div class="top-post" :class="[sizeClass, {clickable}]" @click="$emit('click', $event)">
 	<div class="top-post-header flex-row-md">
-		<div class="top-post-author" v-if="post.authorDisplayName">{{post.authorDisplayName}}</div>
+		<div class="top-post-author" v-if="post.authorDisplayName">
+			{{post.authorDisplayName}}
+			<small v-if="post.authorHandle">@{{post.authorHandle}}</small>
+		</div>
 		<div class="top-post-score">{{post.totalTopicScore}}</div>
 	</div>
 	<div class="topic-list flex-row">

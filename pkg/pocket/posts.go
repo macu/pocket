@@ -15,6 +15,7 @@ type Post struct {
 	ParentPostID      *uint     `json:"parentPostId,omitempty"`
 	AuthorID          uint      `json:"authorId"`
 	AuthorDisplayName string    `json:"authorDisplayName,omitempty"`
+	AuthorHandle      string    `json:"authorHandle,omitempty"`
 	PostText          string    `json:"postText"`
 	CreatedAt         time.Time `json:"createdAt"`
 	Topics            []Topic   `json:"topics,omitempty"`
@@ -56,19 +57,19 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 
 	if len(selectedTopicIDs) == 0 {
 		query = `
-			SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
 				COALESCE(SUM(CASE WHEN pts.sum > 0 THEN pts.sum ELSE 0 END), 0) AS total_topic_score
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
-			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
+			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at
 			ORDER BY total_topic_score DESC, p.created_at DESC
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	} else {
 		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
 		query = `
-			SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
 				topic_scores.selected_sum AS total_topic_score
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
@@ -94,7 +95,8 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 		var post Post
 		var parentID sql.NullInt64
 		var displayName sql.NullString
-		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &post.PostText, &post.CreatedAt, &post.TotalTopicScore); err != nil {
+		var handle sql.NullString
+		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.TotalTopicScore); err != nil {
 			continue
 		}
 		if parentID.Valid {
@@ -103,6 +105,9 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 		}
 		if displayName.Valid {
 			post.AuthorDisplayName = displayName.String
+		}
+		if handle.Valid {
+			post.AuthorHandle = handle.String
 		}
 		post.Topics, err = LoadPostTopics(conn, post.ID, userID, 0)
 		if err != nil {
@@ -134,20 +139,20 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 
 	if len(selectedTopicIDs) == 0 {
 		query = `
-			SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
 				COALESCE(SUM(CASE WHEN pts.sum > 0 THEN pts.sum ELSE 0 END), 0) AS total_topic_score
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
 			WHERE p.parent_post_id = ` + parentArg + `
-			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
+			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at
 			ORDER BY total_topic_score DESC, p.created_at DESC
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	} else {
 		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
 		query = `
-			SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at,
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
 				topic_scores.selected_sum AS total_topic_score
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
@@ -175,7 +180,8 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 		var post Post
 		var parentID sql.NullInt64
 		var displayName sql.NullString
-		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &post.PostText, &post.CreatedAt, &post.TotalTopicScore); err != nil {
+		var handle sql.NullString
+		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.TotalTopicScore); err != nil {
 			continue
 		}
 		if parentID.Valid {
@@ -184,6 +190,9 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 		}
 		if displayName.Valid {
 			post.AuthorDisplayName = displayName.String
+		}
+		if handle.Valid {
+			post.AuthorHandle = handle.String
 		}
 		post.Topics, err = LoadPostTopics(conn, post.ID, userID, 0)
 		if err != nil {
@@ -299,13 +308,14 @@ func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 	var post Post
 	var parentID sql.NullInt64
 	var displayName sql.NullString
+	var handle sql.NullString
 
 	err := db.QueryRow(`
-		SELECT p.id, p.parent_post_id, p.author, u.display_name, p.post_text, p.created_at
+		SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at
 		FROM post p
 		LEFT JOIN user_account u ON u.id = p.author
 		WHERE p.id = $1
-	`, postID).Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &post.PostText, &post.CreatedAt)
+	`, postID).Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("loading post %d: %w", postID, err)
 	}
@@ -316,6 +326,9 @@ func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 	}
 	if displayName.Valid {
 		post.AuthorDisplayName = displayName.String
+	}
+	if handle.Valid {
+		post.AuthorHandle = handle.String
 	}
 
 	post.Topics, err = LoadPostTopics(db, post.ID, userID, 0)
