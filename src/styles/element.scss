@@ -13,10 +13,10 @@
 	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
 }
 
-.el-input.is-focus .el-input__wrapper,
+.el-input__wrapper.is-focus,
 .el-textarea__inner:focus,
 .el-select__wrapper.is-focused {
-	box-shadow: 0 0 0 1px $topic-bg-color inset !important;
+	box-shadow: 0 0 0 1px $el-focus-color inset !important;
 }
 
 .el-input__inner,
@@ -47,11 +47,11 @@
 
 // select dropdown popper is teleported to <body>, so it needs its own (unscoped) rules
 .el-select-dropdown {
-	background-color: $topic-bg-color;
+	background-color: $el-dropdown-bg-color;
 	border-color: rgba(255, 255, 255, 0.2);
 
 	.el-select-dropdown__item {
-		color: $topic-fg-color;
+		color: $el-dropdown-fg-color;
 
 		&.is-hovering {
 			background-color: rgba(255, 255, 255, 0.1);
@@ -68,7 +68,7 @@
 	}
 
 	.el-popper__arrow::before {
-		background-color: $topic-bg-color;
+		background-color: $el-dropdown-bg-color;
 		border-color: rgba(255, 255, 255, 0.2);
 	}
 }
