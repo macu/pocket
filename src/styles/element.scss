@@ -1,0 +1,74 @@
+// dark theme overrides for Element Plus form inputs, since the loaded theme is light by default
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+	background-color: rgba(255, 255, 255, 0.05);
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.el-input__wrapper:hover,
+.el-textarea__inner:hover,
+.el-select__wrapper:hover {
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+}
+
+.el-input.is-focus .el-input__wrapper,
+.el-textarea__inner:focus,
+.el-select__wrapper.is-focused {
+	box-shadow: 0 0 0 1px $topic-bg-color inset !important;
+}
+
+.el-input__inner,
+.el-textarea__inner,
+.el-select__selected-item,
+.el-select__placeholder {
+	color: $app-fg-color;
+}
+
+.el-input__inner::placeholder,
+.el-textarea__inner::placeholder,
+.el-select__placeholder.is-transparent {
+	color: rgba(255, 255, 255, 0.5);
+}
+
+.el-input.is-disabled .el-input__wrapper,
+.el-textarea.is-disabled .el-textarea__inner,
+.el-select__wrapper.is-disabled {
+	background-color: rgba(255, 255, 255, 0.03);
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.el-input.is-disabled .el-input__inner,
+.el-textarea.is-disabled .el-textarea__inner,
+.el-select__wrapper.is-disabled .el-select__placeholder {
+	color: rgba(255, 255, 255, 0.3);
+}
+
+// select dropdown popper is teleported to <body>, so it needs its own (unscoped) rules
+.el-select-dropdown {
+	background-color: $topic-bg-color;
+	border-color: rgba(255, 255, 255, 0.2);
+
+	.el-select-dropdown__item {
+		color: $topic-fg-color;
+
+		&.is-hovering {
+			background-color: rgba(255, 255, 255, 0.1);
+		}
+
+		&.is-selected {
+			color: $app-fg-color;
+			font-weight: bold;
+		}
+
+		&.is-disabled {
+			color: rgba(255, 255, 255, 0.3);
+		}
+	}
+
+	.el-popper__arrow::before {
+		background-color: $topic-bg-color;
+		border-color: rgba(255, 255, 255, 0.2);
+	}
+}
