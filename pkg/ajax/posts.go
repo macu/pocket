@@ -23,6 +23,11 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 
 	loadContent := types.AtoBool(r.FormValue("loadContent"))
 
+	cutoff, err := pocket.ParseTimeframe(r.FormValue("timeframe"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
 	var userID *uint
 	if auth != nil {
 		userID = &auth.UserID
@@ -55,19 +60,19 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 	}
 
 	if loadContent {
-		topTopics, err := pocket.LoadSpaceTopics(db, id, 0, nil)
+		topTopics, err := pocket.LoadSpaceTopics(db, id, 0, nil, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
 		}
 		payload["topTopics"] = topTopics
-		topSubPosts, err := pocket.LoadTopSubPosts(db, auth, id, 0, nil)
+		topSubPosts, err := pocket.LoadTopSubPosts(db, auth, id, 0, nil, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
 		}
 		payload["topSubPosts"] = topSubPosts
-		totalSubPosts, err := pocket.CountTopSubPosts(db, id, nil)
+		totalSubPosts, err := pocket.CountTopSubPosts(db, id, nil, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -265,6 +270,11 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	cutoff, err := pocket.ParseTimeframe(r.FormValue("timeframe"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
 	var posts []pocket.Post
 	var totalPosts int
 
@@ -275,12 +285,12 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 		if err != nil {
 			return nil, http.StatusBadRequest
 		}
-		posts, err = pocket.LoadTopPosts(db, auth, offset, selectedTopicIDs)
+		posts, err = pocket.LoadTopPosts(db, auth, offset, selectedTopicIDs, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
 		}
-		totalPosts, err = pocket.CountTopPosts(db, selectedTopicIDs)
+		totalPosts, err = pocket.CountTopPosts(db, selectedTopicIDs, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -295,12 +305,12 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 		if err != nil {
 			return nil, http.StatusBadRequest
 		}
-		posts, err = pocket.LoadTopSubPosts(db, auth, postID, offset, selectedTopicIDs)
+		posts, err = pocket.LoadTopSubPosts(db, auth, postID, offset, selectedTopicIDs, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
 		}
-		totalPosts, err = pocket.CountTopSubPosts(db, postID, selectedTopicIDs)
+		totalPosts, err = pocket.CountTopSubPosts(db, postID, selectedTopicIDs, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError

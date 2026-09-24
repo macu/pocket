@@ -24,6 +24,9 @@
 		margin: 0;
 	}
 
+	>.align-start {
+		align-self: flex-start;
+	}
 	>.align-end {
 		align-self: flex-end;
 	}

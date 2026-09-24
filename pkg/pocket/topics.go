@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/db"
@@ -136,8 +137,10 @@ func SearchTopics(conn *sql.DB, query string) ([]Topic, error) {
 // topics that are co-present with the selected topics on the same posts
 // (within scopePostID's sub-posts, if scoped), and each topic's sum/post
 // count are limited to those same posts (i.e. posts matching the selected
-// topics plus that topic), not the topic's totals across all posts.
-func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePostID *uint) ([]Topic, error) {
+// topics plus that topic), not the topic's totals across all posts. If
+// cutoff is non-nil, only votes cast and posts created at or after cutoff
+// are considered.
+func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePostID *uint, cutoff *time.Time) ([]Topic, error) {
 
 	var topics []Topic
 	pageSize := MaxTopicPageSize
@@ -151,12 +154,12 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 	}
 
 	if len(selectedTopicIDs) == 0 {
-		topicJoin := "LEFT JOIN post_topic_sum pts ON pts.topic_id = t.id"
+		topicJoin := "LEFT JOIN " + filteredPostTopicSumTable(&args, cutoff) + " pts ON pts.topic_id = t.id"
 		scopeJoin := ""
 		scopeWhere := ""
 		if scopePostID != nil {
 			// only topics actually tagged on a sub-post are of interest, so use an inner join
-			topicJoin = "JOIN post_topic_sum pts ON pts.topic_id = t.id"
+			topicJoin = "JOIN " + filteredPostTopicSumTable(&args, cutoff) + " pts ON pts.topic_id = t.id"
 			scopeJoin = "JOIN post p ON p.id = pts.post_id"
 			scopeWhere = "WHERE p.parent_post_id = " + scopeArg
 		}
@@ -192,12 +195,12 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 			JOIN (
 				SELECT pts_self.topic_id, SUM(pts_self.sum) AS total_sum,
 					COUNT(DISTINCT pts_self.post_id) AS post_count
-				FROM post_topic_sum pts_self
+				FROM ` + filteredPostTopicSumTable(&args, cutoff) + ` pts_self
 				` + selfScopeJoin + `
 				WHERE pts_self.sum >= 0
 				` + selfScopeWhere + `
 				AND pts_self.post_id IN (
-					SELECT post_id FROM post_topic_sum
+					SELECT post_id FROM ` + filteredPostTopicSumTable(&args, cutoff) + `
 					WHERE ` + selectedClause + ` AND sum >= 0
 					GROUP BY post_id
 					HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
@@ -234,9 +237,10 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePos
 // (net votes) across all posts. If selectedTopicIDs is non-empty, the
 // selected topics are excluded and the results are restricted to topics that
 // are co-present with the selected topics on the same posts (i.e. posts that
-// have all of the selected topics present).
-func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint) ([]Topic, error) {
-	return loadTopicsPage(conn, offset, selectedTopicIDs, nil)
+// have all of the selected topics present). If cutoff is non-nil, only votes
+// cast and posts created at or after cutoff are considered.
+func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint, cutoff *time.Time) ([]Topic, error) {
+	return loadTopicsPage(conn, offset, selectedTopicIDs, nil, cutoff)
 }
 
 // LoadSpaceTopics loads a page of the top topics tagged on the sub-posts of
@@ -244,9 +248,10 @@ func LoadTopTopics(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs 
 // selectedTopicIDs is non-empty, the selected topics are excluded and the
 // results are restricted to topics that are co-present with the selected
 // topics on the same sub-posts (i.e. sub-posts that have all of the selected
-// topics present).
-func LoadSpaceTopics(conn *sql.DB, parentPostID uint, offset uint, selectedTopicIDs []uint) ([]Topic, error) {
-	return loadTopicsPage(conn, offset, selectedTopicIDs, &parentPostID)
+// topics present). If cutoff is non-nil, only votes cast and posts created at
+// or after cutoff are considered.
+func LoadSpaceTopics(conn *sql.DB, parentPostID uint, offset uint, selectedTopicIDs []uint, cutoff *time.Time) ([]Topic, error) {
+	return loadTopicsPage(conn, offset, selectedTopicIDs, &parentPostID, cutoff)
 }
 
 func SetPostTopicVote(conn *sql.DB, postID uint, topicID uint, userID uint, voteType string) (*Topic, error) {

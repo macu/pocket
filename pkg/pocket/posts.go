@@ -42,8 +42,10 @@ func ValidatePostText(text string) error {
 // downvoted topics are excluded so they can't drag a post's score down). If
 // selectedTopicIDs is non-empty, results are restricted to posts that have
 // all of the selected topics present, ordered by the same positive-sum-only
-// total across just those topics.
-func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint) ([]Post, error) {
+// total across just those topics. If cutoff is non-nil, only posts created
+// at or after cutoff are considered, and topic scores only reflect votes
+// cast at or after cutoff.
+func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint, cutoff *time.Time) ([]Post, error) {
 
 	// offset is uint, so it cannot be negative
 
@@ -55,13 +57,19 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 	var args []interface{}
 	var query string
 
+	var cutoffWhere string
+	if cutoff != nil {
+		cutoffWhere = "WHERE p.created_at >= " + db.Arg(&args, *cutoff)
+	}
+
 	if len(selectedTopicIDs) == 0 {
 		query = `
 			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
 				COALESCE(SUM(CASE WHEN pts.sum > 0 THEN pts.sum ELSE 0 END), 0) AS total_topic_score
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
-			LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
+			LEFT JOIN ` + filteredPostTopicSumTable(&args, cutoff) + ` pts ON pts.post_id = p.id
+			` + cutoffWhere + `
 			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at
 			ORDER BY total_topic_score DESC, p.created_at DESC
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
@@ -75,11 +83,12 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 			LEFT JOIN user_account u ON u.id = p.author
 			JOIN (
 				SELECT post_id, SUM(CASE WHEN sum > 0 THEN sum ELSE 0 END) AS selected_sum
-				FROM post_topic_sum
+				FROM ` + filteredPostTopicSumTable(&args, cutoff) + `
 				WHERE ` + selectedClause + ` AND sum >= 0
 				GROUP BY post_id
 				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 			) topic_scores ON topic_scores.post_id = p.id
+			` + cutoffWhere + `
 			ORDER BY topic_scores.selected_sum DESC, p.created_at DESC
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	}
@@ -124,8 +133,10 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 // individual sum; downvoted topics are excluded so they can't drag a post's
 // score down). If selectedTopicIDs is non-empty, results are restricted to
 // sub-posts that have all of the selected topics present, ordered by the
-// same positive-sum-only total across just those topics.
-func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint, selectedTopicIDs []uint) ([]Post, error) {
+// same positive-sum-only total across just those topics. If cutoff is
+// non-nil, only sub-posts created at or after cutoff are considered, and
+// topic scores only reflect votes cast at or after cutoff.
+func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint, selectedTopicIDs []uint, cutoff *time.Time) ([]Post, error) {
 
 	var userID *uint
 	if auth != nil {
@@ -137,14 +148,19 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 
 	parentArg := db.Arg(&args, parentPostID)
 
+	cutoffClause := ""
+	if cutoff != nil {
+		cutoffClause = " AND p.created_at >= " + db.Arg(&args, *cutoff)
+	}
+
 	if len(selectedTopicIDs) == 0 {
 		query = `
 			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
 				COALESCE(SUM(CASE WHEN pts.sum > 0 THEN pts.sum ELSE 0 END), 0) AS total_topic_score
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
-			LEFT JOIN post_topic_sum pts ON pts.post_id = p.id
-			WHERE p.parent_post_id = ` + parentArg + `
+			LEFT JOIN ` + filteredPostTopicSumTable(&args, cutoff) + ` pts ON pts.post_id = p.id
+			WHERE p.parent_post_id = ` + parentArg + cutoffClause + `
 			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at
 			ORDER BY total_topic_score DESC, p.created_at DESC
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
@@ -158,12 +174,12 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 			LEFT JOIN user_account u ON u.id = p.author
 			JOIN (
 				SELECT post_id, SUM(CASE WHEN sum > 0 THEN sum ELSE 0 END) AS selected_sum
-				FROM post_topic_sum
+				FROM ` + filteredPostTopicSumTable(&args, cutoff) + `
 				WHERE ` + selectedClause + ` AND sum >= 0
 				GROUP BY post_id
 				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 			) topic_scores ON topic_scores.post_id = p.id
-			WHERE p.parent_post_id = ` + parentArg + `
+			WHERE p.parent_post_id = ` + parentArg + cutoffClause + `
 			ORDER BY topic_scores.selected_sum DESC, p.created_at DESC
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	}
@@ -206,31 +222,41 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 
 // countTopPosts counts the total number of posts matching selectedTopicIDs
 // (all of them must be present on a post for it to match; if empty, all
-// posts match), optionally restricted to the sub-posts of scopePostID.
-func countTopPosts(conn *sql.DB, selectedTopicIDs []uint, scopePostID *uint) (int, error) {
+// posts match), optionally restricted to the sub-posts of scopePostID. If
+// cutoff is non-nil, only posts created at or after cutoff are counted, and
+// matching is based on votes cast at or after cutoff.
+func countTopPosts(conn *sql.DB, selectedTopicIDs []uint, scopePostID *uint, cutoff *time.Time) (int, error) {
 
 	var args []interface{}
 	var query string
 
-	var scopeWhere string
+	var scopeClause string
 	if scopePostID != nil {
-		scopeWhere = "WHERE p.parent_post_id = " + db.Arg(&args, *scopePostID)
+		scopeClause = " AND p.parent_post_id = " + db.Arg(&args, *scopePostID)
+	}
+	var cutoffClause string
+	if cutoff != nil {
+		cutoffClause = " AND p.created_at >= " + db.Arg(&args, *cutoff)
+	}
+	whereClause := ""
+	if scopeClause != "" || cutoffClause != "" {
+		whereClause = "WHERE TRUE" + scopeClause + cutoffClause
 	}
 
 	if len(selectedTopicIDs) == 0 {
-		query = `SELECT COUNT(*) FROM post p ` + scopeWhere
+		query = `SELECT COUNT(*) FROM post p ` + whereClause
 	} else {
 		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
 		query = `
 			SELECT COUNT(*) FROM post p
 			JOIN (
-				SELECT post_id FROM post_topic_sum
+				SELECT post_id FROM ` + filteredPostTopicSumTable(&args, cutoff) + `
 				WHERE ` + selectedClause + ` AND sum >= 0
 				GROUP BY post_id
 				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 			) matching ON matching.post_id = p.id
-			` + scopeWhere
+			` + whereClause
 	}
 
 	var total int
@@ -242,14 +268,14 @@ func countTopPosts(conn *sql.DB, selectedTopicIDs []uint, scopePostID *uint) (in
 
 // CountTopPosts counts the total number of the site's posts matching
 // selectedTopicIDs (see LoadTopPosts).
-func CountTopPosts(conn *sql.DB, selectedTopicIDs []uint) (int, error) {
-	return countTopPosts(conn, selectedTopicIDs, nil)
+func CountTopPosts(conn *sql.DB, selectedTopicIDs []uint, cutoff *time.Time) (int, error) {
+	return countTopPosts(conn, selectedTopicIDs, nil, cutoff)
 }
 
 // CountTopSubPosts counts the total number of sub-posts of parentPostID
 // matching selectedTopicIDs (see LoadTopSubPosts).
-func CountTopSubPosts(conn *sql.DB, parentPostID uint, selectedTopicIDs []uint) (int, error) {
-	return countTopPosts(conn, selectedTopicIDs, &parentPostID)
+func CountTopSubPosts(conn *sql.DB, parentPostID uint, selectedTopicIDs []uint, cutoff *time.Time) (int, error) {
+	return countTopPosts(conn, selectedTopicIDs, &parentPostID, cutoff)
 }
 
 func LoadPostTopics(db *sql.DB, postID uint, userID *uint, offset uint) ([]Topic, error) {

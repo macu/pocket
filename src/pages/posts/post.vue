@@ -37,6 +37,12 @@
 				</el-button>
 			</horizontal-controls>
 
+			<horizontal-controls class="align-start">
+
+				<timeframe-select v-model="timeframe"/>
+
+			</horizontal-controls>
+
 			<h3>Top Topics in this Space</h3>
 
 			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row-md">
@@ -94,16 +100,23 @@
 <script>
 import PostWidget from '@/widgets/post.vue';
 import TopicsInput from '@/widgets/topics-input.vue';
+import TimeframeSelect, {TIMEFRAME_STORAGE_KEY} from '@/widgets/timeframe-select.vue';
 
 import {
 	ajaxGet,
 	ajaxPost,
 } from '@/utils/ajax.js';
 
+import {
+	getStorage,
+	setStorage,
+} from '@/utils/storage.js';
+
 export default {
 	components: {
 		PostWidget,
 		TopicsInput,
+		TimeframeSelect,
 	},
 	data() {
 		return {
@@ -119,6 +132,7 @@ export default {
 			subPostText: '',
 			showAddTopicForm: false,
 			showAddSubPostForm: false,
+			timeframe: getStorage(TIMEFRAME_STORAGE_KEY, '24h'),
 		};
 	},
 	computed: {
@@ -151,16 +165,21 @@ export default {
 	},
 	watch: {
 		postId() {
+			this.selectedTopics = [];
+			this.load();
+		},
+		timeframe(timeframe) {
+			setStorage(TIMEFRAME_STORAGE_KEY, timeframe);
 			this.load();
 		},
 	},
 	methods: {
 		load() {
 			this.loading = true;
-			this.selectedTopics = [];
 			ajaxGet('/ajax/post', {
 				id: this.$route.params.id,
 				loadContent: true,
+				timeframe: this.timeframe,
 			}).then(response => {
 				this.post = response.post || null;
 				this.parentPost = response.parentPost || null;
@@ -168,6 +187,9 @@ export default {
 				this.hasMoreTopics = true;
 				this.topSubPosts = response.topSubPosts || [];
 				this.totalSubPosts = response.totalSubPosts || 0;
+				if (this.selectedTopics.length > 0) {
+					this.reloadFiltered();
+				}
 			}).finally(() => {
 				this.loading = false;
 			});
@@ -192,6 +214,7 @@ export default {
 				postId: this.post.id,
 				offset: this.topTopics.length,
 				topicIds: this.selectedTopicIds(),
+				timeframe: this.timeframe,
 			}).then(response => {
 				const topics = response.topics || [];
 				this.topTopics.push(...topics);
@@ -204,6 +227,7 @@ export default {
 				postId: this.post.id,
 				offset: this.topSubPosts.length,
 				topicIds: this.selectedTopicIds(),
+				timeframe: this.timeframe,
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topSubPosts.push(...posts);
@@ -234,6 +258,7 @@ export default {
 				postId: this.post.id,
 				offset: 0,
 				topicIds,
+				timeframe: this.timeframe,
 			}).then(response => {
 				const topics = response.topics || [];
 				this.topTopics = topics;
@@ -245,6 +270,7 @@ export default {
 				postId: this.post.id,
 				offset: 0,
 				topicIds,
+				timeframe: this.timeframe,
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topSubPosts = posts;

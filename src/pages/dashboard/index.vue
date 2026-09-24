@@ -43,6 +43,12 @@
 
 		<template v-else>
 
+			<horizontal-controls class="align-start">
+
+				<timeframe-select v-model="timeframe"/>
+
+			</horizontal-controls>
+
 			<h2>Top Topics</h2>
 
 			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row">
@@ -113,6 +119,7 @@
 
 <script>
 import Post from '@/widgets/post.vue';
+import TimeframeSelect, {TIMEFRAME_STORAGE_KEY} from '@/widgets/timeframe-select.vue';
 
 import {
 	ajaxGet,
@@ -124,18 +131,27 @@ import {
 	showError,
 } from '@/utils/notify.js';
 
+import {
+	getStorage,
+	setStorage,
+} from '@/utils/storage.js';
+
+const SELECTED_TOPICS_STORAGE_KEY = 'dashboard.selectedTopics';
+
 export default {
 	components: {
 		Post,
+		TimeframeSelect,
 	},
 	data() {
 		return {
 			loading: true,
+			timeframe: getStorage(TIMEFRAME_STORAGE_KEY, '24h'),
 			topPosts: [],
 			totalPosts: 0,
 			topTopics: [],
 			hasMoreTopics: true,
-			selectedTopics: [],
+			selectedTopics: getStorage(SELECTED_TOPICS_STORAGE_KEY, []),
 
 			showingAddTopic: false,
 			newTopicName: '',
@@ -168,6 +184,13 @@ export default {
 			},
 			deep: true,
 		},
+		timeframe(timeframe) {
+			setStorage(TIMEFRAME_STORAGE_KEY, timeframe);
+			this.loadDashboard();
+		},
+		selectedTopics(selectedTopics) {
+			setStorage(SELECTED_TOPICS_STORAGE_KEY, selectedTopics);
+		},
 	},
 	mounted() {
 		this.loadDashboard();
@@ -178,12 +201,16 @@ export default {
 		},
 		loadDashboard() {
 			this.loading = true;
-			this.selectedTopics = [];
-			ajaxGet('/ajax/dashboard').then(response => {
+			ajaxGet('/ajax/dashboard', {
+				timeframe: this.timeframe,
+			}).then(response => {
 				this.topPosts = response.topPosts || [];
 				this.totalPosts = response.totalPosts || 0;
 				this.topTopics = response.topTopics || [];
 				this.hasMoreTopics = true;
+				if (this.selectedTopics.length > 0) {
+					this.reloadFiltered();
+				}
 			}).finally(() => {
 				this.loading = false;
 			});
@@ -193,6 +220,7 @@ export default {
 				context: 'dashboard',
 				offset: this.topTopics.length,
 				topicIds: this.selectedTopicIds(),
+				timeframe: this.timeframe,
 			}).then(response => {
 				const topics = response.topics || [];
 				this.topTopics.push(...topics);
@@ -204,6 +232,7 @@ export default {
 				context: 'dashboard',
 				offset: this.topPosts.length,
 				topicIds: this.selectedTopicIds(),
+				timeframe: this.timeframe,
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topPosts.push(...posts);
@@ -230,6 +259,7 @@ export default {
 				context: 'dashboard',
 				offset: 0,
 				topicIds,
+				timeframe: this.timeframe,
 			}).then(response => {
 				const topics = response.topics || [];
 				this.topTopics = topics;
@@ -240,6 +270,7 @@ export default {
 				context: 'dashboard',
 				offset: 0,
 				topicIds,
+				timeframe: this.timeframe,
 			}).then(response => {
 				const posts = response.posts || [];
 				this.topPosts = posts;

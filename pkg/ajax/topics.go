@@ -61,6 +61,11 @@ func AjaxLoadTopicsPage(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	cutoff, err := pocket.ParseTimeframe(r.FormValue("timeframe"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
 	var topics []pocket.Topic
 
 	switch r.FormValue("context") {
@@ -70,7 +75,7 @@ func AjaxLoadTopicsPage(db *sql.DB, auth *ajax.Auth,
 		if err != nil {
 			return nil, http.StatusBadRequest
 		}
-		topics, err = pocket.LoadTopTopics(db, auth, offset, selectedTopicIDs)
+		topics, err = pocket.LoadTopTopics(db, auth, offset, selectedTopicIDs, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -100,7 +105,7 @@ func AjaxLoadTopicsPage(db *sql.DB, auth *ajax.Auth,
 		if err != nil {
 			return nil, http.StatusBadRequest
 		}
-		topics, err = pocket.LoadSpaceTopics(db, postID, offset, selectedTopicIDs)
+		topics, err = pocket.LoadSpaceTopics(db, postID, offset, selectedTopicIDs, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
