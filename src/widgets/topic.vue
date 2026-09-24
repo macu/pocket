@@ -48,6 +48,10 @@ export default {
 			type: String,
 			default: '%d',
 		},
+		countOutputSingular: {
+			type: String,
+			default: '%d',
+		},
 		negative: {
 			type: Boolean,
 			default: false,
@@ -80,6 +84,9 @@ export default {
 			return this.count !== null && this.count !== undefined;
 		},
 		formattedCount() {
+			if (this.count === 1) {
+				return this.countOutputSingular.replace('%d', this.count);
+			}
 			return this.countOutput.replace('%d', this.count);
 		},
 		authenticated() {

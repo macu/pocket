@@ -55,6 +55,7 @@
 					size="medium"
 					:count="topic.postCount"
 					count-output="%d posts"
+					count-output-singular="%d post"
 					checkable
 					@check="checkTopic(topic)">
 					{{topic.name}}
