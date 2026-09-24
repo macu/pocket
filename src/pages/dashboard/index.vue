@@ -193,7 +193,14 @@ export default {
 		},
 	},
 	mounted() {
-		this.loadDashboard();
+		if (this.selectedTopics.length > 0) {
+			this.loading = true;
+			this.reloadFiltered().finally(() => {
+				this.loading = false;
+			});
+		} else {
+			this.loadDashboard();
+		}
 	},
 	methods: {
 		selectedTopicIds() {
@@ -241,7 +248,8 @@ export default {
 		},
 		checkTopic(topic) {
 			this.topTopics = this.topTopics.filter(t => t.id !== topic.id);
-			this.selectedTopics.push(topic);
+			// reassign (rather than push) so the selectedTopics watcher fires and persists the change
+			this.selectedTopics = [...this.selectedTopics, topic];
 			this.reloadFiltered();
 		},
 		uncheckTopic(topic) {
@@ -255,7 +263,7 @@ export default {
 		reloadFiltered() {
 			const topicIds = this.selectedTopicIds();
 
-			ajaxGet('/ajax/topics/page', {
+			const topicsPromise = ajaxGet('/ajax/topics/page', {
 				context: 'dashboard',
 				offset: 0,
 				topicIds,
@@ -266,7 +274,7 @@ export default {
 				this.hasMoreTopics = topics.length > 0;
 			});
 
-			ajaxGet('/ajax/posts/page', {
+			const postsPromise = ajaxGet('/ajax/posts/page', {
 				context: 'dashboard',
 				offset: 0,
 				topicIds,
@@ -276,6 +284,8 @@ export default {
 				this.topPosts = posts;
 				this.totalPosts = response.totalPosts || 0;
 			});
+
+			return Promise.all([topicsPromise, postsPromise]);
 		},
 
 		addTopic() {

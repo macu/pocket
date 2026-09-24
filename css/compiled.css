@@ -1,14 +1,614 @@
-.el-input__wrapper,.el-textarea__inner,.el-select__wrapper{background-color:hsla(0,0%,100%,.05);box-shadow:0 0 0 1px hsla(0,0%,100%,.2) inset}.el-input__wrapper:hover,.el-textarea__inner:hover,.el-select__wrapper:hover{box-shadow:0 0 0 1px hsla(0,0%,100%,.4) inset}.el-input.is-focus .el-input__wrapper,.el-textarea__inner:focus,.el-select__wrapper.is-focused{box-shadow:0 0 0 1px #5656d3 inset !important}.el-input__inner,.el-textarea__inner,.el-select__selected-item,.el-select__placeholder{color:#fff}.el-input__inner::placeholder,.el-textarea__inner::placeholder,.el-select__placeholder.is-transparent{color:hsla(0,0%,100%,.5)}.el-input.is-disabled .el-input__wrapper,.el-textarea.is-disabled .el-textarea__inner,.el-select__wrapper.is-disabled{background-color:hsla(0,0%,100%,.03);box-shadow:0 0 0 1px hsla(0,0%,100%,.1) inset}.el-input.is-disabled .el-input__inner,.el-textarea.is-disabled .el-textarea__inner,.el-select__wrapper.is-disabled .el-select__placeholder{color:hsla(0,0%,100%,.3)}.el-select-dropdown{background-color:#5656d3;border-color:hsla(0,0%,100%,.2)}.el-select-dropdown .el-select-dropdown__item{color:#fff}.el-select-dropdown .el-select-dropdown__item.is-hovering{background-color:hsla(0,0%,100%,.1)}.el-select-dropdown .el-select-dropdown__item.is-selected{color:#fff;font-weight:bold}.el-select-dropdown .el-select-dropdown__item.is-disabled{color:hsla(0,0%,100%,.3)}.el-select-dropdown .el-popper__arrow::before{background-color:#5656d3;border-color:hsla(0,0%,100%,.2)}html,body{padding:0;margin:0;background-color:#000}*{box-sizing:border-box}.pre-wrap{white-space:pre-wrap}div.center{display:flex;justify-content:center;align-items:center}.horizontal-scroll{overflow-x:auto}.el-button>span,.el-tag__content,.el-dropdown-menu__item,.el-menu-item,.el-menu-item,.el-sub-menu__title{display:flex;flex-direction:row;align-items:center;column-gap:10px}.el-button>span>.material-icons,.el-tag__content>.material-icons,.el-dropdown-menu__item>.material-icons,.el-menu-item>.material-icons,.el-menu-item>.material-icons,.el-sub-menu__title>.material-icons{font-size:larger}.el-checkbox>.el-checkbox__label,.el-radio>.el-radio__label{white-space:normal;word-break:normal;overflow-wrap:anywhere}.el-checkbox-group{display:flex;flex-direction:row;row-gap:10px;column-gap:5px}.el-checkbox-group .el-checkbox{flex-wrap:nowrap}.el-checkbox-group .el-checkbox>.el-checkbox__label{display:flex;flex-direction:row;flex-wrap:nowrap}.el-alert>.el-alert__content{width:100%;padding-top:10px;padding-bottom:10px}.el-alert>.el-alert__content>.el-alert__title+.el-alert__description{margin-top:10px}.el-alert>.el-alert__content>.el-alert__description{display:flex;flex-direction:column;row-gap:10px;align-items:flex-start;white-space:normal;word-break:normal}.el-alert>.el-alert__content>.el-alert__description>*{margin:0}.el-alert>.el-alert__content>.el-alert__description:empty{display:none}.el-alert>.el-alert__content>.el-alert__description:first-child{margin:0}.el-alert.is-light.el-alert--warning{border:thin solid var(--el-color-warning)}.el-alert.is-light.el-alert--warning .el-alert__description{color:#000}.el-drawer .el-drawer__header{background-color:gray;color:#fff;padding-bottom:var(--el-drawer-padding-primary)}.el-drawer .el-drawer__footer{background-color:gray;color:#fff}.spin{animation-name:spin;animation-duration:2000ms;animation-iteration-count:infinite;animation-timing-function:linear}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.flex-row,.flex-row-sm,.flex-row-md,.flex-row-lg{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center}.flex-row.nowrap,.flex-row-sm.nowrap,.flex-row-md.nowrap,.flex-row-lg.nowrap{flex-wrap:nowrap}.flex-row.flex-inline,.flex-row-sm.flex-inline,.flex-row-md.flex-inline,.flex-row-lg.flex-inline{display:inline-flex}.flex-row>.flex-1,.flex-row-sm>.flex-1,.flex-row-md>.flex-1,.flex-row-lg>.flex-1{flex:1}.flex-row>.flex-100,.flex-row-sm>.flex-100,.flex-row-md>.flex-100,.flex-row-lg>.flex-100{flex-basis:100%}.flex-row>*,.flex-row>.el-button+.el-button,.flex-row-sm>*,.flex-row-sm>.el-button+.el-button,.flex-row-md>*,.flex-row-md>.el-button+.el-button,.flex-row-lg>*,.flex-row-lg>.el-button+.el-button{margin:0}.flex-row>.align-start,.flex-row-sm>.align-start,.flex-row-md>.align-start,.flex-row-lg>.align-start{align-self:flex-start}.flex-row>.align-end,.flex-row-sm>.align-end,.flex-row-md>.align-end,.flex-row-lg>.align-end{align-self:flex-end}.flex-row{row-gap:10px;column-gap:10px}.flex-row-sm{row-gap:5px;column-gap:5px}.flex-row-md{row-gap:10px;column-gap:20px}.flex-row-lg{row-gap:20px;column-gap:40px}.flex-column,.flex-column-sm,.flex-column-md,.flex-column-lg,.flex-column-xl{display:flex;flex-direction:column;align-items:stretch}.flex-column.flex-align-end,.flex-column-sm.flex-align-end,.flex-column-md.flex-align-end,.flex-column-lg.flex-align-end,.flex-column-xl.flex-align-end{align-items:flex-end}.flex-column>*,.flex-column>.el-button+.el-button,.flex-column-sm>*,.flex-column-sm>.el-button+.el-button,.flex-column-md>*,.flex-column-md>.el-button+.el-button,.flex-column-lg>*,.flex-column-lg>.el-button+.el-button,.flex-column-xl>*,.flex-column-xl>.el-button+.el-button{margin:0}.flex-column{row-gap:10px}.flex-column-sm{row-gap:5px}.flex-column-md{row-gap:20px}.flex-column-lg{row-gap:40px}.flex-column-xl{row-gap:60px}.page-width-sm{max-width:600px;margin:0 auto}.page-width-md{max-width:800px;margin:0 auto}.page-width-lg{max-width:1000px;margin:0 auto}.page-width-xl{max-width:1200px;margin:0 auto}
-.pocket-app>header{margin:0;padding:20px;background-color:#e2670f;color:#fff}.pocket-app>header>h1{font-size:2em}.pocket-app>header a:link,.pocket-app>header a:visited{color:#fff}.pocket-app>.body{color:#fff;padding:40px 40px 80px;background:linear-gradient(to bottom, rgb(226, 103, 15), transparent 10px),rgba(0,0,0,0)}.pocket-app>.body a:link,.pocket-app>.body a:visited{color:#fff}.pocket-app.is-mobile>header{padding:10px}.pocket-app.is-mobile>header>h1{font-size:1.5em}.pocket-app.is-mobile>.body{padding:20px 10px 60px}
-.top-post{padding:12px;border-radius:10px;background-color:hsla(0,0%,100%,.1);border:thin solid hsla(0,0%,100%,.15);display:flex;flex-direction:column;row-gap:10px}.top-post.clickable{cursor:pointer}.top-post.size-small{padding:8px;row-gap:6px;font-size:.85em}.top-post.size-medium{padding:12px;row-gap:10px;font-size:1em}.top-post.size-large{padding:20px;row-gap:24px;font-size:1.3em}.top-post .top-post-header{justify-content:space-between;align-items:center}.top-post .top-post-header .top-post-author{font-weight:bold}.top-post .top-post-header .top-post-score{padding:2px 8px;border-radius:10px;background-color:rgba(86,86,211,.2)}.top-post .top-post-text{cursor:pointer;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;line-clamp:5;overflow:hidden}.top-post .top-post-text.expanded{-webkit-line-clamp:unset;line-clamp:unset}
-.dashboard-page{color:#fff}.dashboard-page>.horizontal-controls{padding:10px;border-radius:5px}.dashboard-page .add-topic-form{background-color:#5656d3;color:#fff}.dashboard-page .total-posts{opacity:.7;font-size:.9em}
-.material-symbols-outlined{font-family:"Material Symbols Outlined";font-size:24px}.material-symbols-outlined.large{font-size:48px}.material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 48}
-.topics-input .topics-input-row{align-items:center;position:relative}.topics-input .topics-input-suggestions{position:absolute;top:100%;left:0;z-index:10;margin:4px 0 0;padding:4px 0;list-style:none;min-width:200px;max-height:240px;overflow-y:auto;border-radius:5px;background-color:#5656d3;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}.topics-input .topics-input-suggestions li{padding:8px 12px;cursor:pointer}.topics-input .topics-input-suggestions li:hover,.topics-input .topics-input-suggestions li.active{background-color:hsla(0,0%,100%,.1)}.topics-input .topics-input-tags{flex-wrap:wrap}.topics-input .topics-input-tag{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:thin solid #fff;background-color:#5656d3;color:#fff;line-height:1.2;white-space:nowrap}.topics-input .topics-input-tag .remove-btn{cursor:pointer;font-size:18px}
-.add-post-page{color:#fff}.add-post-page .parent-post-preview{border-radius:5px;background:hsla(0,0%,100%,.04);white-space:pre-wrap;word-break:break-word}
-.post-page{color:#fff}.post-page .add-topic-form{background-color:#5656d3;color:#fff}.post-page .total-posts{opacity:.7;font-size:.9em}.post-page .post-card{border-top:thin solid #fff;border-bottom:thin solid #fff;padding:10px 0}
-.loading-message{font-size:larger}.loading-message.left{justify-content:flex-start}.loading-message.center{justify-content:center}.loading-message.right{justify-content:flex-end}
-.form-layout{align-items:stretch;border:thin solid #fff;padding:12px;border-radius:5px}
-.form-layout-form-field>.title-row,.form-layout-form-field>.tip{padding:0 10px}.form-layout-form-field>.form-field-body{padding:12px 10px;border-top:thin solid #fff;border-radius:5px}.form-layout-form-field>.form-field-body>.form-value{font-size:larger}
-.form-actions{padding:12px;border:thin solid #fff;border-radius:5px}
-.topic{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background-color:#5656d3;color:#fff;line-height:1.2;white-space:nowrap}.topic.negative{background-color:#d35656}.topic.checkable{cursor:pointer}.topic.checked{outline:2px solid #fff;outline-offset:1px}.topic .topic-checkbox{font-size:1.1em}.topic.size-small{padding:4px 8px;border-radius:999px;font-size:.85em;gap:6px}.topic.size-medium{padding:8px 10px;font-size:.95em;gap:8px}.topic.size-large{padding:11px 14px;font-size:1.15rem;gap:10px}.topic .topic-name{display:inline-block}.topic .topic-count{font-weight:bold;background-color:hsla(0,0%,100%,.1);padding:2px 6px;border-radius:6px}.topic .topic-votes{display:inline-flex;align-items:center;gap:4px}.topic .topic-votes .vote-btn{cursor:pointer;font-size:18px;opacity:.6;border-radius:999px}.topic .topic-votes .vote-btn:hover{opacity:.85}.topic .topic-votes .vote-btn.active{opacity:1;color:#fff;padding:4px;background-color:#4caf50}.topic .topic-votes .vote-btn.active.downvote{background-color:#d35656}
+/*!**************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/app.scss ***!
+  \**************************************************************************************************************************************************************/
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.el-input__wrapper:hover,
+.el-textarea__inner:hover,
+.el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+}
+
+.el-input.is-focus .el-input__wrapper,
+.el-textarea__inner:focus,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px rgb(86, 86, 211) inset !important;
+}
+
+.el-input__inner,
+.el-textarea__inner,
+.el-select__selected-item,
+.el-select__placeholder {
+  color: white;
+}
+
+.el-input__inner::placeholder,
+.el-textarea__inner::placeholder,
+.el-select__placeholder.is-transparent {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.el-input.is-disabled .el-input__wrapper,
+.el-textarea.is-disabled .el-textarea__inner,
+.el-select__wrapper.is-disabled {
+  background-color: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.el-input.is-disabled .el-input__inner,
+.el-textarea.is-disabled .el-textarea__inner,
+.el-select__wrapper.is-disabled .el-select__placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.el-select-dropdown {
+  background-color: rgb(86, 86, 211);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.el-select-dropdown .el-select-dropdown__item {
+  color: white;
+}
+.el-select-dropdown .el-select-dropdown__item.is-hovering {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.el-select-dropdown .el-select-dropdown__item.is-selected {
+  color: white;
+  font-weight: bold;
+}
+.el-select-dropdown .el-select-dropdown__item.is-disabled {
+  color: rgba(255, 255, 255, 0.3);
+}
+.el-select-dropdown .el-popper__arrow::before {
+  background-color: rgb(86, 86, 211);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  background-color: black;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.pre-wrap {
+  white-space: pre-wrap;
+}
+
+div.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.horizontal-scroll {
+  overflow-x: auto;
+}
+
+.el-button > span,
+.el-tag__content,
+.el-dropdown-menu__item,
+.el-menu-item,
+.el-menu-item,
+.el-sub-menu__title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 10px;
+}
+.el-button > span > .material-icons,
+.el-tag__content > .material-icons,
+.el-dropdown-menu__item > .material-icons,
+.el-menu-item > .material-icons,
+.el-menu-item > .material-icons,
+.el-sub-menu__title > .material-icons {
+  font-size: larger;
+}
+
+.el-checkbox > .el-checkbox__label, .el-radio > .el-radio__label {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.el-checkbox-group {
+  display: flex;
+  flex-direction: row;
+  row-gap: 10px;
+  column-gap: 5px;
+}
+.el-checkbox-group .el-checkbox {
+  flex-wrap: nowrap;
+}
+.el-checkbox-group .el-checkbox > .el-checkbox__label {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.el-alert > .el-alert__content {
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.el-alert > .el-alert__content > .el-alert__title + .el-alert__description {
+  margin-top: 10px;
+}
+.el-alert > .el-alert__content > .el-alert__description {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  align-items: flex-start;
+  white-space: normal;
+  word-break: normal;
+}
+.el-alert > .el-alert__content > .el-alert__description > * {
+  margin: 0;
+}
+.el-alert > .el-alert__content > .el-alert__description:empty {
+  display: none;
+}
+.el-alert > .el-alert__content > .el-alert__description:first-child {
+  margin: 0;
+}
+.el-alert.is-light.el-alert--warning {
+  border: thin solid var(--el-color-warning);
+}
+.el-alert.is-light.el-alert--warning .el-alert__description {
+  color: black;
+}
+
+.el-drawer .el-drawer__header {
+  background-color: gray;
+  color: white;
+  padding-bottom: var(--el-drawer-padding-primary);
+}
+.el-drawer .el-drawer__footer {
+  background-color: gray;
+  color: white;
+}
+
+.spin {
+  animation-name: spin;
+  animation-duration: 2000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/*!******************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/layouts.scss ***!
+  \******************************************************************************************************************************************************************/
+.flex-row, .flex-row-sm, .flex-row-md, .flex-row-lg {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.flex-row.nowrap, .flex-row-sm.nowrap, .flex-row-md.nowrap, .flex-row-lg.nowrap {
+  flex-wrap: nowrap;
+}
+.flex-row.flex-inline, .flex-row-sm.flex-inline, .flex-row-md.flex-inline, .flex-row-lg.flex-inline {
+  display: inline-flex;
+}
+.flex-row > .flex-1, .flex-row-sm > .flex-1, .flex-row-md > .flex-1, .flex-row-lg > .flex-1 {
+  flex: 1;
+}
+.flex-row > .flex-100, .flex-row-sm > .flex-100, .flex-row-md > .flex-100, .flex-row-lg > .flex-100 {
+  flex-basis: 100%;
+}
+.flex-row > *, .flex-row > .el-button + .el-button, .flex-row-sm > *, .flex-row-sm > .el-button + .el-button, .flex-row-md > *, .flex-row-md > .el-button + .el-button, .flex-row-lg > *, .flex-row-lg > .el-button + .el-button {
+  margin: 0;
+}
+.flex-row > .align-start, .flex-row-sm > .align-start, .flex-row-md > .align-start, .flex-row-lg > .align-start {
+  align-self: flex-start;
+}
+.flex-row > .align-end, .flex-row-sm > .align-end, .flex-row-md > .align-end, .flex-row-lg > .align-end {
+  align-self: flex-end;
+}
+
+.flex-row {
+  row-gap: 10px;
+  column-gap: 10px;
+}
+
+.flex-row-sm {
+  row-gap: 5px;
+  column-gap: 5px;
+}
+
+.flex-row-md {
+  row-gap: 10px;
+  column-gap: 20px;
+}
+
+.flex-row-lg {
+  row-gap: 20px;
+  column-gap: 40px;
+}
+
+.flex-column, .flex-column-sm, .flex-column-md, .flex-column-lg, .flex-column-xl {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.flex-column.flex-align-end, .flex-column-sm.flex-align-end, .flex-column-md.flex-align-end, .flex-column-lg.flex-align-end, .flex-column-xl.flex-align-end {
+  align-items: flex-end;
+}
+.flex-column > *, .flex-column > .el-button + .el-button, .flex-column-sm > *, .flex-column-sm > .el-button + .el-button, .flex-column-md > *, .flex-column-md > .el-button + .el-button, .flex-column-lg > *, .flex-column-lg > .el-button + .el-button, .flex-column-xl > *, .flex-column-xl > .el-button + .el-button {
+  margin: 0;
+}
+
+.flex-column {
+  row-gap: 10px;
+}
+
+.flex-column-sm {
+  row-gap: 5px;
+}
+
+.flex-column-md {
+  row-gap: 20px;
+}
+
+.flex-column-lg {
+  row-gap: 40px;
+}
+
+.flex-column-xl {
+  row-gap: 60px;
+}
+
+.page-width-sm {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-width-md {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-width-lg {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.page-width-xl {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/app.vue?vue&type=style&index=0&id=5ef48958&lang=scss ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.pocket-app > header {
+  margin: 0;
+  padding: 20px;
+  background-color: rgb(226, 103, 15);
+  color: white;
+}
+.pocket-app > header > h1 {
+  font-size: 2em;
+}
+.pocket-app > header a:link, .pocket-app > header a:visited {
+  color: white;
+}
+.pocket-app > .body {
+  color: white;
+  padding: 40px 40px 80px;
+  background: linear-gradient(to bottom, rgb(226, 103, 15), transparent 10px), transparent;
+}
+.pocket-app > .body a:link, .pocket-app > .body a:visited {
+  color: white;
+}
+.pocket-app.is-mobile > header {
+  padding: 10px;
+}
+.pocket-app.is-mobile > header > h1 {
+  font-size: 1.5em;
+}
+.pocket-app.is-mobile > .body {
+  padding: 20px 10px 60px;
+}
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/post.vue?vue&type=style&index=0&id=d2d2ff4e&lang=scss ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.top-post {
+  padding: 12px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: thin solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+}
+.top-post.clickable {
+  cursor: pointer;
+}
+.top-post.size-small {
+  padding: 8px;
+  row-gap: 6px;
+  font-size: 0.85em;
+}
+.top-post.size-medium {
+  padding: 12px;
+  row-gap: 10px;
+  font-size: 1em;
+}
+.top-post.size-large {
+  padding: 20px;
+  row-gap: 24px;
+  font-size: 1.3em;
+}
+.top-post .top-post-header {
+  justify-content: space-between;
+  align-items: center;
+}
+.top-post .top-post-header .top-post-author {
+  font-weight: bold;
+}
+.top-post .top-post-header .top-post-score {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background-color: rgba(86, 86, 211, 0.2);
+}
+.top-post .top-post-text {
+  cursor: pointer;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
+}
+.top-post .top-post-text.expanded {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/dashboard/index.vue?vue&type=style&index=0&id=363a5543&lang=scss ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.dashboard-page {
+  color: white;
+}
+.dashboard-page > .horizontal-controls {
+  padding: 10px;
+  border-radius: 5px;
+}
+.dashboard-page .add-topic-form {
+  background-color: rgb(86, 86, 211);
+  color: white;
+}
+.dashboard-page .total-posts {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-size: 24px;
+}
+.material-symbols-outlined.large {
+  font-size: 48px;
+}
+.material-symbols-outlined.fill {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 48;
+}
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/topics-input.vue?vue&type=style&index=0&id=100c881a&lang=scss ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.topics-input .topics-input-row {
+  align-items: center;
+  position: relative;
+}
+.topics-input .topics-input-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  min-width: 200px;
+  max-height: 240px;
+  overflow-y: auto;
+  border-radius: 5px;
+  background-color: rgb(86, 86, 211);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.topics-input .topics-input-suggestions li {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.topics-input .topics-input-suggestions li:hover, .topics-input .topics-input-suggestions li.active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.topics-input .topics-input-tags {
+  flex-wrap: wrap;
+}
+.topics-input .topics-input-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: thin solid white;
+  background-color: rgb(86, 86, 211);
+  color: white;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.topics-input .topics-input-tag .remove-btn {
+  cursor: pointer;
+  font-size: 18px;
+}
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/posts/add-post.vue?vue&type=style&index=0&id=738a608c&lang=scss ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.add-post-page {
+  color: white;
+}
+.add-post-page .parent-post-preview {
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/posts/post.vue?vue&type=style&index=0&id=698b7640&lang=scss ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.post-page {
+  color: white;
+}
+.post-page .add-topic-form {
+  background-color: rgb(86, 86, 211);
+  color: white;
+}
+.post-page .total-posts {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+.post-page .post-card {
+  border-top: thin solid white;
+  border-bottom: thin solid white;
+  padding: 10px 0;
+}
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/loading-message.vue?vue&type=style&index=0&id=68380766&lang=scss ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.loading-message {
+  font-size: larger;
+}
+.loading-message.left {
+  justify-content: flex-start;
+}
+.loading-message.center {
+  justify-content: center;
+}
+.loading-message.right {
+  justify-content: flex-end;
+}
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-layout.vue?vue&type=style&index=0&id=27e1292a&lang=scss ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-layout {
+  align-items: stretch;
+  border: thin solid white;
+  padding: 12px;
+  border-radius: 5px;
+}
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-field.vue?vue&type=style&index=0&id=09e9792a&lang=scss ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-layout-form-field > .title-row, .form-layout-form-field > .tip {
+  padding: 0 10px;
+}
+.form-layout-form-field > .form-field-body {
+  padding: 12px 10px;
+  border-top: thin solid white;
+  border-radius: 5px;
+}
+.form-layout-form-field > .form-field-body > .form-value {
+  font-size: larger;
+}
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-actions.vue?vue&type=style&index=0&id=8321bca6&lang=scss ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-actions {
+  padding: 12px;
+  border: thin solid white;
+  border-radius: 5px;
+}
+/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/topic.vue?vue&type=style&index=0&id=42c52174&lang=scss ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: rgb(86, 86, 211);
+  color: white;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.topic.negative {
+  background-color: rgb(211, 86, 86);
+}
+.topic.checkable {
+  cursor: pointer;
+}
+.topic.checked {
+  outline: 2px solid white;
+  outline-offset: 1px;
+}
+.topic .topic-checkbox {
+  font-size: 1.1em;
+}
+.topic.size-small {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.85em;
+  gap: 6px;
+}
+.topic.size-medium {
+  padding: 8px 10px;
+  font-size: 0.95em;
+  gap: 8px;
+}
+.topic.size-large {
+  padding: 11px 14px;
+  font-size: 1.15rem;
+  gap: 10px;
+}
+.topic .topic-name {
+  display: inline-block;
+}
+.topic .topic-count {
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.topic .topic-votes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.topic .topic-votes .vote-btn {
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.6;
+  border-radius: 999px;
+}
+.topic .topic-votes .vote-btn:hover {
+  opacity: 0.85;
+}
+.topic .topic-votes .vote-btn.active {
+  opacity: 1;
+  color: white;
+  padding: 4px;
+  background-color: rgb(76, 175, 80);
+}
+.topic .topic-votes .vote-btn.active.downvote {
+  background-color: rgb(211, 86, 86);
+}
