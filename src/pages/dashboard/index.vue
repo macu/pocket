@@ -1,19 +1,7 @@
 <template>
-<div class="dashboard-page flex-column-lg page-width-md">
+<div class="dashboard-page flex-column-lg" :class="isMobile ? 'page-width-md' : 'page-width-xl'">
 
 	<return-to-top/>
-
-	<horizontal-controls v-if="authenticated">
-
-		<el-button @click="addTopic()" type="primary">
-			Add Topic
-		</el-button>
-
-		<el-button @click="createPost()" type="primary">
-			Create Post
-		</el-button>
-
-	</horizontal-controls>
 
 	<div class="flex-column-lg">
 
@@ -41,76 +29,96 @@
 
 		<loading-message v-else-if="loading"/>
 
-		<template v-else>
+		<div v-else class="dashboard-columns" :class="{'is-mobile': isMobile}">
 
-			<horizontal-controls class="align-start">
+			<div ref="columnLeft" class="dashboard-column-left flex-column-lg">
 
-				<timeframe-select v-model="timeframe"/>
+				<horizontal-controls class="align-start">
 
-			</horizontal-controls>
+					<timeframe-select v-model="timeframe"/>
 
-			<h2>Top Topics</h2>
+				</horizontal-controls>
 
-			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row">
-				<topic
-					v-for="topic in selectedTopics"
-					:key="'selected-' + topic.id"
-					size="large"
-					checkable
-					checked
-					@check="uncheckTopic(topic)">
-					{{topic.name}}
-				</topic>
-				<topic
-					v-for="topic in topTopics"
-					:key="topic.id"
-					size="large"
-					:count="topic.postCount"
-					count-output="%d posts"
-					count-output-singular="%d post"
-					checkable
-					@check="checkTopic(topic)">
-					{{topic.name}}
-				</topic>
-				<el-button v-if="showLoadMoreTopics"
-					@click="loadMoreTopics()"
-					type="primary" text size="small">
-					Load More
-				</el-button>
-				<el-button v-if="selectedTopics.length > 0"
-					@click="clearSelectedTopics()"
-					type="warning" text size="small">
-					Clear selected
-				</el-button>
+				<h2>Top Topics</h2>
+
+				<horizontal-controls v-if="authenticated" class="align-start">
+					<el-button @click="addTopic()" type="primary">
+						Add Topic
+					</el-button>
+				</horizontal-controls>
+
+				<div v-if="selectedTopics.length > 0 || topTopics.length > 0" ref="topicsList" class="top-topics flex-row">
+					<topic
+						v-for="topic in selectedTopics"
+						:key="'selected-' + topic.id"
+						size="large"
+						checkable
+						checked
+						@check="uncheckTopic(topic)">
+						{{topic.name}}
+					</topic>
+					<topic
+						v-for="topic in topTopics"
+						:key="topic.id"
+						size="large"
+						:count="topic.postCount"
+						count-output="%d posts"
+						count-output-singular="%d post"
+						checkable
+						@check="checkTopic(topic)">
+						{{topic.name}}
+					</topic>
+					<el-button v-if="showLoadMoreTopics"
+						@click="loadMoreTopics()"
+						type="primary" text size="small">
+						Load More
+					</el-button>
+					<el-button v-if="selectedTopics.length > 0"
+						@click="clearSelectedTopics()"
+						type="warning" text size="small">
+						Clear selected
+					</el-button>
+				</div>
+
+				<p v-else><em>No topics available.</em></p>
+
 			</div>
 
-			<p v-else><em>No topics available.</em></p>
+			<div class="dashboard-column-right flex-column-lg">
 
-			<h2>Top Posts</h2>
+				<h2>Top Posts</h2>
 
-			<p v-if="topPosts.length > 0" class="total-posts">{{totalPosts}} matching posts</p>
+				<horizontal-controls v-if="authenticated" class="align-start">
+					<el-button @click="createPost()" type="primary">
+						Create Post
+					</el-button>
+				</horizontal-controls>
 
-			<div v-if="topPosts.length > 0" class="top-posts flex-column-lg">
-				<post
-					v-for="post in topPosts"
-					:key="post.id"
-					:post="post"
-					clickable
-					:expandable="false"
-					size="medium"
-					@click="openPost(post.id)"
-				/>
+				<p v-if="topPosts.length > 0" class="total-posts">{{totalPosts}} matching posts</p>
 
-				<el-button v-if="showLoadMorePosts"
-					@click="loadMorePosts()"
-					type="primary" size="small">
-					Load More
-				</el-button>
+				<div v-if="topPosts.length > 0" class="top-posts flex-column-lg">
+					<post
+						v-for="post in topPosts"
+						:key="post.id"
+						:post="post"
+						clickable
+						:expandable="false"
+						size="medium"
+						@click="openPost(post.id)"
+					/>
+
+					<el-button v-if="showLoadMorePosts"
+						@click="loadMorePosts()"
+						type="primary" size="small">
+						Load More
+					</el-button>
+				</div>
+
+				<p v-else><em>No posts available.</em></p>
+
 			</div>
 
-			<p v-else><em>No posts available.</em></p>
-
-		</template>
+		</div>
 
 	</div>
 
@@ -161,6 +169,9 @@ export default {
 	computed: {
 		authenticated() {
 			return this.$store.getters.authenticated;
+		},
+		isMobile() {
+			return this.$store.getters.isMobile;
 		},
 		showLoadMoreTopics() {
 			return this.hasMoreTopics &&
@@ -250,15 +261,18 @@ export default {
 			this.topTopics = this.topTopics.filter(t => t.id !== topic.id);
 			// reassign (rather than push) so the selectedTopics watcher fires and persists the change
 			this.selectedTopics = [...this.selectedTopics, topic];
-			this.reloadFiltered();
+			this.reloadFiltered().then(() => this.resetColumnsScroll());
 		},
 		uncheckTopic(topic) {
 			this.selectedTopics = this.selectedTopics.filter(t => t.id !== topic.id);
-			this.reloadFiltered();
+			this.reloadFiltered().then(() => this.resetColumnsScroll());
 		},
 		clearSelectedTopics() {
 			this.selectedTopics = [];
-			this.reloadFiltered();
+			this.reloadFiltered().then(() => this.resetColumnsScroll());
+		},
+		resetColumnsScroll() {
+			// todo
 		},
 		reloadFiltered() {
 			const topicIds = this.selectedTopicIds();
@@ -351,6 +365,39 @@ export default {
 	.total-posts {
 		opacity: 0.7;
 		font-size: 0.9em;
+	}
+
+	.dashboard-columns {
+		display: flex;
+		align-items: flex-start;
+		column-gap: 40px;
+
+		>.dashboard-column-left {
+			flex: 0 0 300px;
+			position: sticky;
+			top: 20px;
+			max-height: calc(100vh - 40px);
+			overflow-y: auto;
+			padding: 5px;
+		}
+
+		>.dashboard-column-right {
+			flex: 1;
+			min-width: 0;
+			padding: 5px;
+		}
+
+		&.is-mobile {
+			flex-direction: column;
+			row-gap: 40px;
+
+			>.dashboard-column-left {
+				flex-basis: auto;
+				position: static;
+				max-height: none;
+				overflow-y: visible;
+			}
+		}
 	}
 
 }
