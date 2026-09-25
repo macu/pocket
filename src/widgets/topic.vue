@@ -160,6 +160,8 @@ export default {
 
 	.topic-name {
 		display: inline-block;
+		white-space: normal;
+		word-break: break-word;
 	}
 
 	.topic-count {

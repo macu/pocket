@@ -610,6 +610,8 @@ div.center {
 }
 .topic .topic-name {
   display: inline-block;
+  white-space: normal;
+  word-break: break-word;
 }
 .topic .topic-count {
   font-weight: bold;
