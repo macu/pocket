@@ -3,10 +3,10 @@ package pocket
 const MaxTopicPageSize = 20
 const MaxTopicLength = 50
 const MaxTopicSearchResults = 10
-const MaxNewPostTopics = 50
 
 const MaxPostPageSize = 20
 const MaxPostLength = 1024
+const MaxNewPostTopics = 20
 
 const (
 	VoteTypeUpvote   = "upvote"

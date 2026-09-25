@@ -1,7 +1,10 @@
 <template>
-<el-tooltip effect="dark" :content="tooltipString" placement="bottom-start">
+<el-tooltip v-if="ago" effect="dark"
+	:content="tooltipString"
+	placement="top-start">
 	<span class="moment" v-text="displayString"/>
 </el-tooltip>
+<span v-else class="moment" v-text="displayString"/>
 </template>
 
 <script>
@@ -13,13 +16,25 @@ export default {
 			type: String,
 			required: true,
 		},
+		ago: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	computed: {
-		displayString() {
+		displayAgo() {
 			return moment(this.time).fromNow();
 		},
-		tooltipString() {
+		displayFormatted() {
 			return moment(this.time).format('YYYY-MM-DD HH:mm:ss');
+		},
+		displayString() {
+			return this.ago
+				? this.displayAgo
+				: this.displayFormatted;
+		},
+		tooltipString() {
+			return this.displayFormatted;
 		},
 	},
 };

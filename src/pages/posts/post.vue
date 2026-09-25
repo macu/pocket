@@ -16,6 +16,7 @@
 
 		<form-layout v-if="showAddTopicForm" title="Add topics" class="add-topic-form">
 			<form-field title="Topic names">
+				<template #tip><small>Add topics to this post (max {{ $const.maxNewPostTopics }}).</small></template>
 				<topics-input ref="addTopicInput" v-model="newTopics" :max="$const.maxNewPostTopics"/>
 			</form-field>
 			<form-actions>
@@ -39,7 +40,10 @@
 
 			<horizontal-controls class="align-start">
 
-				<timeframe-select v-model="timeframe"/>
+				<div class="flex-column-sm">
+					<small>Find posts created within:</small>
+					<timeframe-select v-model="timeframe"/>
+				</div>
 
 			</horizontal-controls>
 
@@ -77,7 +81,7 @@
 					Clear selected
 				</el-button>
 			</div>
-			<p v-else><em>No topics available.</em></p>
+			<p v-else class="no-topics"><em>No topics available.</em></p>
 
 			<h3>Top Sub-Posts</h3>
 
@@ -89,7 +93,7 @@
 					Load More
 				</el-button>
 			</div>
-			<p v-else><em>No sub-posts available.</em></p>
+			<p v-else class="no-sub-posts"><em>No sub-posts available.</em></p>
 
 		</template>
 
@@ -111,6 +115,10 @@ import {
 	getStorage,
 	setStorage,
 } from '@/utils/storage.js';
+
+import {
+	alertSuccess,
+} from '@/utils/notify.js';
 
 export default {
 	components: {
@@ -292,6 +300,7 @@ export default {
 				this.newTopics = [];
 				this.post = response.post || this.post;
 				this.showAddTopicForm = false;
+				alertSuccess('Topics added. Thanks!');
 			});
 		},
 		goToAddSubPost() {
@@ -318,7 +327,7 @@ export default {
 		color: $topic-fg-color;
 	}
 
-	.total-posts {
+	.total-posts, .no-topics, .no-sub-posts {
 		opacity: 0.7;
 		font-size: 0.9em;
 	}
@@ -328,5 +337,6 @@ export default {
 		border-bottom: thin solid white;
 		padding: 10px 0;
 	}
+
 }
 </style>

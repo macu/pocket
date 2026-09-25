@@ -8,11 +8,14 @@
 	</form-field>
 
 	<form-field title="Post text" required>
-		<el-input v-model="text" type="textarea" size="large" :maxlength="$const.postMaxLength"
+		<el-input v-model="text" type="textarea" size="large"
+			:maxlength="$const.postMaxLength"
+			show-word-limit
 			autocapitalize="sentences" :rows="6"/>
 	</form-field>
 
 	<form-field title="Topics">
+		<template #tip><small>Add topics to this post (max {{ $const.maxNewPostTopics }}).</small></template>
 		<topics-input v-model="topics" :max="$const.maxNewPostTopics"/>
 	</form-field>
 

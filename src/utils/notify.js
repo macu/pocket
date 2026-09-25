@@ -4,6 +4,9 @@ export function alertSuccess(message) {
 	ElMessage({
 		message,
 		type: 'success',
+		showClose: true,
+		duration: 2 * 1000,
+		plain: true,
 	});
 }
 
@@ -13,6 +16,7 @@ export function showLoading(message) {
 		type: 'info',
 		duration: 0,
 		closable: false,
+		plain: true,
 	});
 }
 
@@ -22,5 +26,6 @@ export function showError(message) {
 		type: 'error',
 		showClose: true,
 		duration: 10 * 1000,
+		plain: true,
 	});
 }

@@ -10,6 +10,7 @@
 			<form-layout class="add-topic-form" title="Add topic">
 
 				<form-field title="Topic name">
+					<template #tip><small>Add a topic for others to use on their posts.</small></template>
 					<el-input v-model="newTopicName" type="text" :maxlength="$const.maxTopicLength"
 						autocapitalize="words"
 						@keyup.enter.native="submitAddTopic()"
@@ -35,7 +36,10 @@
 
 				<horizontal-controls class="align-start">
 
-					<timeframe-select v-model="timeframe"/>
+					<div class="flex-column-sm">
+						<small>Find posts created within:</small>
+						<timeframe-select v-model="timeframe"/>
+					</div>
 
 				</horizontal-controls>
 
@@ -80,7 +84,7 @@
 					</el-button>
 				</div>
 
-				<p v-else><em>No topics available.</em></p>
+				<p v-else class="no-topics"><em>No topics available.</em></p>
 
 			</div>
 
@@ -114,7 +118,7 @@
 					</el-button>
 				</div>
 
-				<p v-else><em>No posts available.</em></p>
+				<p v-else class="no-sub-posts"><em>No posts available.</em></p>
 
 			</div>
 
@@ -331,7 +335,7 @@ export default {
 				}
 				this.showingAddTopic = false;
 				this.newTopicName = '';
-				alertSuccess('Topic added.');
+				alertSuccess('Topic added. Thanks!');
 			}).finally(() => {
 				this.addTopicLoading = false;
 			});
@@ -362,7 +366,7 @@ export default {
 		color: $topic-fg-color;
 	}
 
-	.total-posts {
+	.total-posts, .no-topics, .no-sub-posts {
 		opacity: 0.7;
 		font-size: 0.9em;
 	}

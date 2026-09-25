@@ -5,9 +5,13 @@
 			{{post.authorDisplayName}}
 			<small v-if="post.authorHandle">@{{post.authorHandle}}</small>
 		</div>
+		<small v-if="post.createdAt">
+			&emsp;posted
+			<moment :time="post.createdAt" ago/>
+		</small>
 		<div class="top-post-score">{{post.totalTopicScore}}</div>
 	</div>
-	<div class="topic-list flex-row">
+	<div v-if="showTopics" class="topic-list flex-row">
 		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
 			{{topic.name}}
 		</topic>
@@ -56,6 +60,9 @@ export default {
 	computed: {
 		sizeClass() {
 			return 'size-' + this.size;
+		},
+		showTopics() {
+			return this.post.topics && this.post.topics.length > 0;
 		},
 		showLoadMoreTopics() {
 			return this.hasMoreTopics &&
@@ -109,6 +116,8 @@ export default {
 </script>
 
 <style lang="scss">
+@import '@/styles/vars.scss';
+
 .top-post {
 	padding: 12px;
 	border-radius: 10px;
@@ -118,38 +127,17 @@ export default {
 	flex-direction: column;
 	row-gap: 10px;
 
-	&.clickable {
-		cursor: pointer;
-	}
-
-	&.size-small {
-		padding: 8px;
-		row-gap: 6px;
-		font-size: 0.85em;
-	}
-
-	&.size-medium {
-		padding: 12px;
-		row-gap: 10px;
-		font-size: 1em;
-	}
-
-	&.size-large {
-		padding: 20px;
-		row-gap: 24px;
-		font-size: 1.3em;
-	}
-
 	.top-post-header {
-		justify-content: space-between;
 		align-items: center;
 		.top-post-author {
+			flex: 1;
 			font-weight: bold;
 		}
 		.top-post-score {
 			padding: 2px 8px;
 			border-radius: 10px;
-			background-color: rgba(86, 86, 211, 0.2);
+			background-color: $el-dropdown-fg-color;
+			color: $el-focus-color;
 		}
 	}
 
@@ -167,5 +155,49 @@ export default {
 			line-clamp: unset;
 		}
 	}
+
+	&.clickable {
+		cursor: pointer;
+	}
+
+	&.size-small {
+		padding: 8px;
+		row-gap: 6px;
+		font-size: 0.85em;
+
+		.top-post-header {
+			.top-post-score {
+				padding: 2px 8px;
+				border-radius: 10px;
+			}
+		}
+	}
+
+	&.size-medium {
+		padding: 12px;
+		row-gap: 10px;
+		font-size: 1em;
+
+		.top-post-header {
+			.top-post-score {
+				padding: 3px 10px;
+				border-radius: 11px;
+			}
+		}
+	}
+
+	&.size-large {
+		padding: 20px;
+		row-gap: 24px;
+		font-size: 1.3em;
+
+		.top-post-header {
+			.top-post-score {
+				padding: 4px 12px;
+				border-radius: 12px;
+			}
+		}
+	}
+
 }
 </style>
