@@ -61,22 +61,24 @@
 						@check="uncheckTopic(topic)">
 						{{topic.name}}
 					</topic>
-					<topic
-						v-for="topic in uniqueTopTopics"
-						:key="topic.id"
-						size="large"
-						:count="topic.postCount"
-						count-output="%d posts"
-						count-output-singular="%d post"
-						checkable
-						@check="checkTopic(topic)">
-						{{topic.name}}
-					</topic>
-					<el-button v-if="showLoadMoreTopics"
-						@click="loadMoreTopics()"
-						type="primary" text size="small">
-						Load More
-					</el-button>
+					<template v-if="!topicSelectionLimitReached">
+						<topic
+							v-for="topic in uniqueTopTopics"
+							:key="topic.id"
+							size="large"
+							:count="topic.postCount"
+							count-output="%d posts"
+							count-output-singular="%d post"
+							checkable
+							@check="checkTopic(topic)">
+							{{topic.name}}
+						</topic>
+						<el-button v-if="showLoadMoreTopics"
+							@click="loadMoreTopics()"
+							type="primary" text size="small">
+							Load More
+						</el-button>
+					</template>
 					<el-button v-if="selectedTopics.length > 0"
 						@click="clearSelectedTopics()"
 						type="warning" text size="small">
@@ -180,12 +182,16 @@ export default {
 			return this.$store.getters.isMobile;
 		},
 		showLoadMoreTopics() {
-			return this.hasMoreTopics &&
+			return !this.topicSelectionLimitReached &&
+				this.hasMoreTopics &&
 				this.topTopics.length > 0 &&
 				this.topTopics.length % this.$const.maxTopicPageSize === 0;
 		},
 		showLoadMorePosts() {
 			return this.topPosts.length < this.totalPosts;
+		},
+		topicSelectionLimitReached() {
+			return this.selectedTopics.length >= this.$const.maxTopicSelectionCount;
 		},
 		// dedupe by id since pagination offsets can shift as votes reorder results between page loads
 		uniqueTopTopics() {
@@ -249,6 +255,9 @@ export default {
 			});
 		},
 		loadMoreTopics() {
+			if (this.topicSelectionLimitReached) {
+				return;
+			}
 			ajaxGet('/ajax/topics/page', {
 				context: 'dashboard',
 				offset: this.topTopics.length,
@@ -273,6 +282,9 @@ export default {
 			});
 		},
 		checkTopic(topic) {
+			if (this.topicSelectionLimitReached) {
+				return;
+			}
 			this.topTopics = this.topTopics.filter(t => t.id !== topic.id);
 			// reassign (rather than push) so the selectedTopics watcher fires and persists the change
 			this.selectedTopics = [...this.selectedTopics, topic];
@@ -292,16 +304,23 @@ export default {
 		reloadFiltered() {
 			const topicIds = this.selectedTopicIds();
 
-			const topicsPromise = ajaxGet('/ajax/topics/page', {
-				context: 'dashboard',
-				offset: 0,
-				topicIds,
-				timeframe: this.timeframe,
-			}).then(response => {
-				const topics = response.topics || [];
-				this.topTopics = topics;
-				this.hasMoreTopics = topics.length > 0;
-			});
+			// once the selection limit is reached, don't load any more co-topics to choose from
+			let topicsPromise = Promise.resolve();
+			if (this.topicSelectionLimitReached) {
+				this.topTopics = [];
+				this.hasMoreTopics = false;
+			} else {
+				topicsPromise = ajaxGet('/ajax/topics/page', {
+					context: 'dashboard',
+					offset: 0,
+					topicIds,
+					timeframe: this.timeframe,
+				}).then(response => {
+					const topics = response.topics || [];
+					this.topTopics = topics;
+					this.hasMoreTopics = topics.length > 0;
+				});
+			}
 
 			const postsPromise = ajaxGet('/ajax/posts/page', {
 				context: 'dashboard',
