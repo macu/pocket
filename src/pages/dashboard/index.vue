@@ -148,6 +148,8 @@ import {
 	setStorage,
 } from '@/utils/storage.js';
 
+import {PRESELECTED_TOPICS_STORAGE_KEY} from '@/pages/posts/add-post.vue';
+
 const SELECTED_TOPICS_STORAGE_KEY = 'dashboard.selectedTopics';
 
 export default {
@@ -353,6 +355,7 @@ export default {
 			this.$router.push({name: 'post', params: {id: postId}});
 		},
 		createPost() {
+			setStorage(PRESELECTED_TOPICS_STORAGE_KEY, this.selectedTopics.map(topic => topic.name));
 			this.$router.push({name: 'add-post'});
 		},
 	},

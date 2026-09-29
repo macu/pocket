@@ -20,3 +20,9 @@ export function setStorage(key, value) {
 		window.sessionStorage.setItem(key, JSON.stringify(value));
 	}
 }
+
+export function removeStorage(key) {
+	if (window.sessionStorage) {
+		window.sessionStorage.removeItem(key);
+	}
+}

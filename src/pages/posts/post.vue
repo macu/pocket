@@ -120,6 +120,8 @@ import {
 	alertSuccess,
 } from '@/utils/notify.js';
 
+import {PRESELECTED_TOPICS_STORAGE_KEY} from '@/pages/posts/add-post.vue';
+
 export default {
 	components: {
 		PostWidget,
@@ -313,6 +315,7 @@ export default {
 			});
 		},
 		goToAddSubPost() {
+			setStorage(PRESELECTED_TOPICS_STORAGE_KEY, this.selectedTopics.map(topic => topic.name));
 			this.$router.push({
 				name: 'add-post',
 				query: {parentId: this.post.id},

@@ -36,6 +36,13 @@ import {
 	ajaxPost,
 } from '@/utils/ajax.js';
 
+import {
+	getStorage,
+	removeStorage,
+} from '@/utils/storage.js';
+
+export const PRESELECTED_TOPICS_STORAGE_KEY = 'add-post.preselectedTopics';
+
 export default {
 	components: {
 		PostWidget,
@@ -60,6 +67,8 @@ export default {
 		if (this.parentId) {
 			this.loadParentPost();
 		}
+		this.topics = getStorage(PRESELECTED_TOPICS_STORAGE_KEY, []);
+		removeStorage(PRESELECTED_TOPICS_STORAGE_KEY);
 	},
 	methods: {
 		loadParentPost() {
