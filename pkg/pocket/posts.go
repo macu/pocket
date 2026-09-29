@@ -486,5 +486,54 @@ func EnsureTopicOnPost(conn db.DBConn, postID uint, topicName string, createdBy 
 		}
 	}
 
+	// Auto-upvote the topic on behalf of the user adding it, whether it's
+	// newly added to the post or already there.
+	if err := ensureUserUpvote(conn, postID, topic.ID, createdBy); err != nil {
+		return Topic{}, err
+	}
+
+	err = conn.QueryRow(`
+		SELECT pts.sum, ptv.vote_type FROM post_topic_sum pts
+		LEFT JOIN post_topic_vote ptv
+			ON ptv.post_id = pts.post_id AND ptv.topic_id = pts.topic_id AND ptv.user_id = $3
+		WHERE pts.post_id = $1 AND pts.topic_id = $2
+	`, postID, topic.ID, createdBy).Scan(&topic.Sum, &topic.UserVote)
+	if err != nil {
+		return Topic{}, fmt.Errorf("loading topic sum after upvote: %w", err)
+	}
+
 	return topic, nil
+}
+
+// ensureUserUpvote makes sure userID has an upvote recorded against topicID
+// on postID, inserting one and updating the topic's vote sum if they don't
+// already have any vote there.
+func ensureUserUpvote(conn db.DBConn, postID uint, topicID uint, userID uint) error {
+	var voteExists bool
+	if err := conn.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1 FROM post_topic_vote WHERE post_id = $1 AND topic_id = $2 AND user_id = $3
+		)
+	`, postID, topicID, userID).Scan(&voteExists); err != nil {
+		return fmt.Errorf("checking existing vote: %w", err)
+	}
+	if voteExists {
+		return nil
+	}
+
+	if _, err := conn.Exec(`
+		INSERT INTO post_topic_vote (post_id, user_id, topic_id, vote_type, created_at)
+		VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+	`, postID, userID, topicID, VoteTypeUpvote); err != nil {
+		return fmt.Errorf("auto-upvoting topic: %w", err)
+	}
+	if _, err := conn.Exec(`
+		UPDATE post_topic_sum SET
+			upvotes = upvotes + 1,
+			sum = sum + 1
+		WHERE post_id = $1 AND topic_id = $2
+	`, postID, topicID); err != nil {
+		return fmt.Errorf("updating topic sum after auto-upvote: %w", err)
+	}
+	return nil
 }
