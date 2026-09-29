@@ -60,7 +60,7 @@
 					{{topic.name}}
 				</topic>
 				<topic
-					v-for="topic in topTopics"
+					v-for="topic in uniqueTopTopics"
 					:key="topic.id"
 					size="medium"
 					:count="topic.postCount"
@@ -88,7 +88,7 @@
 			<p v-if="topSubPosts.length > 0" class="total-posts">{{totalSubPosts}} matching posts</p>
 
 			<div v-if="topSubPosts.length" class="top-sub-posts flex-column-md">
-				<post-widget v-for="subPost in topSubPosts" :key="subPost.id" :post="subPost" clickable size="medium" @click="openPost(subPost.id)" />
+				<post-widget v-for="subPost in uniqueTopSubPosts" :key="subPost.id" :post="subPost" clickable size="medium" @click="openPost(subPost.id)" />
 				<el-button v-if="showLoadMoreSubPosts" @click="loadMoreSubPosts()" type="primary">
 					Load More
 				</el-button>
@@ -163,6 +163,15 @@ export default {
 		},
 		showLoadMoreSubPosts() {
 			return this.topSubPosts.length < this.totalSubPosts;
+		},
+		// dedupe by id since pagination offsets can shift as votes reorder results between page loads
+		uniqueTopTopics() {
+			const seen = new Set();
+			return this.topTopics.filter(topic => (seen.has(topic.id) ? false : seen.add(topic.id)));
+		},
+		uniqueTopSubPosts() {
+			const seen = new Set();
+			return this.topSubPosts.filter(post => (seen.has(post.id) ? false : seen.add(post.id)));
 		},
 		postId() {
 			return this.$route.params.id;

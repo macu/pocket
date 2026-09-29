@@ -9,7 +9,11 @@
 			&emsp;posted
 			<moment :time="post.createdAt" ago/>
 		</small>
-		<div class="top-post-score">{{post.totalTopicScore}}</div>
+		<div class="top-post-score">
+			<el-tooltip content="Total topic upvotes" placement="top">
+				<span>{{post.totalTopicScore}}</span>
+			</el-tooltip>
+		</div>
 	</div>
 	<div v-if="showTopics" class="topic-list flex-row">
 		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">

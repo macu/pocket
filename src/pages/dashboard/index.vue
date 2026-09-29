@@ -62,7 +62,7 @@
 						{{topic.name}}
 					</topic>
 					<topic
-						v-for="topic in topTopics"
+						v-for="topic in uniqueTopTopics"
 						:key="topic.id"
 						size="large"
 						:count="topic.postCount"
@@ -102,7 +102,7 @@
 
 				<div v-if="topPosts.length > 0" class="top-posts flex-column-lg">
 					<post
-						v-for="post in topPosts"
+						v-for="post in uniqueTopPosts"
 						:key="post.id"
 						:post="post"
 						clickable
@@ -184,6 +184,15 @@ export default {
 		},
 		showLoadMorePosts() {
 			return this.topPosts.length < this.totalPosts;
+		},
+		// dedupe by id since pagination offsets can shift as votes reorder results between page loads
+		uniqueTopTopics() {
+			const seen = new Set();
+			return this.topTopics.filter(topic => (seen.has(topic.id) ? false : seen.add(topic.id)));
+		},
+		uniqueTopPosts() {
+			const seen = new Set();
+			return this.topPosts.filter(post => (seen.has(post.id) ? false : seen.add(post.id)));
 		},
 		addTopicDisabled() {
 			return this.addTopicLoading || !this.newTopicName.trim();
