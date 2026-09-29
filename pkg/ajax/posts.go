@@ -285,6 +285,7 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 		if err != nil {
 			return nil, http.StatusBadRequest
 		}
+		selectedTopicIDs = pocket.LimitTopicSelection(selectedTopicIDs)
 		posts, err = pocket.LoadTopPosts(db, auth, offset, selectedTopicIDs, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)
@@ -305,6 +306,7 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 		if err != nil {
 			return nil, http.StatusBadRequest
 		}
+		selectedTopicIDs = pocket.LimitTopicSelection(selectedTopicIDs)
 		posts, err = pocket.LoadTopSubPosts(db, auth, postID, offset, selectedTopicIDs, cutoff)
 		if err != nil {
 			logging.LogError(r, auth, err)

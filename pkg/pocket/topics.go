@@ -142,6 +142,10 @@ func SearchTopics(conn *sql.DB, query string) ([]Topic, error) {
 // are considered.
 func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scopePostID *uint, cutoff *time.Time) ([]Topic, error) {
 
+	if len(selectedTopicIDs) > MaxTopicSelectionCount {
+		return nil, nil
+	}
+
 	var topics []Topic
 	pageSize := MaxTopicPageSize
 
