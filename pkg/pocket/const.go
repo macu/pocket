@@ -3,7 +3,7 @@ package pocket
 const MaxTopicPageSize = 20
 const MaxTopicLength = 50
 const MaxTopicSearchResults = 10
-const MaxTopicSelectionCount = 5
+const MaxTopicSelectionCount = 20
 
 const MaxPostPageSize = 20
 const MaxPostLength = 1024

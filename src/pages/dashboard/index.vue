@@ -53,11 +53,22 @@
 
 				<h2>Top Topics</h2>
 
-				<horizontal-controls v-if="authenticated" class="align-start">
-					<el-button @click="addTopic()" type="primary">
+				<horizontal-controls v-if="authenticated || !topicSelectionLimitReached" class="align-start">
+					<el-button v-if="authenticated" @click="addTopic()" type="primary">
 						Add Topic
 					</el-button>
+					<el-button v-if="!topicSelectionLimitReached" @click="toggleTopicSearch()" type="primary">
+						Search Topics
+					</el-button>
 				</horizontal-controls>
+
+				<div v-if="showTopicSearch && !topicSelectionLimitReached" class="dashboard-topic-search">
+					<topic-search
+						v-model="topicSearchQuery"
+						:exclude-ids="selectedTopics.map(topic => topic.id)"
+						@select="selectSearchTopic"
+					/>
+				</div>
 
 				<div v-if="selectedTopics.length > 0 || topTopics.length > 0" ref="topicsList" class="top-topics flex-row">
 					<topic
@@ -141,6 +152,7 @@
 
 <script>
 import Post from '@/widgets/post.vue';
+import TopicSearch from '@/widgets/topic-search.vue';
 import TimeframeSelect, {TIMEFRAME_STORAGE_KEY} from '@/widgets/timeframe-select.vue';
 
 import {
@@ -165,6 +177,7 @@ const SELECTED_TOPICS_STORAGE_KEY = 'dashboard.selectedTopics';
 export default {
 	components: {
 		Post,
+		TopicSearch,
 		TimeframeSelect,
 	},
 	data() {
@@ -180,6 +193,8 @@ export default {
 			showingAddTopic: false,
 			newTopicName: '',
 			addTopicLoading: false,
+			showTopicSearch: false,
+			topicSearchQuery: '',
 			matchingTopics: [],
 			topicSearchLoading: false,
 			topicSearchTimeout: null,
@@ -249,6 +264,17 @@ export default {
 	methods: {
 		selectedTopicIds() {
 			return this.selectedTopics.map(topic => topic.id).join(',');
+		},
+		selectSearchTopic(topic) {
+			this.topicSearchQuery = '';
+			this.showTopicSearch = false;
+			this.checkTopic(topic);
+		},
+		toggleTopicSearch() {
+			this.showTopicSearch = !this.showTopicSearch;
+			if (!this.showTopicSearch) {
+				this.topicSearchQuery = '';
+			}
 		},
 		loadDashboard() {
 			this.loading = true;
