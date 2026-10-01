@@ -13,8 +13,16 @@
 					<template #tip><small>Add a topic for others to use on their posts.</small></template>
 					<el-input v-model="newTopicName" type="text" :maxlength="$const.maxTopicLength"
 						autocapitalize="words"
+						@input="scheduleTopicSearch()"
 						@keyup.enter.native="submitAddTopic()"
 					/>
+					<div v-if="topicSearchLoading || matchingTopics.length > 0" class="matching-topics">
+						<small>Existing topics:</small>
+						<p v-if="topicSearchLoading"><em>Searching...</em></p>
+						<ul v-else>
+							<li v-for="topic in matchingTopics" :key="topic.id">{{topic.name}}</li>
+						</ul>
+					</div>
 				</form-field>
 
 				<form-actions>
@@ -172,6 +180,10 @@ export default {
 			showingAddTopic: false,
 			newTopicName: '',
 			addTopicLoading: false,
+			matchingTopics: [],
+			topicSearchLoading: false,
+			topicSearchTimeout: null,
+			topicSearchRequestId: 0,
 		};
 	},
 	computed: {
@@ -339,8 +351,39 @@ export default {
 		addTopic() {
 			this.showingAddTopic = true;
 			this.newTopicName = '';
+			this.clearTopicSearch();
+		},
+		scheduleTopicSearch() {
+			clearTimeout(this.topicSearchTimeout);
+			const requestId = ++this.topicSearchRequestId;
+			const query = this.newTopicName.trim();
+			this.matchingTopics = [];
+			this.topicSearchLoading = Boolean(query);
+			if (!query) {
+				return;
+			}
+			this.topicSearchTimeout = setTimeout(() => {
+				ajaxGet('/ajax/topics/search', {query}).then(response => {
+					if (requestId === this.topicSearchRequestId) {
+						this.matchingTopics = response.topics || [];
+					}
+				}).catch(() => {
+					// ajaxGet already displays a request error.
+				}).finally(() => {
+					if (requestId === this.topicSearchRequestId) {
+						this.topicSearchLoading = false;
+					}
+				});
+			}, 250);
+		},
+		clearTopicSearch() {
+			clearTimeout(this.topicSearchTimeout);
+			this.topicSearchRequestId++;
+			this.matchingTopics = [];
+			this.topicSearchLoading = false;
 		},
 		cancelAddTopic() {
+			this.clearTopicSearch();
 			this.showingAddTopic = false;
 			this.newTopicName = '';
 			this.addTopicLoading = false;
