@@ -47,7 +47,7 @@
 
 			</horizontal-controls>
 
-			<h3>Top Topics in this Space</h3>
+			<h3>Top topics in this space</h3>
 
 			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row-md">
 				<topic
@@ -85,14 +85,14 @@
 			</div>
 			<p v-else class="no-topics"><em>No topics available.</em></p>
 
-			<h3>Top Sub-Posts</h3>
+			<h3>Top sub-posts</h3>
 
 			<p v-if="topSubPosts.length > 0" class="total-posts">{{totalSubPosts}} matching posts</p>
 
 			<div v-if="topSubPosts.length" class="top-sub-posts flex-column-md">
 				<post-widget v-for="subPost in uniqueTopSubPosts" :key="subPost.id" :post="subPost" clickable size="medium" @click="openPost(subPost.id)" />
 				<el-button v-if="showLoadMoreSubPosts" @click="loadMoreSubPosts()" type="primary">
-					Load More
+					Load more
 				</el-button>
 			</div>
 			<p v-else class="no-sub-posts"><em>No sub-posts available.</em></p>

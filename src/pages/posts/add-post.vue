@@ -1,5 +1,5 @@
 <template>
-<form-layout class="add-post-page page-width-md" title="Add post">
+<form-layout class="add-post-page page-width-md" title="Create post">
 
 	<form-field v-if="parentPost" title="Replying to">
 		<div class="parent-post-preview">

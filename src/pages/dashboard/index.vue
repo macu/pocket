@@ -7,10 +7,10 @@
 
 		<template v-if="showingAddTopic">
 
-			<form-layout class="add-topic-form" title="Add topic">
+			<form-layout class="add-topic-form" title="Create topic">
 
 				<form-field title="Topic name">
-					<template #tip><small>Add a topic for others to use on their posts.</small></template>
+					<template #tip><small>Create a topic for others to use on their posts.</small></template>
 					<el-input v-model="newTopicName" type="text" :maxlength="$const.maxTopicLength"
 						autocapitalize="words"
 						@input="scheduleTopicSearch()"
@@ -27,9 +27,11 @@
 
 				<form-actions>
 					<el-button @click="submitAddTopic()" :disabled="addTopicDisabled" type="primary">
-						Save Topic
+						Create
 					</el-button>
-					<el-button @click="cancelAddTopic()" :disabled="cancelAddTopicDisabled">Cancel</el-button>
+					<el-button @click="cancelAddTopic()" :disabled="cancelAddTopicDisabled">
+						Cancel
+					</el-button>
 				</form-actions>
 
 			</form-layout>
@@ -51,14 +53,14 @@
 
 				</horizontal-controls>
 
-				<h2>Top Topics</h2>
+				<h2>Top topics</h2>
 
 				<horizontal-controls v-if="authenticated || !topicSelectionLimitReached" class="align-start">
 					<el-button v-if="authenticated" @click="addTopic()" type="primary">
-						Add Topic
+						Create topic
 					</el-button>
 					<el-button v-if="!topicSelectionLimitReached" @click="toggleTopicSearch()" type="primary">
-						Search Topics
+						Search topics
 					</el-button>
 				</horizontal-controls>
 
@@ -95,7 +97,7 @@
 						<el-button v-if="showLoadMoreTopics"
 							@click="loadMoreTopics()"
 							type="primary" text size="small">
-							Load More
+							Load more
 						</el-button>
 					</template>
 					<el-button v-if="selectedTopics.length > 0"
@@ -111,11 +113,11 @@
 
 			<div class="dashboard-column-right flex-column-lg">
 
-				<h2>Top Posts</h2>
+				<h2>Top posts</h2>
 
 				<horizontal-controls v-if="authenticated" class="align-start">
 					<el-button @click="createPost()" type="primary">
-						Create Post
+						Create post
 					</el-button>
 				</horizontal-controls>
 
@@ -135,7 +137,7 @@
 					<el-button v-if="showLoadMorePosts"
 						@click="loadMorePosts()"
 						type="primary" size="small">
-						Load More
+						Load more
 					</el-button>
 				</div>
 
