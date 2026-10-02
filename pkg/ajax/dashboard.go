@@ -17,6 +17,7 @@ func AjaxLoadDashboard(db *sql.DB, auth *ajax.Auth,
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
+	mostRecent := pocket.IsMostRecentTimeframe(r.FormValue("timeframe"))
 
 	topTopics, err := pocket.LoadTopTopics(db, auth, 0, nil, cutoff)
 	if err != nil {
@@ -24,7 +25,7 @@ func AjaxLoadDashboard(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	topPosts, err := pocket.LoadTopPosts(db, auth, 0, nil, cutoff)
+	topPosts, err := pocket.LoadTopPosts(db, auth, 0, nil, cutoff, mostRecent, nil)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError

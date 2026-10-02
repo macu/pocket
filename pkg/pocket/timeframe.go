@@ -7,14 +7,19 @@ import (
 	"pocket/pkg/utils/db"
 )
 
-// ParseTimeframe converts a timeframe value ("24h", "7d", "30d", "all", or
-// "") into the cutoff time before which votes/posts should be excluded from
-// topic/post filtering. A nil return value means no cutoff (all time), which
-// is the default when raw is empty.
+const TimeframeMostRecent = "recent"
+
+func IsMostRecentTimeframe(raw string) bool {
+	return raw == TimeframeMostRecent
+}
+
+// ParseTimeframe converts a timeframe value into the cutoff time before which
+// votes/posts should be excluded from topic/post filtering. A nil return value
+// means no cutoff (all time), including when the most-recent sort is selected.
 func ParseTimeframe(raw string) (*time.Time, error) {
 	var duration time.Duration
 	switch raw {
-	case "", "all":
+	case "", "all", TimeframeMostRecent:
 		return nil, nil
 	case "24h":
 		duration = 24 * time.Hour

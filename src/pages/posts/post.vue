@@ -106,7 +106,7 @@
 <script>
 import PostWidget from '@/widgets/post.vue';
 import TopicsInput from '@/widgets/topics-input.vue';
-import TimeframeSelect, {TIMEFRAME_STORAGE_KEY} from '@/widgets/timeframe-select.vue';
+import TimeframeSelect, {TIMEFRAME_RECENT, TIMEFRAME_STORAGE_KEY} from '@/widgets/timeframe-select.vue';
 
 import {
 	ajaxGet,
@@ -250,13 +250,20 @@ export default {
 			});
 		},
 		loadMoreSubPosts() {
-			ajaxGet('/ajax/posts/page', {
+			const params = {
 				context: 'subposts',
 				postId: this.post.id,
 				offset: this.topSubPosts.length,
 				topicIds: this.selectedTopicIds(),
 				timeframe: this.timeframe,
-			}).then(response => {
+			};
+			if (this.timeframe === TIMEFRAME_RECENT && this.topSubPosts.length > 0) {
+				const lastPost = this.topSubPosts[this.topSubPosts.length - 1];
+				params.offset = 0;
+				params.createdAt = lastPost.createdAt;
+				params.cursorPostId = lastPost.id;
+			}
+			ajaxGet('/ajax/posts/page', params).then(response => {
 				const posts = response.posts || [];
 				this.topSubPosts.push(...posts);
 				this.totalSubPosts = response.totalPosts || 0;

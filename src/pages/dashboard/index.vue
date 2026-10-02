@@ -155,7 +155,7 @@
 <script>
 import Post from '@/widgets/post.vue';
 import TopicSearch from '@/widgets/topic-search.vue';
-import TimeframeSelect, {TIMEFRAME_STORAGE_KEY} from '@/widgets/timeframe-select.vue';
+import TimeframeSelect, {TIMEFRAME_RECENT, TIMEFRAME_STORAGE_KEY} from '@/widgets/timeframe-select.vue';
 
 import {
 	ajaxGet,
@@ -310,12 +310,19 @@ export default {
 			});
 		},
 		loadMorePosts() {
-			ajaxGet('/ajax/posts/page', {
+			const params = {
 				context: 'dashboard',
 				offset: this.topPosts.length,
 				topicIds: this.selectedTopicIds(),
 				timeframe: this.timeframe,
-			}).then(response => {
+			};
+			if (this.timeframe === TIMEFRAME_RECENT && this.topPosts.length > 0) {
+				const lastPost = this.topPosts[this.topPosts.length - 1];
+				params.offset = 0;
+				params.createdAt = lastPost.createdAt;
+				params.cursorPostId = lastPost.id;
+			}
+			ajaxGet('/ajax/posts/page', params).then(response => {
 				const posts = response.posts || [];
 				this.topPosts.push(...posts);
 				this.totalPosts = response.totalPosts || 0;

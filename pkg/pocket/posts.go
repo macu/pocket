@@ -22,6 +22,12 @@ type Post struct {
 	TotalTopicScore   int       `json:"totalTopicScore"`
 }
 
+// PostCursor identifies the last post returned by a recent-mode page.
+type PostCursor struct {
+	CreatedAt time.Time
+	ID        uint
+}
+
 func NormalizePostText(text string) string {
 	return strings.TrimSpace(text)
 }
@@ -44,8 +50,9 @@ func ValidatePostText(text string) error {
 // all of the selected topics present, ordered by the same positive-sum-only
 // total across just those topics. If cutoff is non-nil, only posts created
 // at or after cutoff are considered, and topic scores only reflect votes
-// cast at or after cutoff.
-func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint, cutoff *time.Time) ([]Post, error) {
+// cast at or after cutoff. If mostRecent is true, posts are ordered by
+// creation time and ID, and cursor excludes posts at or before the last post.
+func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs []uint, cutoff *time.Time, mostRecent bool, cursor *PostCursor) ([]Post, error) {
 
 	// offset is uint, so it cannot be negative
 
@@ -57,9 +64,26 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 	var args []interface{}
 	var query string
 
-	var cutoffWhere string
+	var postWhere string
 	if cutoff != nil {
-		cutoffWhere = "WHERE p.created_at >= " + db.Arg(&args, *cutoff)
+		postWhere = "WHERE p.created_at >= " + db.Arg(&args, *cutoff)
+	}
+	if cursor != nil && mostRecent {
+		cursorWhere := "(p.created_at, p.id) < (" + db.Arg(&args, cursor.CreatedAt) + ", " + db.Arg(&args, cursor.ID) + ")"
+		if postWhere == "" {
+			postWhere = "WHERE " + cursorWhere
+		} else {
+			postWhere += " AND " + cursorWhere
+		}
+	}
+	if mostRecent && cursor != nil {
+		offset = 0
+	}
+	orderBy := "total_topic_score DESC, p.created_at DESC, p.id DESC"
+	selectedOrderBy := "topic_scores.selected_sum DESC, p.created_at DESC, p.id DESC"
+	if mostRecent {
+		orderBy = "p.created_at DESC, p.id DESC"
+		selectedOrderBy = orderBy
 	}
 
 	if len(selectedTopicIDs) == 0 {
@@ -69,9 +93,9 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN ` + filteredPostTopicSumTable(&args, cutoff) + ` pts ON pts.post_id = p.id
-			` + cutoffWhere + `
+			` + postWhere + `
 			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at
-			ORDER BY total_topic_score DESC, p.created_at DESC
+			ORDER BY ` + orderBy + `
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	} else {
 		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
@@ -88,8 +112,8 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 				GROUP BY post_id
 				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 			) topic_scores ON topic_scores.post_id = p.id
-			` + cutoffWhere + `
-			ORDER BY topic_scores.selected_sum DESC, p.created_at DESC
+			` + postWhere + `
+			ORDER BY ` + selectedOrderBy + `
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	}
 
@@ -135,8 +159,10 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 // sub-posts that have all of the selected topics present, ordered by the
 // same positive-sum-only total across just those topics. If cutoff is
 // non-nil, only sub-posts created at or after cutoff are considered, and
-// topic scores only reflect votes cast at or after cutoff.
-func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint, selectedTopicIDs []uint, cutoff *time.Time) ([]Post, error) {
+// topic scores only reflect votes cast at or after cutoff. If mostRecent is
+// true, sub-posts are ordered by creation time and ID, and cursor excludes
+// posts at or before the last post.
+func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint, selectedTopicIDs []uint, cutoff *time.Time, mostRecent bool, cursor *PostCursor) ([]Post, error) {
 
 	var userID *uint
 	if auth != nil {
@@ -152,6 +178,16 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 	if cutoff != nil {
 		cutoffClause = " AND p.created_at >= " + db.Arg(&args, *cutoff)
 	}
+	if cursor != nil && mostRecent {
+		cutoffClause += " AND (p.created_at, p.id) < (" + db.Arg(&args, cursor.CreatedAt) + ", " + db.Arg(&args, cursor.ID) + ")"
+		offset = 0
+	}
+	orderBy := "total_topic_score DESC, p.created_at DESC, p.id DESC"
+	selectedOrderBy := "topic_scores.selected_sum DESC, p.created_at DESC, p.id DESC"
+	if mostRecent {
+		orderBy = "p.created_at DESC, p.id DESC"
+		selectedOrderBy = orderBy
+	}
 
 	if len(selectedTopicIDs) == 0 {
 		query = `
@@ -162,7 +198,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 			LEFT JOIN ` + filteredPostTopicSumTable(&args, cutoff) + ` pts ON pts.post_id = p.id
 			WHERE p.parent_post_id = ` + parentArg + cutoffClause + `
 			GROUP BY p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at
-			ORDER BY total_topic_score DESC, p.created_at DESC
+			ORDER BY ` + orderBy + `
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	} else {
 		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
@@ -180,7 +216,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 			) topic_scores ON topic_scores.post_id = p.id
 			WHERE p.parent_post_id = ` + parentArg + cutoffClause + `
-			ORDER BY topic_scores.selected_sum DESC, p.created_at DESC
+			ORDER BY ` + selectedOrderBy + `
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	}
 

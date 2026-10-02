@@ -2,9 +2,11 @@ package ajax
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"pocket/pkg/pocket"
 	"pocket/pkg/utils/ajax"
@@ -27,6 +29,7 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
+	mostRecent := pocket.IsMostRecentTimeframe(r.FormValue("timeframe"))
 
 	var userID *uint
 	if auth != nil {
@@ -66,7 +69,7 @@ func AjaxLoadPost(db *sql.DB, auth *ajax.Auth,
 			return nil, http.StatusInternalServerError
 		}
 		payload["topTopics"] = topTopics
-		topSubPosts, err := pocket.LoadTopSubPosts(db, auth, id, 0, nil, cutoff)
+		topSubPosts, err := pocket.LoadTopSubPosts(db, auth, id, 0, nil, cutoff, mostRecent, nil)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -274,6 +277,11 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
+	mostRecent := pocket.IsMostRecentTimeframe(r.FormValue("timeframe"))
+	cursor, err := parsePostCursor(r, mostRecent)
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
 
 	var posts []pocket.Post
 	var totalPosts int
@@ -286,7 +294,7 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 			return nil, http.StatusBadRequest
 		}
 		selectedTopicIDs = pocket.LimitTopicSelection(selectedTopicIDs)
-		posts, err = pocket.LoadTopPosts(db, auth, offset, selectedTopicIDs, cutoff)
+		posts, err = pocket.LoadTopPosts(db, auth, offset, selectedTopicIDs, cutoff, mostRecent, cursor)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -307,7 +315,7 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 			return nil, http.StatusBadRequest
 		}
 		selectedTopicIDs = pocket.LimitTopicSelection(selectedTopicIDs)
-		posts, err = pocket.LoadTopSubPosts(db, auth, postID, offset, selectedTopicIDs, cutoff)
+		posts, err = pocket.LoadTopSubPosts(db, auth, postID, offset, selectedTopicIDs, cutoff, mostRecent, cursor)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -327,4 +335,27 @@ func AjaxLoadPostsPage(db *sql.DB, auth *ajax.Auth,
 		"totalPosts": totalPosts,
 	}, http.StatusOK
 
+}
+
+func parsePostCursor(r *http.Request, mostRecent bool) (*pocket.PostCursor, error) {
+	if !mostRecent {
+		return nil, nil
+	}
+	createdAtValue := strings.TrimSpace(r.FormValue("createdAt"))
+	cursorPostIDValue := strings.TrimSpace(r.FormValue("cursorPostId"))
+	if createdAtValue == "" && cursorPostIDValue == "" {
+		return nil, nil
+	}
+	if createdAtValue == "" || cursorPostIDValue == "" {
+		return nil, fmt.Errorf("incomplete post cursor")
+	}
+	createdAt, err := time.Parse(time.RFC3339Nano, createdAtValue)
+	if err != nil {
+		return nil, err
+	}
+	postID, err := types.AtoUint(cursorPostIDValue)
+	if err != nil {
+		return nil, err
+	}
+	return &pocket.PostCursor{CreatedAt: createdAt, ID: postID}, nil
 }
