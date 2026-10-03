@@ -438,8 +438,15 @@ func CreatePost(conn *sql.DB, parentPostID *uint, authorID uint, text string, to
 		}
 
 		if _, err := tx.Exec(`
+			INSERT INTO post_vote (post_id, user_id, vote_type, created_at)
+			VALUES ($1, $2, 'upvote', CURRENT_TIMESTAMP)
+		`, postID, authorID); err != nil {
+			return err
+		}
+
+		if _, err := tx.Exec(`
 			INSERT INTO post_vote_sum (post_id, upvotes, downvotes, sum, created_at)
-			VALUES ($1, 0, 0, 0, CURRENT_TIMESTAMP)
+			VALUES ($1, 1, 0, 1, CURRENT_TIMESTAMP)
 		`, postID); err != nil {
 			return err
 		}
