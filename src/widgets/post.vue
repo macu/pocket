@@ -1,6 +1,25 @@
 <template>
 <div class="top-post" :class="[sizeClass, {clickable}]" @click="$emit('click', $event)">
 	<div class="top-post-header flex-row-md">
+		<span class="top-post-votes" @click.stop>
+			<span v-if="authenticated" class="vote-buttons">
+				<material-icon
+					v-if="!post.userVote || post.userVote === 'upvote'"
+					icon="thumb_up" class="vote-btn upvote"
+					:fill="post.userVote === 'upvote'"
+					:class="{active: post.userVote === 'upvote'}"
+					@click="votePost('upvote')"/>
+				<material-icon
+					v-if="!post.userVote || post.userVote === 'downvote'"
+					icon="thumb_down" class="vote-btn downvote"
+					:fill="post.userVote === 'downvote'"
+					:class="{active: post.userVote === 'downvote'}"
+					@click="votePost('downvote')"/>
+			</span>
+			<el-tooltip content="Post votes" placement="top">
+				<span class="top-post-score">{{post.sum}}</span>
+			</el-tooltip>
+		</span>
 		<div class="top-post-author" v-if="post.authorDisplayName">
 			{{post.authorDisplayName}}
 			<small v-if="post.authorHandle">@{{post.authorHandle}}</small>
@@ -9,11 +28,6 @@
 			&emsp;posted
 			<moment :time="post.createdAt" ago/>
 		</small>
-		<div class="top-post-score">
-			<el-tooltip content="Total topic upvotes" placement="top">
-				<span>{{post.totalTopicScore}}</span>
-			</el-tooltip>
-		</div>
 	</div>
 	<div v-if="showTopics" class="topic-list flex-row">
 		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
@@ -29,8 +43,12 @@
 
 <script>
 import {ajaxGet, ajaxPost} from '@/utils/ajax.js';
+import MaterialIcon from '@/widgets/material-icon.vue';
 
 export default {
+	components: {
+		MaterialIcon,
+	},
 	emits: ['click'],
 	props: {
 		post: {
@@ -62,6 +80,9 @@ export default {
 		};
 	},
 	computed: {
+		authenticated() {
+			return this.$store.getters.authenticated;
+		},
 		sizeClass() {
 			return 'size-' + this.size;
 		},
@@ -88,6 +109,15 @@ export default {
 				this.hasMoreTopics = topics.length > 0;
 			});
 		},
+		votePost(voteType) {
+			ajaxPost('/ajax/post/vote', {
+				postId: this.post.id,
+				voteType,
+			}).then(response => {
+				this.post.sum = response.sum;
+				this.post.userVote = response.userVote;
+			});
+		},
 		vote(topic, voteType) {
 			ajaxPost('/ajax/post/topic/vote', {
 				postId: this.post.id,
@@ -96,9 +126,6 @@ export default {
 			}).then(response => {
 				if (response.topic) {
 					Object.assign(topic, response.topic);
-				}
-				if (response.totalTopicScore !== undefined) {
-					this.post.totalTopicScore = response.totalTopicScore;
 				}
 			});
 		},
@@ -137,11 +164,41 @@ export default {
 			flex: 1;
 			font-weight: bold;
 		}
+		.top-post-votes {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+
+			.vote-buttons {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+			}
+			.vote-btn {
+				cursor: pointer;
+				font-size: 26px;
+				opacity: 0.6;
+				border-radius: 999px;
+				&:hover {
+					opacity: 0.85;
+				}
+				&.active {
+					opacity: 1;
+					color: white;
+					padding: 4px;
+					background-color: rgb(76, 175, 80);
+					&.downvote {
+						background-color: rgb(211, 86, 86);
+					}
+				}
+			}
+		}
 		.top-post-score {
 			padding: 2px 8px;
 			border-radius: 10px;
 			background-color: $el-dropdown-fg-color;
 			color: $el-focus-color;
+			font-weight: bold;
 		}
 	}
 

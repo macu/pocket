@@ -324,6 +324,19 @@ div.center {
 .pocket-app.is-mobile > .body {
   padding: 20px 10px 60px;
 }
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-size: 24px;
+}
+.material-symbols-outlined.large {
+  font-size: 48px;
+}
+.material-symbols-outlined.fill {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 48;
+}
 /*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/post.vue?vue&type=style&index=0&id=d2d2ff4e&lang=scss ***!
   \**********************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -343,11 +356,40 @@ div.center {
   flex: 1;
   font-weight: bold;
 }
+.top-post .top-post-header .top-post-votes {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.top-post .top-post-header .top-post-votes .vote-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.top-post .top-post-header .top-post-votes .vote-btn {
+  cursor: pointer;
+  font-size: 26px;
+  opacity: 0.6;
+  border-radius: 999px;
+}
+.top-post .top-post-header .top-post-votes .vote-btn:hover {
+  opacity: 0.85;
+}
+.top-post .top-post-header .top-post-votes .vote-btn.active {
+  opacity: 1;
+  color: white;
+  padding: 4px;
+  background-color: rgb(76, 175, 80);
+}
+.top-post .top-post-header .top-post-votes .vote-btn.active.downvote {
+  background-color: rgb(211, 86, 86);
+}
 .top-post .top-post-header .top-post-score {
   padding: 2px 8px;
   border-radius: 10px;
   background-color: white;
   color: rgb(40, 40, 207);
+  font-weight: bold;
 }
 .top-post .top-post-text {
   cursor: pointer;
@@ -525,19 +567,6 @@ div.center {
   border-top: thin solid white;
   border-bottom: thin solid white;
   padding: 10px 0;
-}
-/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
-  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.material-symbols-outlined {
-  font-family: "Material Symbols Outlined";
-  font-size: 24px;
-}
-.material-symbols-outlined.large {
-  font-size: 48px;
-}
-.material-symbols-outlined.fill {
-  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 48;
 }
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/loading-message.vue?vue&type=style&index=0&id=68380766&lang=scss ***!

@@ -227,14 +227,8 @@ func AjaxVotePostTopic(db *sql.DB, auth ajax.Auth,
 			logging.LogError(r, &auth, err)
 			return nil, http.StatusInternalServerError
 		}
-		totalTopicScore, err := pocket.LoadPostTotalTopicScore(db, postID)
-		if err != nil {
-			logging.LogError(r, &auth, err)
-			return nil, http.StatusInternalServerError
-		}
 		return map[string]any{
-			"topic":           topic,
-			"totalTopicScore": totalTopicScore,
+			"topic": topic,
 		}, http.StatusOK
 	}
 
@@ -248,15 +242,35 @@ func AjaxVotePostTopic(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	totalTopicScore, err := pocket.LoadPostTotalTopicScore(db, postID)
+	return map[string]any{
+		"topic": topic,
+	}, http.StatusOK
+
+}
+
+func AjaxVotePost(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	postID, err := types.AtoUint(r.FormValue("postId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	voteType := strings.TrimSpace(r.FormValue("voteType"))
+	if voteType != "" && !pocket.IsValidVote(voteType) {
+		return ajax.AjaxErrorPayload{ErrorCode: "invalid-vote-type"}, http.StatusBadRequest
+	}
+
+	sum, userVote, err := pocket.SetPostVote(db, postID, auth.UserID, voteType)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
 
 	return map[string]any{
-		"topic":           topic,
-		"totalTopicScore": totalTopicScore,
+		"sum":      sum,
+		"userVote": userVote,
 	}, http.StatusOK
 
 }

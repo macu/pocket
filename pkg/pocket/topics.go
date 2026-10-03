@@ -430,3 +430,97 @@ func CreateTopic(conn db.DBConn, name string, createdBy uint) (*Topic, error) {
 
 	return topic, nil
 }
+
+// LoadPostVote loads the post's net vote sum and userID's own vote on it.
+func LoadPostVote(conn db.DBConn, postID uint, userID *uint) (int, *string, error) {
+	var userIDParam any
+	if userID != nil {
+		userIDParam = *userID
+	}
+	var sum int
+	var voteType sql.NullString
+	err := conn.QueryRow(`
+		SELECT COALESCE((SELECT sum FROM post_vote_sum WHERE post_id = $1), 0),
+			(SELECT vote_type FROM post_vote WHERE post_id = $1 AND user_id = $2::INTEGER)
+	`, postID, userIDParam).Scan(&sum, &voteType)
+	if err != nil {
+		return 0, nil, fmt.Errorf("loading vote for post %d: %w", postID, err)
+	}
+	if voteType.Valid {
+		v := voteType.String
+		return sum, &v, nil
+	}
+	return sum, nil, nil
+}
+
+// SetPostVote records userID's vote on the post. Voting the same type again,
+// or passing an empty voteType, removes the vote. Returns the post's new sum
+// and the user's resulting vote.
+func SetPostVote(conn *sql.DB, postID uint, userID uint, voteType string) (int, *string, error) {
+
+	if voteType != "" && !IsValidVote(voteType) {
+		return 0, nil, fmt.Errorf("invalid vote type: %s", voteType)
+	}
+
+	var sum int
+	var userVote *string
+
+	err := db.InTransaction(conn, func(tx *sql.Tx) error {
+
+		var postExists bool
+		if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM post WHERE id = $1)`, postID).Scan(&postExists); err != nil {
+			return fmt.Errorf("checking post: %w", err)
+		}
+		if !postExists {
+			return fmt.Errorf("post %d does not exist", postID)
+		}
+
+		var existingVote sql.NullString
+		err := tx.QueryRow(`
+			SELECT vote_type FROM post_vote WHERE post_id = $1 AND user_id = $2
+		`, postID, userID).Scan(&existingVote)
+		if err != nil && err != sql.ErrNoRows {
+			return fmt.Errorf("loading existing vote: %w", err)
+		}
+
+		if voteType == "" || (existingVote.Valid && existingVote.String == voteType) {
+			if _, err := tx.Exec(`DELETE FROM post_vote WHERE post_id = $1 AND user_id = $2`, postID, userID); err != nil {
+				return fmt.Errorf("deleting vote: %w", err)
+			}
+		} else {
+			if _, err := tx.Exec(`
+				INSERT INTO post_vote (post_id, user_id, vote_type, created_at)
+				VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+				ON CONFLICT (post_id, user_id)
+				DO UPDATE SET vote_type = EXCLUDED.vote_type, created_at = CURRENT_TIMESTAMP
+			`, postID, userID, voteType); err != nil {
+				return fmt.Errorf("saving vote: %w", err)
+			}
+			v := voteType
+			userVote = &v
+		}
+
+		// Upsert so posts that predate post_vote_sum are handled too.
+		if _, err := tx.Exec(`
+			INSERT INTO post_vote_sum (post_id, upvotes, downvotes, sum, created_at)
+			SELECT $1,
+				COUNT(*) FILTER (WHERE vote_type = 'upvote'),
+				COUNT(*) FILTER (WHERE vote_type = 'downvote'),
+				COUNT(*) FILTER (WHERE vote_type = 'upvote') - COUNT(*) FILTER (WHERE vote_type = 'downvote'),
+				CURRENT_TIMESTAMP
+			FROM post_vote WHERE post_id = $1
+			ON CONFLICT (post_id) DO UPDATE SET
+				upvotes = EXCLUDED.upvotes,
+				downvotes = EXCLUDED.downvotes,
+				sum = EXCLUDED.sum
+		`, postID); err != nil {
+			return fmt.Errorf("updating post vote sum: %w", err)
+		}
+
+		return tx.QueryRow(`SELECT sum FROM post_vote_sum WHERE post_id = $1`, postID).Scan(&sum)
+	})
+	if err != nil {
+		return 0, nil, err
+	}
+	return sum, userVote, nil
+}

@@ -56,3 +56,19 @@ func filteredPostTopicSumTable(args *[]interface{}, cutoff *time.Time) string {
 		GROUP BY pts.post_id, pts.topic_id
 	)`
 }
+
+// filteredPostVoteSumTable returns a SQL expression usable in place of the
+// post_vote_sum table, yielding (post_id, sum) columns. If cutoff is non-nil,
+// the sum is recomputed from votes cast at or after cutoff.
+func filteredPostVoteSumTable(args *[]interface{}, cutoff *time.Time) string {
+	if cutoff == nil {
+		return "post_vote_sum"
+	}
+	return `(
+		SELECT post_id,
+			COUNT(*) FILTER (WHERE vote_type = 'upvote') - COUNT(*) FILTER (WHERE vote_type = 'downvote') AS sum
+		FROM post_vote
+		WHERE created_at >= ` + db.Arg(args, *cutoff) + `
+		GROUP BY post_id
+	)`
+}

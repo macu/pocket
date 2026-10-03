@@ -5,6 +5,8 @@ DROP INDEX IF EXISTS topic_name_trgm_idx;
 -- DROP TABLE IF EXISTS topic_score CASCADE;
 -- DROP TABLE IF EXISTS post_topic_score CASCADE;
 -- DROP TABLE IF EXISTS post_topic_pin CASCADE;
+DROP TABLE IF EXISTS post_vote_sum CASCADE;
+DROP TABLE IF EXISTS post_vote CASCADE;
 DROP TABLE IF EXISTS post_topic_sum CASCADE;
 DROP TABLE IF EXISTS topic CASCADE;
 DROP TABLE IF EXISTS post_topic_vote CASCADE;
@@ -107,6 +109,22 @@ CREATE INDEX post_text_fulltext_idx ON post USING GIN (to_tsvector('simple', pos
 CREATE TYPE vote_type AS ENUM (
 	'upvote',
 	'downvote'
+);
+
+CREATE TABLE post_vote (
+	post_id INTEGER NOT NULL REFERENCES post (id) ON DELETE CASCADE,
+	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+	vote_type vote_type NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+	PRIMARY KEY (post_id, user_id)
+);
+
+CREATE TABLE post_vote_sum (
+	post_id INTEGER PRIMARY KEY REFERENCES post (id) ON DELETE CASCADE,
+	upvotes INTEGER NOT NULL,
+	downvotes INTEGER NOT NULL,
+	sum INTEGER NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL
 );
 
 CREATE TABLE post_topic_vote (
