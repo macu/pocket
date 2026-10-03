@@ -19,6 +19,7 @@ type Post struct {
 	PostText          string    `json:"postText"`
 	CreatedAt         time.Time `json:"createdAt"`
 	Topics            []Topic   `json:"topics,omitempty"`
+	SubPostCount      int       `json:"subPostCount"`
 	Sum               int       `json:"sum"`
 	UserVote          *string   `json:"userVote"`
 }
@@ -92,7 +93,8 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 	if len(selectedTopicIDs) == 0 {
 		query = `
 			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
-				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type
+				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type,
+				(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id) AS sub_post_count
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN ` + filteredPostVoteSumTable(&args, cutoff) + ` pvs ON pvs.post_id = p.id
@@ -105,7 +107,8 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
 		query = `
 			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
-				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type
+				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type,
+				(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id) AS sub_post_count
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN ` + filteredPostVoteSumTable(&args, cutoff) + ` pvs ON pvs.post_id = p.id
@@ -135,7 +138,7 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 		var displayName sql.NullString
 		var handle sql.NullString
 		var userVote sql.NullString
-		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.Sum, &userVote); err != nil {
+		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.Sum, &userVote, &post.SubPostCount); err != nil {
 			continue
 		}
 		if userVote.Valid {
@@ -204,7 +207,8 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 	if len(selectedTopicIDs) == 0 {
 		query = `
 			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
-				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type
+				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type,
+				(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id) AS sub_post_count
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN ` + filteredPostVoteSumTable(&args, cutoff) + ` pvs ON pvs.post_id = p.id
@@ -217,7 +221,8 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
 		query = `
 			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
-				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type
+				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type,
+				(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id) AS sub_post_count
 			FROM post p
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN ` + filteredPostVoteSumTable(&args, cutoff) + ` pvs ON pvs.post_id = p.id
@@ -248,7 +253,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 		var displayName sql.NullString
 		var handle sql.NullString
 		var userVote sql.NullString
-		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.Sum, &userVote); err != nil {
+		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.Sum, &userVote, &post.SubPostCount); err != nil {
 			continue
 		}
 		if userVote.Valid {
@@ -379,11 +384,12 @@ func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 	var handle sql.NullString
 
 	err := db.QueryRow(`
-		SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at
+		SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
+			(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id)
 		FROM post p
 		LEFT JOIN user_account u ON u.id = p.author
 		WHERE p.id = $1
-	`, postID).Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt)
+	`, postID).Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.SubPostCount)
 	if err != nil {
 		return nil, fmt.Errorf("loading post %d: %w", postID, err)
 	}

@@ -28,6 +28,9 @@
 			&emsp;posted
 			<moment :time="post.createdAt" ago/>
 		</small>
+		<small v-if="post.subPostCount !== undefined">
+			&emsp;{{post.subPostCount}} {{post.subPostCount === 1 ? 'subpost' : 'subposts'}}
+		</small>
 	</div>
 	<div v-if="showTopics" class="topic-list flex-row">
 		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
