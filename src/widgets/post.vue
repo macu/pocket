@@ -27,7 +27,7 @@
 			</router-link>
 		</div>
 		<small v-if="post.createdAt">
-			&emsp;posted
+			&emsp;{{post.parentPostId ? 'subpost posted' : 'posted'}}
 			<moment :time="post.createdAt" ago/>
 		</small>
 		<small v-if="post.subPostCount !== undefined">
