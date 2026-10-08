@@ -641,6 +641,13 @@ div.center {
   flex: 1;
   font-weight: bold;
 }
+.top-post .top-post-header .top-post-author-link {
+  color: inherit;
+  text-decoration: none;
+}
+.top-post .top-post-header .top-post-author-link:hover {
+  text-decoration: underline;
+}
 .top-post .top-post-header .top-post-votes {
   display: inline-flex;
   align-items: center;
@@ -833,6 +840,47 @@ div.center {
   row-gap: 40px;
 }
 .dashboard-page .dashboard-columns.is-mobile > .dashboard-column-left {
+  flex-basis: auto;
+  position: static;
+  max-height: none;
+  overflow-y: visible;
+}
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/user/index.vue?vue&type=style&index=0&id=4070cfdc&lang=scss ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.user-page {
+  color: white;
+}
+.user-page .total-posts, .user-page .no-topics, .user-page .no-posts, .user-page .no-user {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+.user-page .user-heading small {
+  opacity: 0.7;
+}
+.user-page .user-columns {
+  display: flex;
+  align-items: flex-start;
+  column-gap: 40px;
+}
+.user-page .user-columns > .user-column-left {
+  flex: 0 0 300px;
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 5px;
+}
+.user-page .user-columns > .user-column-right {
+  flex: 1;
+  min-width: 0;
+  padding: 5px;
+}
+.user-page .user-columns.is-mobile {
+  flex-direction: column;
+  row-gap: 40px;
+}
+.user-page .user-columns.is-mobile > .user-column-left {
   flex-basis: auto;
   position: static;
   max-height: none;

@@ -24,6 +24,30 @@ type Post struct {
 	UserVote          *string   `json:"userVote"`
 }
 
+// PostScope restricts a set of posts to the sub-posts of ParentPostID and/or
+// the posts written by AuthorID. The zero value matches all posts.
+type PostScope struct {
+	ParentPostID *uint
+	AuthorID     *uint
+}
+
+func (s PostScope) isSet() bool {
+	return s.ParentPostID != nil || s.AuthorID != nil
+}
+
+// conditions returns SQL conditions (joined by AND) restricting rows of the
+// post table aliased as alias, or "TRUE" if the scope is empty.
+func (s PostScope) conditions(args *[]interface{}, alias string) string {
+	conditions := []string{"TRUE"}
+	if s.ParentPostID != nil {
+		conditions = append(conditions, alias+".parent_post_id = "+db.Arg(args, *s.ParentPostID))
+	}
+	if s.AuthorID != nil {
+		conditions = append(conditions, alias+".author = "+db.Arg(args, *s.AuthorID))
+	}
+	return strings.Join(conditions, " AND ")
+}
+
 // PostCursor identifies the last post returned by a recent-mode page.
 type PostCursor struct {
 	CreatedAt time.Time
@@ -173,6 +197,16 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 // true, sub-posts are ordered by creation time and ID, and cursor excludes
 // posts at or before the last post.
 func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset uint, selectedTopicIDs []uint, cutoff *time.Time, mostRecent bool, cursor *PostCursor) ([]Post, error) {
+	return loadScopedPosts(conn, auth, PostScope{ParentPostID: &parentPostID}, offset, selectedTopicIDs, cutoff, mostRecent, cursor)
+}
+
+// LoadUserPosts loads a page of the top posts written by authorID (see
+// LoadTopSubPosts for the meaning of the other arguments).
+func LoadUserPosts(conn *sql.DB, auth *ajax.Auth, authorID uint, offset uint, selectedTopicIDs []uint, cutoff *time.Time, mostRecent bool, cursor *PostCursor) ([]Post, error) {
+	return loadScopedPosts(conn, auth, PostScope{AuthorID: &authorID}, offset, selectedTopicIDs, cutoff, mostRecent, cursor)
+}
+
+func loadScopedPosts(conn *sql.DB, auth *ajax.Auth, scope PostScope, offset uint, selectedTopicIDs []uint, cutoff *time.Time, mostRecent bool, cursor *PostCursor) ([]Post, error) {
 
 	var userID *uint
 	if auth != nil {
@@ -188,7 +222,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 	}
 	userArg := db.Arg(&args, userIDParam) + "::INTEGER"
 
-	parentArg := db.Arg(&args, parentPostID)
+	scopeWhere := scope.conditions(&args, "p")
 
 	cutoffClause := ""
 	if cutoff != nil {
@@ -213,7 +247,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 			LEFT JOIN user_account u ON u.id = p.author
 			LEFT JOIN ` + filteredPostVoteSumTable(&args, cutoff) + ` pvs ON pvs.post_id = p.id
 			LEFT JOIN post_vote uv ON uv.post_id = p.id AND uv.user_id = ` + userArg + `
-			WHERE p.parent_post_id = ` + parentArg + cutoffClause + `
+			WHERE ` + scopeWhere + cutoffClause + `
 			ORDER BY ` + orderBy + `
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	} else {
@@ -234,7 +268,7 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 				GROUP BY post_id
 				HAVING COUNT(DISTINCT topic_id) = ` + selectedCount + `
 			) matching ON matching.post_id = p.id
-			WHERE p.parent_post_id = ` + parentArg + cutoffClause + `
+			WHERE ` + scopeWhere + cutoffClause + `
 			ORDER BY ` + selectedOrderBy + `
 			LIMIT ` + db.Arg(&args, MaxPostPageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	}
@@ -282,17 +316,17 @@ func LoadTopSubPosts(conn *sql.DB, auth *ajax.Auth, parentPostID uint, offset ui
 
 // countTopPosts counts the total number of posts matching selectedTopicIDs
 // (all of them must be present on a post for it to match; if empty, all
-// posts match), optionally restricted to the sub-posts of scopePostID. If
+// posts match), optionally restricted to scope. If
 // cutoff is non-nil, only posts created at or after cutoff are counted, and
 // matching is based on votes cast at or after cutoff.
-func countTopPosts(conn *sql.DB, selectedTopicIDs []uint, scopePostID *uint, cutoff *time.Time) (int, error) {
+func countTopPosts(conn *sql.DB, selectedTopicIDs []uint, scope PostScope, cutoff *time.Time) (int, error) {
 
 	var args []interface{}
 	var query string
 
 	var scopeClause string
-	if scopePostID != nil {
-		scopeClause = " AND p.parent_post_id = " + db.Arg(&args, *scopePostID)
+	if scope.isSet() {
+		scopeClause = " AND " + scope.conditions(&args, "p")
 	}
 	var cutoffClause string
 	if cutoff != nil {
@@ -329,13 +363,19 @@ func countTopPosts(conn *sql.DB, selectedTopicIDs []uint, scopePostID *uint, cut
 // CountTopPosts counts the total number of the site's posts matching
 // selectedTopicIDs (see LoadTopPosts).
 func CountTopPosts(conn *sql.DB, selectedTopicIDs []uint, cutoff *time.Time) (int, error) {
-	return countTopPosts(conn, selectedTopicIDs, nil, cutoff)
+	return countTopPosts(conn, selectedTopicIDs, PostScope{}, cutoff)
 }
 
 // CountTopSubPosts counts the total number of sub-posts of parentPostID
 // matching selectedTopicIDs (see LoadTopSubPosts).
 func CountTopSubPosts(conn *sql.DB, parentPostID uint, selectedTopicIDs []uint, cutoff *time.Time) (int, error) {
-	return countTopPosts(conn, selectedTopicIDs, &parentPostID, cutoff)
+	return countTopPosts(conn, selectedTopicIDs, PostScope{ParentPostID: &parentPostID}, cutoff)
+}
+
+// CountUserPosts counts the total number of posts written by authorID
+// matching selectedTopicIDs (see LoadUserPosts).
+func CountUserPosts(conn *sql.DB, authorID uint, selectedTopicIDs []uint, cutoff *time.Time) (int, error) {
+	return countTopPosts(conn, selectedTopicIDs, PostScope{AuthorID: &authorID}, cutoff)
 }
 
 func LoadPostTopics(db *sql.DB, postID uint, userID *uint, offset uint) ([]Topic, error) {

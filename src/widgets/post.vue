@@ -21,8 +21,10 @@
 			</el-tooltip>
 		</span>
 		<div class="top-post-author" v-if="post.authorDisplayName">
-			{{post.authorDisplayName}}
-			<small v-if="post.authorHandle">@{{post.authorHandle}}</small>
+			<router-link :to="{name: 'user', params: {identifier: post.authorHandle || String(post.authorId)}}" class="top-post-author-link" @click.stop>
+				{{post.authorDisplayName}}
+				<small v-if="post.authorHandle">@{{post.authorHandle}}</small>
+			</router-link>
 		</div>
 		<small v-if="post.createdAt">
 			&emsp;posted
@@ -166,6 +168,13 @@ export default {
 		.top-post-author {
 			flex: 1;
 			font-weight: bold;
+		}
+		.top-post-author-link {
+			color: inherit;
+			text-decoration: none;
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 		.top-post-votes {
 			display: inline-flex;

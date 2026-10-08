@@ -113,6 +113,22 @@ func AjaxLoadTopicsPage(db *sql.DB, auth *ajax.Auth,
 			return nil, http.StatusInternalServerError
 		}
 
+	case "user":
+		userID, err := types.AtoUint(r.FormValue("userId"))
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+		selectedTopicIDs, err := types.AtoUintList(r.FormValue("topicIds"))
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+		selectedTopicIDs = pocket.LimitTopicSelection(selectedTopicIDs)
+		topics, err = pocket.LoadUserTopics(db, userID, offset, selectedTopicIDs, cutoff)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+
 	default:
 		return nil, http.StatusBadRequest
 	}
