@@ -68,6 +68,291 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.el-button--primary {
+  --el-button-text-color: white;
+  --el-button-bg-color: rgb(86, 86, 211);
+  --el-button-border-color: rgb(120, 120, 235);
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(110, 110, 230);
+  --el-button-hover-border-color: rgb(120, 120, 235);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(110, 110, 230);
+  --el-button-active-border-color: rgb(120, 120, 235);
+  --el-button-outline-color: rgb(120, 120, 235);
+  --el-button-disabled-text-color: rgba(255, 255, 255, 0.3);
+  --el-button-disabled-bg-color: rgba(255, 255, 255, 0.05);
+  --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.el-button--primary.is-plain,
+.el-button--primary.is-text,
+.el-button--primary.is-link {
+  --el-button-text-color: rgb(120, 120, 235);
+  --el-button-bg-color: transparent;
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(86, 86, 211);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(110, 110, 230);
+}
+
+.el-button--primary.is-text,
+.el-button--primary.is-link {
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --el-button-hover-text-color: rgb(110, 110, 230);
+  --el-button-active-bg-color: rgba(255, 255, 255, 0.12);
+}
+
+.el-button--success {
+  --el-button-text-color: white;
+  --el-button-bg-color: rgb(40, 150, 70);
+  --el-button-border-color: rgb(70, 190, 105);
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(55, 175, 90);
+  --el-button-hover-border-color: rgb(70, 190, 105);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(55, 175, 90);
+  --el-button-active-border-color: rgb(70, 190, 105);
+  --el-button-outline-color: rgb(70, 190, 105);
+  --el-button-disabled-text-color: rgba(255, 255, 255, 0.3);
+  --el-button-disabled-bg-color: rgba(255, 255, 255, 0.05);
+  --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.el-button--success.is-plain,
+.el-button--success.is-text,
+.el-button--success.is-link {
+  --el-button-text-color: rgb(70, 190, 105);
+  --el-button-bg-color: transparent;
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(40, 150, 70);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(55, 175, 90);
+}
+
+.el-button--success.is-text,
+.el-button--success.is-link {
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --el-button-hover-text-color: rgb(55, 175, 90);
+  --el-button-active-bg-color: rgba(255, 255, 255, 0.12);
+}
+
+.el-button--warning {
+  --el-button-text-color: white;
+  --el-button-bg-color: rgb(226, 103, 15);
+  --el-button-border-color: rgb(245, 140, 60);
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(240, 125, 40);
+  --el-button-hover-border-color: rgb(245, 140, 60);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(240, 125, 40);
+  --el-button-active-border-color: rgb(245, 140, 60);
+  --el-button-outline-color: rgb(245, 140, 60);
+  --el-button-disabled-text-color: rgba(255, 255, 255, 0.3);
+  --el-button-disabled-bg-color: rgba(255, 255, 255, 0.05);
+  --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.el-button--warning.is-plain,
+.el-button--warning.is-text,
+.el-button--warning.is-link {
+  --el-button-text-color: rgb(245, 140, 60);
+  --el-button-bg-color: transparent;
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(226, 103, 15);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(240, 125, 40);
+}
+
+.el-button--warning.is-text,
+.el-button--warning.is-link {
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --el-button-hover-text-color: rgb(240, 125, 40);
+  --el-button-active-bg-color: rgba(255, 255, 255, 0.12);
+}
+
+.el-button--danger {
+  --el-button-text-color: white;
+  --el-button-bg-color: rgb(211, 86, 86);
+  --el-button-border-color: rgb(235, 125, 125);
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(228, 108, 108);
+  --el-button-hover-border-color: rgb(235, 125, 125);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(228, 108, 108);
+  --el-button-active-border-color: rgb(235, 125, 125);
+  --el-button-outline-color: rgb(235, 125, 125);
+  --el-button-disabled-text-color: rgba(255, 255, 255, 0.3);
+  --el-button-disabled-bg-color: rgba(255, 255, 255, 0.05);
+  --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.el-button--danger.is-plain,
+.el-button--danger.is-text,
+.el-button--danger.is-link {
+  --el-button-text-color: rgb(235, 125, 125);
+  --el-button-bg-color: transparent;
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(211, 86, 86);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(228, 108, 108);
+}
+
+.el-button--danger.is-text,
+.el-button--danger.is-link {
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --el-button-hover-text-color: rgb(228, 108, 108);
+  --el-button-active-bg-color: rgba(255, 255, 255, 0.12);
+}
+
+.el-button--info {
+  --el-button-text-color: white;
+  --el-button-bg-color: rgb(100, 105, 120);
+  --el-button-border-color: rgb(140, 145, 160);
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(120, 125, 140);
+  --el-button-hover-border-color: rgb(140, 145, 160);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(120, 125, 140);
+  --el-button-active-border-color: rgb(140, 145, 160);
+  --el-button-outline-color: rgb(140, 145, 160);
+  --el-button-disabled-text-color: rgba(255, 255, 255, 0.3);
+  --el-button-disabled-bg-color: rgba(255, 255, 255, 0.05);
+  --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.el-button--info.is-plain,
+.el-button--info.is-text,
+.el-button--info.is-link {
+  --el-button-text-color: rgb(140, 145, 160);
+  --el-button-bg-color: transparent;
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgb(100, 105, 120);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgb(120, 125, 140);
+}
+
+.el-button--info.is-text,
+.el-button--info.is-link {
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --el-button-hover-text-color: rgb(120, 125, 140);
+  --el-button-active-bg-color: rgba(255, 255, 255, 0.12);
+}
+
+.el-button--default,
+.el-button:not([class*=el-button--]) {
+  --el-button-text-color: white;
+  --el-button-bg-color: rgba(255, 255, 255, 0.08);
+  --el-button-border-color: rgba(255, 255, 255, 0.3);
+  --el-button-hover-text-color: white;
+  --el-button-hover-bg-color: rgba(255, 255, 255, 0.18);
+  --el-button-hover-border-color: rgba(255, 255, 255, 0.3);
+  --el-button-active-text-color: white;
+  --el-button-active-bg-color: rgba(255, 255, 255, 0.18);
+  --el-button-active-border-color: rgba(255, 255, 255, 0.3);
+  --el-button-disabled-text-color: rgba(255, 255, 255, 0.3);
+  --el-button-disabled-bg-color: rgba(255, 255, 255, 0.05);
+  --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.el-message {
+  --el-message-bg-color: rgb(28, 28, 36);
+  --el-message-border-color: rgba(255, 255, 255, 0.25);
+  --el-message-text-color: white;
+  --el-message-close-icon-color: rgb(170, 175, 190);
+  --el-message-close-hover-color: white;
+  background-color: rgb(28, 28, 36);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+.el-message .el-message__content {
+  color: white;
+}
+.el-message.el-message--success {
+  border-left: 4px solid rgb(70, 190, 105);
+}
+.el-message.el-message--success .el-message__icon {
+  color: rgb(70, 190, 105);
+}
+.el-message.el-message--warning {
+  border-left: 4px solid rgb(245, 140, 60);
+}
+.el-message.el-message--warning .el-message__icon {
+  color: rgb(245, 140, 60);
+}
+.el-message.el-message--error {
+  border-left: 4px solid rgb(235, 125, 125);
+}
+.el-message.el-message--error .el-message__icon {
+  color: rgb(235, 125, 125);
+}
+.el-message.el-message--info {
+  border-left: 4px solid rgb(170, 175, 190);
+}
+.el-message.el-message--info .el-message__icon {
+  color: rgb(170, 175, 190);
+}
+
+.el-overlay.is-message-box .el-message-box {
+  --el-messagebox-title-color: white;
+  --el-messagebox-content-color: white;
+  background-color: black;
+  border: 1px solid rgb(226, 103, 15);
+  border-radius: 5px;
+  padding: 0;
+  overflow: hidden;
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__header {
+  padding: 14px 40px 14px 20px;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgb(226, 103, 15);
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__title {
+  color: white;
+  font-weight: 600;
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__headerbtn .el-message-box__close {
+  color: white;
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__content {
+  padding: 16px 20px;
+  color: white;
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__message {
+  color: white;
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__status.el-message-box-icon--success {
+  color: rgb(70, 190, 105);
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__status.el-message-box-icon--warning {
+  color: rgb(245, 140, 60);
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__status.el-message-box-icon--error {
+  color: rgb(235, 125, 125);
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__status.el-message-box-icon--info {
+  color: rgb(170, 175, 190);
+}
+.el-overlay.is-message-box .el-message-box .el-message-box__btns {
+  padding: 12px 20px;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgb(226, 103, 15);
+}
+
 html, body {
   padding: 0;
   margin: 0;
@@ -451,23 +736,27 @@ div.center {
   left: 0;
   z-index: 1000;
   margin: 4px 0 0;
-  padding: 4px 0;
+  padding: 6px;
+  gap: 4px;
   list-style: none;
   width: 100%;
   min-width: 200px;
   max-height: 240px;
   overflow-y: auto;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 5px;
-  background-color: rgb(86, 86, 211);
+  background-color: rgb(20, 20, 28);
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 .topic-search-row .topic-search-suggestions li {
   padding: 8px 12px;
+  border-radius: 5px;
   cursor: pointer;
 }
 .topic-search-row .topic-search-suggestions li:hover, .topic-search-row .topic-search-suggestions li.active {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.12);
 }
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/topics-input.vue?vue&type=style&index=0&id=100c881a&lang=scss ***!
@@ -606,12 +895,14 @@ div.center {
   line-height: 1.5;
 }
 .post-revisions-dialog.el-dialog ins {
-  background: rgba(60, 180, 75, 0.35);
+  background: rgb(150, 235, 160);
+  color: black;
   text-decoration: none;
   border-radius: 2px;
 }
 .post-revisions-dialog.el-dialog del {
-  background: rgba(220, 70, 70, 0.4);
+  background: rgb(255, 170, 170);
+  color: black;
   border-radius: 2px;
 }
 /*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\

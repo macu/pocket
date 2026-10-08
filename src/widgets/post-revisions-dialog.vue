@@ -7,7 +7,7 @@
 	<div v-else class="flex-column-md">
 		<div v-for="(revision, index) in revisions" :key="index" class="revision flex-column-sm"
 			:class="{current: revision.current}">
-			<small>{{revision.current ? 'Current revision' : 'Revision'}} &middot; {{formatTime(revision.createdAt)}}</small>
+			<small>{{revision.current ? 'Current revision' : 'Revision'}} &middot; <moment :time="revision.createdAt" ago/></small>
 			<div class="revision-diff">
 				<template v-if="index < revisions.length - 1">
 					<template v-for="(part, partIndex) in diffParts(index)" :key="partIndex">
@@ -61,9 +61,6 @@ export default {
 		// diff of each revision against the one before it (revisions are newest first)
 		diffParts(index) {
 			return diffWords(this.revisions[index + 1].postText, this.revisions[index].postText);
-		},
-		formatTime(value) {
-			return new Date(value).toLocaleString();
 		},
 	},
 };
@@ -129,12 +126,14 @@ export default {
 		line-height: 1.5;
 	}
 	ins {
-		background: rgba(60, 180, 75, 0.35);
+		background: rgb(150, 235, 160);
+		color: black;
 		text-decoration: none;
 		border-radius: 2px;
 	}
 	del {
-		background: rgba(220, 70, 70, 0.4);
+		background: rgb(255, 170, 170);
+		color: black;
 		border-radius: 2px;
 	}
 }

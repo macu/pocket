@@ -14,3 +14,47 @@ $topic-count-bg-color: rgba(255, 255, 255, 0.1);
 $el-focus-color: rgb(40, 40, 207);
 $el-dropdown-bg-color: rgb(40, 40, 207);
 $el-dropdown-fg-color: white;
+
+// buttons
+$button-default-bg-color: rgba(255, 255, 255, 0.08);
+$button-default-hover-bg-color: rgba(255, 255, 255, 0.18);
+$button-default-border-color: rgba(255, 255, 255, 0.3);
+$button-default-fg-color: white;
+
+$button-primary-bg-color: rgb(86, 86, 211);
+$button-primary-hover-bg-color: rgb(110, 110, 230);
+$button-primary-border-color: rgb(120, 120, 235);
+
+$button-success-bg-color: rgb(40, 150, 70);
+$button-success-hover-bg-color: rgb(55, 175, 90);
+$button-success-border-color: rgb(70, 190, 105);
+
+$button-warning-bg-color: rgb(226, 103, 15);
+$button-warning-hover-bg-color: rgb(240, 125, 40);
+$button-warning-border-color: rgb(245, 140, 60);
+
+$button-danger-bg-color: rgb(211, 86, 86);
+$button-danger-hover-bg-color: rgb(228, 108, 108);
+$button-danger-border-color: rgb(235, 125, 125);
+
+$button-info-bg-color: rgb(100, 105, 120);
+$button-info-hover-bg-color: rgb(120, 125, 140);
+$button-info-border-color: rgb(140, 145, 160);
+
+$button-solid-fg-color: white;
+$button-disabled-bg-color: rgba(255, 255, 255, 0.05);
+$button-disabled-border-color: rgba(255, 255, 255, 0.1);
+$button-disabled-fg-color: rgba(255, 255, 255, 0.3);
+
+$suggestions-bg-color: rgb(20, 20, 28);
+
+// messages and message boxes
+$message-bg-color: rgb(28, 28, 36);
+$message-border-color: rgba(255, 255, 255, 0.25);
+$message-fg-color: white;
+$message-success-color: rgb(70, 190, 105);
+$message-warning-color: rgb(245, 140, 60);
+$message-error-color: rgb(235, 125, 125);
+$message-info-color: rgb(170, 175, 190);
+$message-box-bg-color: black;
+$message-box-header-bg-color: rgba(255, 255, 255, 0.08);

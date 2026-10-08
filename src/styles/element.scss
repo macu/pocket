@@ -72,3 +72,140 @@
 		border-color: rgba(255, 255, 255, 0.2);
 	}
 }
+
+// dark theme overrides for Element Plus buttons, set through Element's own button variables
+@mixin el-button-colors($type, $bg, $hover-bg, $border, $fg: $button-solid-fg-color) {
+	.el-button--#{$type} {
+		--el-button-text-color: #{$fg};
+		--el-button-bg-color: #{$bg};
+		--el-button-border-color: #{$border};
+		--el-button-hover-text-color: #{$fg};
+		--el-button-hover-bg-color: #{$hover-bg};
+		--el-button-hover-border-color: #{$border};
+		--el-button-active-text-color: #{$fg};
+		--el-button-active-bg-color: #{$hover-bg};
+		--el-button-active-border-color: #{$border};
+		--el-button-outline-color: #{$border};
+		--el-button-disabled-text-color: #{$button-disabled-fg-color};
+		--el-button-disabled-bg-color: #{$button-disabled-bg-color};
+		--el-button-disabled-border-color: #{$button-disabled-border-color};
+	}
+
+	// plain variant: tinted background, colored text
+	.el-button--#{$type}.is-plain,
+	.el-button--#{$type}.is-text,
+	.el-button--#{$type}.is-link {
+		--el-button-text-color: #{$border};
+		--el-button-bg-color: transparent;
+		--el-button-hover-text-color: #{$fg};
+		--el-button-hover-bg-color: #{$bg};
+		--el-button-active-text-color: #{$fg};
+		--el-button-active-bg-color: #{$hover-bg};
+	}
+
+	.el-button--#{$type}.is-text,
+	.el-button--#{$type}.is-link {
+		--el-button-border-color: transparent;
+		--el-button-hover-border-color: transparent;
+		--el-button-active-border-color: transparent;
+		--el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
+		--el-button-hover-text-color: #{$hover-bg};
+		--el-button-active-bg-color: rgba(255, 255, 255, 0.12);
+	}
+}
+
+@include el-button-colors(primary, $button-primary-bg-color, $button-primary-hover-bg-color, $button-primary-border-color);
+@include el-button-colors(success, $button-success-bg-color, $button-success-hover-bg-color, $button-success-border-color);
+@include el-button-colors(warning, $button-warning-bg-color, $button-warning-hover-bg-color, $button-warning-border-color);
+@include el-button-colors(danger, $button-danger-bg-color, $button-danger-hover-bg-color, $button-danger-border-color);
+@include el-button-colors(info, $button-info-bg-color, $button-info-hover-bg-color, $button-info-border-color);
+
+// default (untyped) buttons
+.el-button--default,
+.el-button:not([class*="el-button--"]) {
+	--el-button-text-color: #{$button-default-fg-color};
+	--el-button-bg-color: #{$button-default-bg-color};
+	--el-button-border-color: #{$button-default-border-color};
+	--el-button-hover-text-color: #{$button-default-fg-color};
+	--el-button-hover-bg-color: #{$button-default-hover-bg-color};
+	--el-button-hover-border-color: #{$button-default-border-color};
+	--el-button-active-text-color: #{$button-default-fg-color};
+	--el-button-active-bg-color: #{$button-default-hover-bg-color};
+	--el-button-active-border-color: #{$button-default-border-color};
+	--el-button-disabled-text-color: #{$button-disabled-fg-color};
+	--el-button-disabled-bg-color: #{$button-disabled-bg-color};
+	--el-button-disabled-border-color: #{$button-disabled-border-color};
+}
+
+// dark theme for ElMessage (toasts); these are teleported to <body>
+.el-message {
+	--el-message-bg-color: #{$message-bg-color};
+	--el-message-border-color: #{$message-border-color};
+	--el-message-text-color: #{$message-fg-color};
+	--el-message-close-icon-color: #{$message-info-color};
+	--el-message-close-hover-color: #{$message-fg-color};
+	background-color: $message-bg-color;
+	border-color: $message-border-color;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+
+	.el-message__content {
+		color: $message-fg-color;
+	}
+
+	&.el-message--success {
+		border-left: 4px solid $message-success-color;
+		.el-message__icon { color: $message-success-color; }
+	}
+	&.el-message--warning {
+		border-left: 4px solid $message-warning-color;
+		.el-message__icon { color: $message-warning-color; }
+	}
+	&.el-message--error {
+		border-left: 4px solid $message-error-color;
+		.el-message__icon { color: $message-error-color; }
+	}
+	&.el-message--info {
+		border-left: 4px solid $message-info-color;
+		.el-message__icon { color: $message-info-color; }
+	}
+}
+
+// dark theme for ElMessageBox ($confirm, $alert, $prompt)
+.el-overlay.is-message-box .el-message-box {
+	--el-messagebox-title-color: #{$app-fg-color};
+	--el-messagebox-content-color: #{$app-fg-color};
+	background-color: $message-box-bg-color;
+	border: 1px solid $app-separator-color;
+	border-radius: $border-radius;
+	padding: 0;
+	overflow: hidden;
+
+	.el-message-box__header {
+		padding: 14px 40px 14px 20px;
+		background-color: $message-box-header-bg-color;
+		border-bottom: 1px solid $app-separator-color;
+	}
+	.el-message-box__title {
+		color: $app-fg-color;
+		font-weight: 600;
+	}
+	.el-message-box__headerbtn .el-message-box__close {
+		color: $app-fg-color;
+	}
+	.el-message-box__content {
+		padding: 16px 20px;
+		color: $app-fg-color;
+	}
+	.el-message-box__message {
+		color: $app-fg-color;
+	}
+	.el-message-box__status.el-message-box-icon--success { color: $message-success-color; }
+	.el-message-box__status.el-message-box-icon--warning { color: $message-warning-color; }
+	.el-message-box__status.el-message-box-icon--error { color: $message-error-color; }
+	.el-message-box__status.el-message-box-icon--info { color: $message-info-color; }
+	.el-message-box__btns {
+		padding: 12px 20px;
+		background-color: $message-box-header-bg-color;
+		border-top: 1px solid $app-separator-color;
+	}
+}

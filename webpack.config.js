@@ -29,6 +29,7 @@ module.exports = {
 		'element-en': 'ElementPlusLocaleEn',
 		'axios': 'axios',
 		'moment': 'moment',
+		'diff': 'Diff',
 	},
 	resolve: {
 		alias: {

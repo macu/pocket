@@ -152,23 +152,27 @@ export default {
 		left: 0;
 		z-index: 1000;
 		margin: 4px 0 0;
-		padding: 4px 0;
+		padding: 6px;
+		gap: 4px;
 		list-style: none;
 		width: 100%;
 		min-width: 200px;
 		max-height: 240px;
 		overflow-y: auto;
+		box-sizing: border-box;
+		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: $border-radius;
-		background-color: $topic-bg-color;
-		color: $topic-fg-color;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+		background-color: $suggestions-bg-color;
+		color: $app-fg-color;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 
 		li {
 			padding: 8px 12px;
+			border-radius: $border-radius;
 			cursor: pointer;
 
 			&:hover, &.active {
-				background-color: rgba(255, 255, 255, 0.1);
+				background-color: rgba(255, 255, 255, 0.12);
 			}
 		}
 	}
