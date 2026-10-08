@@ -18,8 +18,9 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 		"/ajax/load-login":  auth.AjaxLoadLogin,
 		"/ajax/load-signup": auth.AjaxLoadSignup,
 
-		"/ajax/dashboard": AjaxLoadDashboard,
-		"/ajax/post":      AjaxLoadPost,
+		"/ajax/dashboard":      AjaxLoadDashboard,
+		"/ajax/post":           AjaxLoadPost,
+		"/ajax/post/revisions": AjaxLoadPostRevisions,
 
 		"/ajax/topics/page": AjaxLoadTopicsPage,
 		"/ajax/posts/page":  AjaxLoadPostsPage,

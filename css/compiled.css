@@ -549,6 +549,71 @@ div.center {
   max-height: none;
   overflow-y: visible;
 }
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/post-revisions-dialog.vue?vue&type=style&index=0&id=76e4bce1&lang=scss ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.post-revisions-dialog.el-dialog {
+  max-width: 800px;
+  padding: 0;
+  border-radius: 5px;
+  overflow: hidden;
+  background: black;
+  color: white;
+  border: 1px solid rgb(226, 103, 15);
+}
+.post-revisions-dialog.el-dialog .el-dialog__header {
+  margin: 0;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgb(226, 103, 15);
+}
+.post-revisions-dialog.el-dialog .el-dialog__title {
+  color: white;
+  font-weight: 600;
+}
+.post-revisions-dialog.el-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: white;
+}
+.post-revisions-dialog.el-dialog .el-dialog__body {
+  padding: 16px 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+  color: white;
+}
+.post-revisions-dialog.el-dialog .el-dialog__footer {
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgb(226, 103, 15);
+  text-align: right;
+}
+.post-revisions-dialog.el-dialog .revision {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.post-revisions-dialog.el-dialog .revision small {
+  opacity: 0.7;
+  font-weight: 600;
+}
+.post-revisions-dialog.el-dialog .revision.current {
+  border-color: rgb(86, 86, 211);
+  background: rgba(86, 86, 211, 0.15);
+}
+.post-revisions-dialog.el-dialog .revision-diff {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.post-revisions-dialog.el-dialog ins {
+  background: rgba(60, 180, 75, 0.35);
+  text-decoration: none;
+  border-radius: 2px;
+}
+.post-revisions-dialog.el-dialog del {
+  background: rgba(220, 70, 70, 0.4);
+  border-radius: 2px;
+}
 /*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/posts/post.vue?vue&type=style&index=0&id=698b7640&lang=scss ***!
   \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/

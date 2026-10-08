@@ -485,19 +485,39 @@ func UpdatePostText(conn *sql.DB, postID uint, authorID uint, text string) (*Pos
 		return nil, fmt.Errorf("validating post text: %w", err)
 	}
 
-	result, err := conn.Exec(`
-		UPDATE post SET post_text = $1 WHERE id = $2 AND author = $3
-	`, text, postID, authorID)
+	tx, err := conn.Begin()
 	if err != nil {
-		return nil, fmt.Errorf("updating post %d: %w", postID, err)
+		return nil, fmt.Errorf("beginning post update %d: %w", postID, err)
+	}
+	defer tx.Rollback()
+
+	var oldText string
+	err = tx.QueryRow(`
+		SELECT post_text FROM post WHERE id = $1 AND author = $2 FOR UPDATE
+	`, postID, authorID).Scan(&oldText)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sql.ErrNoRows
+		}
+		return nil, fmt.Errorf("locking post %d: %w", postID, err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return nil, fmt.Errorf("checking rows affected for post %d: %w", postID, err)
+	if oldText != text {
+		_, err = tx.Exec(`
+			INSERT INTO post_revision (post_id, post_text, replaced_at) VALUES ($1, $2, NOW())
+		`, postID, oldText)
+		if err != nil {
+			return nil, fmt.Errorf("recording revision of post %d: %w", postID, err)
+		}
+
+		_, err = tx.Exec(`UPDATE post SET post_text = $1 WHERE id = $2`, text, postID)
+		if err != nil {
+			return nil, fmt.Errorf("updating post %d: %w", postID, err)
+		}
 	}
-	if rowsAffected == 0 {
-		return nil, sql.ErrNoRows
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("committing post update %d: %w", postID, err)
 	}
 
 	return LoadPost(conn, postID, &authorID)
@@ -598,4 +618,54 @@ func ensureUserUpvote(conn db.DBConn, postID uint, topicID uint, userID uint) er
 		return fmt.Errorf("updating topic sum after auto-upvote: %w", err)
 	}
 	return nil
+}
+
+// PostRevision is one version of a post's text. CreatedAt is when this
+// version became current.
+type PostRevision struct {
+	PostText  string    `json:"postText"`
+	CreatedAt time.Time `json:"createdAt"`
+	Current   bool      `json:"current"`
+}
+
+// LoadPostRevisions returns all versions of a post, most recent first,
+// beginning with the current version.
+func LoadPostRevisions(conn *sql.DB, postID uint) ([]PostRevision, error) {
+
+	var currentText string
+	var createdAt time.Time
+	err := conn.QueryRow(`SELECT post_text, created_at FROM post WHERE id = $1`, postID).Scan(&currentText, &createdAt)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := conn.Query(`
+		SELECT post_text, replaced_at FROM post_revision WHERE post_id = $1 ORDER BY replaced_at ASC, id ASC
+	`, postID)
+	if err != nil {
+		return nil, fmt.Errorf("loading revisions of post %d: %w", postID, err)
+	}
+	defer rows.Close()
+
+	// each version became current when the previous one was replaced
+	var versions []PostRevision
+	start := createdAt
+	for rows.Next() {
+		var text string
+		var replacedAt time.Time
+		if err := rows.Scan(&text, &replacedAt); err != nil {
+			return nil, fmt.Errorf("scanning revision of post %d: %w", postID, err)
+		}
+		versions = append(versions, PostRevision{PostText: text, CreatedAt: start})
+		start = replacedAt
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("reading revisions of post %d: %w", postID, err)
+	}
+	versions = append(versions, PostRevision{PostText: currentText, CreatedAt: start, Current: true})
+
+	for i, j := 0, len(versions)-1; i < j; i, j = i+1, j-1 {
+		versions[i], versions[j] = versions[j], versions[i]
+	}
+	return versions, nil
 }

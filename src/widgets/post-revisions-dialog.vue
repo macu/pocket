@@ -1,0 +1,141 @@
+<template>
+<el-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)"
+	@open="load()" title="Revisions" width="90%" class="post-revisions-dialog" align-center append-to-body>
+
+	<loading-message v-if="loading"/>
+
+	<div v-else class="flex-column-md">
+		<div v-for="(revision, index) in revisions" :key="index" class="revision flex-column-sm"
+			:class="{current: revision.current}">
+			<small>{{revision.current ? 'Current revision' : 'Revision'}} &middot; {{formatTime(revision.createdAt)}}</small>
+			<div class="revision-diff">
+				<template v-if="index < revisions.length - 1">
+					<template v-for="(part, partIndex) in diffParts(index)" :key="partIndex">
+						<ins v-if="part.added">{{part.value}}</ins>
+						<del v-else-if="part.removed">{{part.value}}</del>
+						<span v-else>{{part.value}}</span>
+					</template>
+				</template>
+				<template v-else>{{revision.postText}}</template>
+			</div>
+		</div>
+	</div>
+
+	<template #footer>
+		<el-button @click="$emit('update:modelValue', false)">Close</el-button>
+	</template>
+</el-dialog>
+</template>
+
+<script>
+import {diffWords} from 'diff';
+
+import {
+	ajaxGet,
+} from '@/utils/ajax.js';
+
+export default {
+	props: {
+		modelValue: Boolean,
+		postId: {
+			type: [String, Number],
+			required: true,
+		},
+	},
+	emits: ['update:modelValue'],
+	data() {
+		return {
+			revisions: [],
+			loading: false,
+		};
+	},
+	methods: {
+		load() {
+			this.loading = true;
+			ajaxGet('/ajax/post/revisions', {id: this.postId}).then(response => {
+				this.revisions = response.revisions || [];
+			}).finally(() => {
+				this.loading = false;
+			});
+		},
+		// diff of each revision against the one before it (revisions are newest first)
+		diffParts(index) {
+			return diffWords(this.revisions[index + 1].postText, this.revisions[index].postText);
+		},
+		formatTime(value) {
+			return new Date(value).toLocaleString();
+		},
+	},
+};
+</script>
+
+<style lang="scss">
+@import '@/styles/vars.scss';
+
+.post-revisions-dialog.el-dialog {
+	max-width: 800px;
+	padding: 0;
+	border-radius: $border-radius;
+	overflow: hidden;
+	background: $app-bg-color;
+	color: $app-fg-color;
+	border: 1px solid $app-separator-color;
+
+	.el-dialog__header {
+		margin: 0;
+		padding: 14px 20px;
+		background: rgba(255, 255, 255, 0.08);
+		border-bottom: 1px solid $app-separator-color;
+	}
+	.el-dialog__title {
+		color: $app-fg-color;
+		font-weight: 600;
+	}
+	.el-dialog__headerbtn .el-dialog__close {
+		color: $app-fg-color;
+	}
+	.el-dialog__body {
+		padding: 16px 20px;
+		max-height: 60vh;
+		overflow-y: auto;
+		color: $app-fg-color;
+	}
+	.el-dialog__footer {
+		padding: 12px 20px;
+		background: rgba(255, 255, 255, 0.08);
+		border-top: 1px solid $app-separator-color;
+		text-align: right;
+	}
+
+	.revision {
+		padding: 12px;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: $border-radius;
+		background: rgba(255, 255, 255, 0.04);
+
+		small {
+			opacity: 0.7;
+			font-weight: 600;
+		}
+
+		&.current {
+			border-color: $topic-bg-color;
+			background: rgba(86, 86, 211, 0.15);
+		}
+	}
+	.revision-diff {
+		white-space: pre-wrap;
+		word-break: break-word;
+		line-height: 1.5;
+	}
+	ins {
+		background: rgba(60, 180, 75, 0.35);
+		text-decoration: none;
+		border-radius: 2px;
+	}
+	del {
+		background: rgba(220, 70, 70, 0.4);
+		border-radius: 2px;
+	}
+}
+</style>

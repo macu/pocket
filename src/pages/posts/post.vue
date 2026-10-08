@@ -14,6 +14,8 @@
 			<post-widget :post="post" default-expanded size="large" />
 		</div>
 
+		<post-revisions-dialog v-model="revisionsVisible" :post-id="postId"/>
+
 		<form-layout v-if="showAddTopicForm" title="Add topics" class="add-topic-form">
 			<form-field title="Topic names">
 				<template #tip><small>Add topics to this post (max {{ $const.maxNewPostTopics }}).</small></template>
@@ -26,15 +28,18 @@
 		</form-layout>
 
 		<template v-else>
-			<horizontal-controls v-if="post && authenticated">
-				<el-button v-if="isOwnPost" @click="goToEditPost()" type="primary">
+			<horizontal-controls v-if="post">
+				<el-button v-if="authenticated && isOwnPost" @click="goToEditPost()" type="primary">
 					Edit
 				</el-button>
-				<el-button @click="toggleAddTopicForm()" type="primary">
+				<el-button v-if="authenticated" @click="toggleAddTopicForm()" type="primary">
 					Add topics
 				</el-button>
-				<el-button @click="goToAddSubPost()" type="primary">
+				<el-button v-if="authenticated" @click="goToAddSubPost()" type="primary">
 					Add sub-post
+				</el-button>
+				<el-button @click="revisionsVisible = true" type="primary">
+					Revisions
 				</el-button>
 			</horizontal-controls>
 
@@ -105,6 +110,7 @@
 
 <script>
 import PostWidget from '@/widgets/post.vue';
+import PostRevisionsDialog from '@/widgets/post-revisions-dialog.vue';
 import TopicsInput from '@/widgets/topics-input.vue';
 import TimeframeSelect, {TIMEFRAME_RECENT, TIMEFRAME_STORAGE_KEY} from '@/widgets/timeframe-select.vue';
 
@@ -127,6 +133,7 @@ import {PRESELECTED_TOPICS_STORAGE_KEY} from '@/pages/posts/add-post.vue';
 export default {
 	components: {
 		PostWidget,
+		PostRevisionsDialog,
 		TopicsInput,
 		TimeframeSelect,
 	},
@@ -143,6 +150,7 @@ export default {
 			newTopics: [],
 			subPostText: '',
 			showAddTopicForm: false,
+			revisionsVisible: false,
 			showAddSubPostForm: false,
 			timeframe: getStorage(TIMEFRAME_STORAGE_KEY, '24h'),
 		};

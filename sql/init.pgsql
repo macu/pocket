@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS post_topic_sum CASCADE;
 DROP TABLE IF EXISTS topic CASCADE;
 DROP TABLE IF EXISTS post_topic_vote CASCADE;
 DROP TABLE IF EXISTS post_topic CASCADE;
+DROP TABLE IF EXISTS post_revision CASCADE;
 DROP TABLE IF EXISTS post CASCADE;
 DROP TYPE IF EXISTS vote_type;
 
@@ -105,6 +106,16 @@ CREATE TABLE post (
 );
 
 CREATE INDEX post_text_fulltext_idx ON post USING GIN (to_tsvector('simple', post_text));
+
+-- previous contents of a post, recorded each time it is edited
+CREATE TABLE post_revision (
+	id SERIAL PRIMARY KEY,
+	post_id INTEGER NOT NULL REFERENCES post (id) ON DELETE CASCADE,
+	post_text TEXT NOT NULL, -- content before the edit
+	replaced_at TIMESTAMPTZ NOT NULL -- when this content was replaced
+);
+
+CREATE INDEX post_revision_post_idx ON post_revision (post_id, replaced_at);
 
 CREATE TYPE vote_type AS ENUM (
 	'upvote',

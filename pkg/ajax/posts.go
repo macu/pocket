@@ -373,3 +373,27 @@ func parsePostCursor(r *http.Request, mostRecent bool) (*pocket.PostCursor, erro
 	}
 	return &pocket.PostCursor{CreatedAt: createdAt, ID: postID}, nil
 }
+
+func AjaxLoadPostRevisions(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	id, err := types.AtoUint(r.FormValue("id"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	revisions, err := pocket.LoadPostRevisions(db, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound
+		}
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return map[string]any{
+		"revisions": revisions,
+	}, http.StatusOK
+
+}
