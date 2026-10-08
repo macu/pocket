@@ -269,7 +269,7 @@
   --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
 }
 
-.el-message {
+.el-message.el-message {
   --el-message-bg-color: rgb(28, 28, 36);
   --el-message-border-color: rgba(255, 255, 255, 0.25);
   --el-message-text-color: white;
@@ -279,31 +279,35 @@
   border-color: rgba(255, 255, 255, 0.25);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
-.el-message .el-message__content {
+.el-message.el-message.is-plain, .el-message.el-message.el-message--success, .el-message.el-message.el-message--warning, .el-message.el-message.el-message--error, .el-message.el-message.el-message--info {
+  background-color: rgb(28, 28, 36);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.el-message.el-message .el-message__content, .el-message.el-message .el-message__badge {
   color: white;
 }
-.el-message.el-message--success {
+.el-message.el-message.el-message--success {
   border-left: 4px solid rgb(70, 190, 105);
 }
-.el-message.el-message--success .el-message__icon {
+.el-message.el-message.el-message--success .el-message__icon {
   color: rgb(70, 190, 105);
 }
-.el-message.el-message--warning {
+.el-message.el-message.el-message--warning {
   border-left: 4px solid rgb(245, 140, 60);
 }
-.el-message.el-message--warning .el-message__icon {
+.el-message.el-message.el-message--warning .el-message__icon {
   color: rgb(245, 140, 60);
 }
-.el-message.el-message--error {
+.el-message.el-message.el-message--error {
   border-left: 4px solid rgb(235, 125, 125);
 }
-.el-message.el-message--error .el-message__icon {
+.el-message.el-message.el-message--error .el-message__icon {
   color: rgb(235, 125, 125);
 }
-.el-message.el-message--info {
+.el-message.el-message.el-message--info {
   border-left: 4px solid rgb(170, 175, 190);
 }
-.el-message.el-message--info .el-message__icon {
+.el-message.el-message.el-message--info .el-message__icon {
   color: rgb(170, 175, 190);
 }
 
@@ -886,6 +890,161 @@ div.center {
   max-height: none;
   overflow-y: visible;
 }
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/admin/users.vue?vue&type=style&index=0&id=70054474&lang=scss ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.admin-users-page .admin-users-status {
+  min-width: 160px;
+}
+.admin-users-page .admin-users-search {
+  min-width: 260px;
+}
+.admin-users-page .total-users, .admin-users-page .no-users, .admin-users-page .no-access {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+.admin-users-page .admin-users-table-wrap {
+  overflow-x: auto;
+}
+.admin-users-page .admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.admin-users-page .admin-users-table th, .admin-users-page .admin-users-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+}
+.admin-users-page .admin-users-table th {
+  background: rgba(255, 255, 255, 0.08);
+}
+.admin-users-page .admin-users-table .number {
+  text-align: right;
+}
+.admin-users-page .admin-users-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.admin-users-page .admin-users-table small {
+  opacity: 0.7;
+}
+.admin-users-page .status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.admin-users-page .status.status-moderator {
+  background: rgba(86, 86, 211, 0.4);
+}
+.admin-users-page .status.status-admin {
+  background: rgba(60, 160, 90, 0.4);
+}
+.admin-users-page .status.status-banned {
+  background: rgba(200, 60, 60, 0.4);
+}
+.admin-users-page .status.status-inactive {
+  opacity: 0.6;
+}
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/admin/user.vue?vue&type=style&index=0&id=8da7a2e2&lang=scss ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.admin-user-page {
+  color: white;
+}
+.admin-user-page .no-access, .admin-user-page .no-topics, .admin-user-page .total-topics {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+.admin-user-page .admin-user-columns {
+  display: flex;
+  align-items: flex-start;
+  column-gap: 40px;
+}
+.admin-user-page .admin-user-columns > .admin-user-column-left {
+  flex: 0 0 300px;
+}
+.admin-user-page .admin-user-columns > .admin-user-column-right {
+  flex: 1;
+  min-width: 0;
+}
+.admin-user-page .admin-user-columns.is-mobile {
+  flex-direction: column;
+  row-gap: 40px;
+  width: 100%;
+}
+.admin-user-page .admin-user-columns.is-mobile > .admin-user-column-left {
+  flex-basis: auto;
+  width: 100%;
+}
+.admin-user-page .admin-user-columns.is-mobile > .admin-user-column-right {
+  width: 100%;
+}
+.admin-user-page .admin-user-header .handle {
+  opacity: 0.7;
+}
+.admin-user-page .admin-user-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin: 8px 0;
+}
+.admin-user-page .admin-user-details dt {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+.admin-user-page .admin-user-details dd {
+  margin: 0;
+  word-break: break-all;
+}
+.admin-user-page .admin-box {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  align-items: flex-start;
+}
+.admin-user-page .admin-box h3 {
+  margin: 0;
+}
+.admin-user-page .admin-topics-box {
+  align-items: stretch;
+}
+.admin-user-page .admin-topics-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: 12px;
+}
+.admin-user-page .admin-pagination {
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0;
+}
+.admin-user-page .admin-topics-table-wrap {
+  overflow-x: auto;
+}
+.admin-user-page .admin-topics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.admin-user-page .admin-topics-table th, .admin-user-page .admin-topics-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+}
+.admin-user-page .admin-topics-table th {
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.35);
+}
+.admin-user-page .admin-topics-table .check {
+  width: 1%;
+}
+.admin-user-page .admin-topics-table .number {
+  text-align: right;
+}
+.admin-user-page .admin-topics-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/post-revisions-dialog.vue?vue&type=style&index=0&id=76e4bce1&lang=scss ***!
   \***************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -986,6 +1145,15 @@ div.center {
 }
 .loading-message.right {
   justify-content: flex-end;
+}
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/horizontal-controls.vue?vue&type=style&index=0&id=47ae9616&lang=scss ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.horizontal-controls.filters {
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
 }
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-layout.vue?vue&type=style&index=0&id=27e1292a&lang=scss ***!

@@ -17,6 +17,10 @@
 				<small>Joined <moment :time="user.createdAt" ago/></small>
 			</div>
 
+			<router-link v-if="isAdmin" :to="{name: 'admin-user', params: {id: user.id}}">
+				Manage user
+			</router-link>
+
 			<horizontal-controls class="align-start">
 				<div class="flex-column-sm">
 					<small>Find posts created within:</small>
@@ -134,6 +138,9 @@ export default {
 		},
 		identifier() {
 			return this.$route.params.identifier;
+		},
+		isAdmin() {
+			return this.$store.getters.isAdmin;
 		},
 		showLoadMoreTopics() {
 			return !this.topicSelectionLimitReached &&

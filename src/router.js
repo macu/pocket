@@ -12,6 +12,8 @@ import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 import AddPostPage from '@/pages/posts/add-post.vue';
 import EditPostPage from '@/pages/posts/edit-post.vue';
 import UserPage from '@/pages/user/index.vue';
+import AdminUsersPage from '@/pages/admin/users.vue';
+import AdminUserPage from '@/pages/admin/user.vue';
 import PostPage from '@/pages/posts/post.vue';
 
 const router = createRouter({
@@ -41,6 +43,16 @@ const router = createRouter({
 			path: '/add-post',
 			name: 'add-post',
 			component: AddPostPage,
+		},
+		{
+			path: '/admin/users',
+			name: 'admin-users',
+			component: AdminUsersPage,
+		},
+		{
+			path: '/admin/user/:id',
+			name: 'admin-user',
+			component: AdminUserPage,
 		},
 		{
 			path: '/user/:identifier',

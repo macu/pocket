@@ -51,6 +51,9 @@ export const store = createStore({
 			}
 			return '';
 		},
+		isAdmin(state) {
+			return !!state.user && state.user.role === 'admin';
+		},
 		currentUserRole(state) {
 			if (state.user) {
 				return state.user.role;

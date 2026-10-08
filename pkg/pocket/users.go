@@ -13,6 +13,7 @@ type User struct {
 	Handle      string    `json:"handle,omitempty"`
 	DisplayName string    `json:"displayName"`
 	CreatedAt   time.Time `json:"createdAt"`
+	Role        string    `json:"role,omitempty"` // only populated for admin viewers
 }
 
 var numericIdentifierPattern = regexp.MustCompile(`^[0-9]+$`)
@@ -36,8 +37,8 @@ func LoadUserByIdentifier(conn *sql.DB, identifier string) (*User, error) {
 	var user User
 	var handle sql.NullString
 	err := conn.QueryRow(`
-		SELECT id, handle, display_name, created_at FROM user_account WHERE `+column+` = $1
-	`, arg).Scan(&user.ID, &handle, &user.DisplayName, &user.CreatedAt)
+		SELECT id, handle, display_name, created_at, user_role::text FROM user_account WHERE `+column+` = $1
+	`, arg).Scan(&user.ID, &handle, &user.DisplayName, &user.CreatedAt, &user.Role)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err

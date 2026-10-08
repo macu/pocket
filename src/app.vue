@@ -7,6 +7,7 @@
 			<router-link v-else :to="{name: 'dashboard'}">Pocket</router-link>
 		</h1>
 		<template v-if="showUser">
+			<router-link v-if="isAdmin" :to="{name: 'admin-users'}">Users</router-link>
 			<span class="flex-row nowrap">
 				<material-icon icon="account_circle"/>
 				<span v-text="currentUserDisplayName"/>
@@ -41,6 +42,9 @@ export default {
 		},
 		showLogin() {
 			return this.loginLoaded && !this.$store.getters.authenticated;
+		},
+		isAdmin() {
+			return this.$store.getters.isAdmin;
 		},
 		currentUserDisplayName() {
 			return this.$store.getters.currentUserDisplayName;

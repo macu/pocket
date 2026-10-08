@@ -138,7 +138,7 @@
 }
 
 // dark theme for ElMessage (toasts); these are teleported to <body>
-.el-message {
+.el-message.el-message {
 	--el-message-bg-color: #{$message-bg-color};
 	--el-message-border-color: #{$message-border-color};
 	--el-message-text-color: #{$message-fg-color};
@@ -148,7 +148,12 @@
 	border-color: $message-border-color;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 
-	.el-message__content {
+	&.is-plain, &.el-message--success, &.el-message--warning, &.el-message--error, &.el-message--info {
+		background-color: $message-bg-color;
+		border-color: $message-border-color;
+	}
+
+	.el-message__content, .el-message__badge {
 		color: $message-fg-color;
 	}
 

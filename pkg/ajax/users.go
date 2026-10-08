@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"pocket/pkg/pocket"
+	userpkg "pocket/pkg/user"
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/logging"
 )
@@ -34,6 +35,10 @@ func AjaxLoadUser(db *sql.DB, auth *ajax.Auth,
 		}
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
+	}
+
+	if auth == nil || !userpkg.CheckRoleAdmin(auth.Role) {
+		user.Role = ""
 	}
 
 	topTopics, err := pocket.LoadUserTopics(db, user.ID, 0, nil, cutoff)

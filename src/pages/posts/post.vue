@@ -41,6 +41,9 @@
 				<el-button @click="revisionsVisible = true" type="primary">
 					Revisions
 				</el-button>
+				<el-button v-if="isAdmin" @click="deletePost()" type="danger">
+					Delete
+				</el-button>
 			</horizontal-controls>
 
 			<horizontal-controls class="align-start">
@@ -159,6 +162,9 @@ export default {
 		authenticated() {
 			return this.$store.getters.authenticated;
 		},
+		isAdmin() {
+			return this.$store.getters.isAdmin;
+		},
 		isOwnPost() {
 			return !!this.post && this.post.authorId === this.$store.getters.currentUserId;
 		},
@@ -228,6 +234,24 @@ export default {
 			});
 		},
 
+		deletePost() {
+			this.$confirm('Delete this post, including its sub-posts, votes and revisions? This cannot be undone.', 'Delete post', {
+				confirmButtonText: 'Delete',
+				cancelButtonText: 'Cancel',
+				type: 'warning',
+			}).then(() => {
+				ajaxPost('/ajax/admin/post/delete', {id: this.postId}).then(response => {
+					alertSuccess('Post deleted.');
+					if (response.parentPostId) {
+						this.$router.push({name: 'post', params: {id: response.parentPostId}});
+					} else {
+						this.$router.push({name: 'dashboard'});
+					}
+				});
+			}).catch(() => {
+				// User cancelled
+			});
+		},
 		focusAddTopicInput() {
 			this.$nextTick(() => {
 				if (this.$refs.addTopicInput && this.$refs.addTopicInput.focus) {
