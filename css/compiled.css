@@ -581,6 +581,99 @@ div.center {
   max-width: 1200px;
   margin: 0 auto;
 }
+/*!****************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/admin.scss ***!
+  \****************************************************************************************************************************************************************/
+.admin-page {
+  color: white;
+  font-size: 1.1rem;
+}
+.admin-page .no-access, .admin-page .no-items, .admin-page .total-items {
+  opacity: 0.7;
+}
+.admin-page .admin-box {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  align-items: flex-start;
+}
+.admin-page .admin-box h3 {
+  margin: 0;
+}
+.admin-page .admin-table-box {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 8px;
+  align-items: stretch;
+}
+.admin-page .admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: 12px;
+}
+.admin-page .admin-pagination {
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0;
+}
+.admin-page .admin-table-wrap {
+  overflow-x: auto;
+}
+.admin-page .admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.admin-page .admin-table th, .admin-page .admin-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+}
+.admin-page .admin-table th {
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.35);
+}
+.admin-page .admin-table .check {
+  width: 1%;
+}
+.admin-page .admin-table .number {
+  text-align: right;
+}
+.admin-page .admin-table .wrap {
+  white-space: normal;
+  min-width: 200px;
+  word-break: break-word;
+}
+.admin-page .admin-table small {
+  opacity: 0.7;
+}
+.admin-page .admin-section {
+  margin-bottom: 24px;
+}
+.admin-page .admin-section-header {
+  display: flex;
+  align-items: center;
+  column-gap: 8px;
+  margin: 0 0 12px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  padding-bottom: 8px;
+}
+.admin-page .el-input, .admin-page .el-select, .admin-page .el-button, .admin-page .el-checkbox {
+  font-size: 1rem;
+}
+.admin-page .el-button {
+  --el-button-size: 36px;
+}
+.admin-page .admin-table small, .admin-page .total-items, .admin-page .no-items, .admin-page .no-access {
+  font-size: 1rem;
+}
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/app.vue?vue&type=style&index=0&id=5ef48958&lang=scss ***!
   \*************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -890,71 +983,36 @@ div.center {
   max-height: none;
   overflow-y: visible;
 }
-/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/admin/users.vue?vue&type=style&index=0&id=70054474&lang=scss ***!
-  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.admin-users-page .admin-users-status {
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/admin/users-table.vue?vue&type=style&index=0&id=c5ac1296&lang=scss ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.admin-users-status {
   min-width: 160px;
 }
-.admin-users-page .admin-users-search {
+.admin-users-search {
   min-width: 260px;
 }
-.admin-users-page .total-users, .admin-users-page .no-users, .admin-users-page .no-access {
-  opacity: 0.7;
-  font-size: 0.9em;
+.admin-table .status.status-moderator {
+  color: rgb(150, 150, 255);
 }
-.admin-users-page .admin-users-table-wrap {
-  overflow-x: auto;
+.admin-table .status.status-admin {
+  color: rgb(100, 210, 130);
 }
-.admin-users-page .admin-users-table {
-  width: 100%;
-  border-collapse: collapse;
+.admin-table .status.status-banned {
+  color: rgb(240, 100, 100);
 }
-.admin-users-page .admin-users-table th, .admin-users-page .admin-users-table td {
-  padding: 8px 12px;
-  text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  white-space: nowrap;
-}
-.admin-users-page .admin-users-table th {
-  background: rgba(255, 255, 255, 0.08);
-}
-.admin-users-page .admin-users-table .number {
-  text-align: right;
-}
-.admin-users-page .admin-users-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-.admin-users-page .admin-users-table small {
-  opacity: 0.7;
-}
-.admin-users-page .status {
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.1);
-}
-.admin-users-page .status.status-moderator {
-  background: rgba(86, 86, 211, 0.4);
-}
-.admin-users-page .status.status-admin {
-  background: rgba(60, 160, 90, 0.4);
-}
-.admin-users-page .status.status-banned {
-  background: rgba(200, 60, 60, 0.4);
-}
-.admin-users-page .status.status-inactive {
+.admin-table .status.status-inactive {
   opacity: 0.6;
+}
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/admin/topics-table.vue?vue&type=style&index=0&id=231ef7a9&lang=scss ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.admin-search {
+  max-width: 320px;
 }
 /*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/admin/user.vue?vue&type=style&index=0&id=8da7a2e2&lang=scss ***!
   \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.admin-user-page {
-  color: white;
-}
-.admin-user-page .no-access, .admin-user-page .no-topics, .admin-user-page .total-topics {
-  opacity: 0.7;
-  font-size: 0.9em;
-}
 .admin-user-page .admin-user-columns {
   display: flex;
   align-items: flex-start;
@@ -972,11 +1030,9 @@ div.center {
   row-gap: 40px;
   width: 100%;
 }
-.admin-user-page .admin-user-columns.is-mobile > .admin-user-column-left {
-  flex-basis: auto;
-  width: 100%;
-}
+.admin-user-page .admin-user-columns.is-mobile > .admin-user-column-left,
 .admin-user-page .admin-user-columns.is-mobile > .admin-user-column-right {
+  flex-basis: auto;
   width: 100%;
 }
 .admin-user-page .admin-user-header .handle {
@@ -995,55 +1051,6 @@ div.center {
 .admin-user-page .admin-user-details dd {
   margin: 0;
   word-break: break-all;
-}
-.admin-user-page .admin-box {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  padding: 12px;
-  align-items: flex-start;
-}
-.admin-user-page .admin-box h3 {
-  margin: 0;
-}
-.admin-user-page .admin-topics-box {
-  align-items: stretch;
-}
-.admin-user-page .admin-topics-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  column-gap: 12px;
-}
-.admin-user-page .admin-pagination {
-  justify-content: center;
-  align-items: center;
-  margin: 8px 0;
-}
-.admin-user-page .admin-topics-table-wrap {
-  overflow-x: auto;
-}
-.admin-user-page .admin-topics-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.admin-user-page .admin-topics-table th, .admin-user-page .admin-topics-table td {
-  padding: 8px 12px;
-  text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  white-space: nowrap;
-}
-.admin-user-page .admin-topics-table th {
-  background: rgba(255, 255, 255, 0.08);
-  border-bottom: 3px solid rgba(255, 255, 255, 0.35);
-}
-.admin-user-page .admin-topics-table .check {
-  width: 1%;
-}
-.admin-user-page .admin-topics-table .number {
-  text-align: right;
-}
-.admin-user-page .admin-topics-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.05);
 }
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/post-revisions-dialog.vue?vue&type=style&index=0&id=76e4bce1&lang=scss ***!

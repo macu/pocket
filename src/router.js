@@ -12,7 +12,7 @@ import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 import AddPostPage from '@/pages/posts/add-post.vue';
 import EditPostPage from '@/pages/posts/edit-post.vue';
 import UserPage from '@/pages/user/index.vue';
-import AdminUsersPage from '@/pages/admin/users.vue';
+import AdminPage from '@/pages/admin/index.vue';
 import AdminUserPage from '@/pages/admin/user.vue';
 import PostPage from '@/pages/posts/post.vue';
 
@@ -45,9 +45,9 @@ const router = createRouter({
 			component: AddPostPage,
 		},
 		{
-			path: '/admin/users',
-			name: 'admin-users',
-			component: AdminUsersPage,
+			path: '/admin',
+			name: 'admin',
+			component: AdminPage,
 		},
 		{
 			path: '/admin/user/:id',

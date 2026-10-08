@@ -191,3 +191,74 @@ func AjaxAdminDeleteUserTopics(db *sql.DB, auth ajax.Auth,
 	}, http.StatusOK
 
 }
+
+func AjaxAdminLoadTopics(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	offset, err := types.AtoUint(r.FormValue("offset"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	topics, total, err := pocket.SearchAdminTopics(db, r.FormValue("query"), offset)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return map[string]any{
+		"topics":   topics,
+		"total":    total,
+		"pageSize": pocket.AdminUserPageSize,
+	}, http.StatusOK
+
+}
+
+func AjaxAdminDeleteTopics(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	topicIDs, err := types.AtoUintList(r.FormValue("topicIds"))
+	if err != nil || len(topicIDs) == 0 || len(topicIDs) > pocket.MaxBulkTopicDelete {
+		return nil, http.StatusBadRequest
+	}
+
+	deleted, err := pocket.DeleteTopics(db, topicIDs)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return map[string]any{
+		"deleted": deleted,
+	}, http.StatusOK
+
+}
+
+func AjaxAdminLoadUserPosts(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+
+	userID, err := types.AtoUint(r.FormValue("userId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+	offset, err := types.AtoUint(r.FormValue("offset"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	posts, total, err := pocket.LoadUserAuthoredPosts(db, userID, offset)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return map[string]any{
+		"posts":    posts,
+		"total":    total,
+		"pageSize": pocket.AdminUserPageSize,
+	}, http.StatusOK
+
+}

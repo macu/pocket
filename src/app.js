@@ -1,5 +1,6 @@
 import '@/styles/app.scss';
 import '@/styles/layouts.scss';
+import '@/styles/admin.scss';
 
 import {createApp} from "vue";
 

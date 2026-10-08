@@ -40,6 +40,8 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 		"/ajax/admin/users":       AjaxAdminLoadUsers,
 		"/ajax/admin/user":        AjaxAdminLoadUser,
 		"/ajax/admin/user/topics": AjaxAdminLoadUserTopics,
+		"/ajax/admin/user/posts":  AjaxAdminLoadUserPosts,
+		"/ajax/admin/topics":      AjaxAdminLoadTopics,
 	},
 	http.MethodPost: {
 		"/ajax/logout": auth.AjaxLogout,
@@ -55,6 +57,7 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 		"/ajax/admin/user/status":         AjaxAdminSetUserStatus,
 		"/ajax/admin/user/delete-content": AjaxAdminDeleteUserContent,
 		"/ajax/admin/post/delete":         AjaxAdminDeletePost,
+		"/ajax/admin/topics/delete":       AjaxAdminDeleteTopics,
 		"/ajax/admin/user/topics/delete":  AjaxAdminDeleteUserTopics,
 	},
 }

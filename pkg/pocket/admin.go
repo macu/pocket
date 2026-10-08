@@ -300,3 +300,135 @@ func DeleteUserTopics(conn *sql.DB, userID uint, topicIDs []uint) (int64, error)
 	}
 	return result.RowsAffected()
 }
+
+// AdminSiteTopic is a topic as shown in the admin site-wide topic table.
+type AdminSiteTopic struct {
+	AdminTopic
+	CreatedBy       uint   `json:"createdBy"`
+	CreatedByName   string `json:"createdByName"`
+	CreatedByHandle string `json:"createdByHandle,omitempty"`
+}
+
+// SearchAdminTopics loads a page of all topics, newest first, whose name
+// contains query (if not empty), along with the total number of matches.
+func SearchAdminTopics(conn *sql.DB, query string, offset uint) ([]AdminSiteTopic, int, error) {
+
+	var args []interface{}
+	where := "TRUE"
+	query = strings.TrimSpace(query)
+	if query != "" {
+		where += " AND t.name ILIKE " + db.Arg(&args, "%"+escapeLikePattern(query)+"%")
+	}
+
+	var total int
+	if err := conn.QueryRow(`SELECT COUNT(*) FROM topic t WHERE `+where, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("counting topics: %w", err)
+	}
+
+	rows, err := conn.Query(`
+		SELECT t.id, t.name, t.created_at,
+			(SELECT COUNT(*) FROM post_topic_sum s WHERE s.topic_id = t.id),
+			t.created_by, u.display_name, u.handle
+		FROM topic t
+		JOIN user_account u ON u.id = t.created_by
+		WHERE `+where+`
+		ORDER BY t.created_at DESC, t.id DESC
+		LIMIT `+db.Arg(&args, AdminUserPageSize)+` OFFSET `+db.Arg(&args, offset), args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("loading topics: %w", err)
+	}
+	defer rows.Close()
+
+	topics := make([]AdminSiteTopic, 0)
+	for rows.Next() {
+		var t AdminSiteTopic
+		var handle sql.NullString
+		if err := rows.Scan(&t.ID, &t.Name, &t.CreatedAt, &t.PostCount,
+			&t.CreatedBy, &t.CreatedByName, &handle); err != nil {
+			return nil, 0, fmt.Errorf("scanning topic: %w", err)
+		}
+		t.CreatedByHandle = handle.String
+		topics = append(topics, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("reading topics: %w", err)
+	}
+
+	return topics, total, nil
+}
+
+// DeleteTopics deletes the given topics, along with their votes and tags on
+// posts. Returns the number deleted.
+func DeleteTopics(conn *sql.DB, topicIDs []uint) (int64, error) {
+	if len(topicIDs) == 0 {
+		return 0, nil
+	}
+	var args []interface{}
+	placeholders := make([]string, 0, len(topicIDs))
+	for _, id := range topicIDs {
+		placeholders = append(placeholders, db.Arg(&args, id))
+	}
+	result, err := conn.Exec(`DELETE FROM topic WHERE id IN (`+strings.Join(placeholders, ",")+`)`, args...)
+	if err != nil {
+		return 0, fmt.Errorf("deleting topics: %w", err)
+	}
+	return result.RowsAffected()
+}
+
+// AdminPost is a post as shown in the admin user's post table.
+type AdminPost struct {
+	ID           uint      `json:"id"`
+	ParentPostID *uint     `json:"parentPostId"`
+	PostText     string    `json:"postText"`
+	CreatedAt    time.Time `json:"createdAt"`
+	Upvotes      int       `json:"upvotes"`
+	Downvotes    int       `json:"downvotes"`
+	Sum          int       `json:"sum"`
+	SubPosts     int       `json:"subPosts"`
+}
+
+const adminPostTextPreviewLength = 200
+
+// LoadUserAuthoredPosts loads a page of posts written by the user, newest
+// first (with text truncated to a preview), along with their total number.
+func LoadUserAuthoredPosts(conn *sql.DB, userID uint, offset uint) ([]AdminPost, int, error) {
+
+	var total int
+	if err := conn.QueryRow(`SELECT COUNT(*) FROM post WHERE author = $1`, userID).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("counting posts: %w", err)
+	}
+
+	rows, err := conn.Query(`
+		SELECT p.id, p.parent_post_id, LEFT(p.post_text, $4), p.created_at,
+			COALESCE(s.upvotes, 0), COALESCE(s.downvotes, 0), COALESCE(s.sum, 0),
+			(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id)
+		FROM post p
+		LEFT JOIN post_vote_sum s ON s.post_id = p.id
+		WHERE p.author = $1
+		ORDER BY p.created_at DESC, p.id DESC
+		LIMIT $2 OFFSET $3`, userID, AdminUserPageSize, offset, adminPostTextPreviewLength)
+	if err != nil {
+		return nil, 0, fmt.Errorf("loading posts: %w", err)
+	}
+	defer rows.Close()
+
+	posts := make([]AdminPost, 0)
+	for rows.Next() {
+		var p AdminPost
+		var parentID sql.NullInt64
+		if err := rows.Scan(&p.ID, &parentID, &p.PostText, &p.CreatedAt,
+			&p.Upvotes, &p.Downvotes, &p.Sum, &p.SubPosts); err != nil {
+			return nil, 0, fmt.Errorf("scanning post: %w", err)
+		}
+		if parentID.Valid {
+			v := uint(parentID.Int64)
+			p.ParentPostID = &v
+		}
+		posts = append(posts, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("reading posts: %w", err)
+	}
+
+	return posts, total, nil
+}

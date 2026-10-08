@@ -7,7 +7,7 @@
 			<router-link v-else :to="{name: 'dashboard'}">Pocket</router-link>
 		</h1>
 		<template v-if="showUser">
-			<router-link v-if="isAdmin" :to="{name: 'admin-users'}">Users</router-link>
+			<router-link v-if="isAdmin" :to="{name: 'admin'}">Admin</router-link>
 			<span class="flex-row nowrap">
 				<material-icon icon="account_circle"/>
 				<span v-text="currentUserDisplayName"/>
