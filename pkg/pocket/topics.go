@@ -18,7 +18,16 @@ type Topic struct {
 	Sum       int     `json:"sum"`
 	PostCount int     `json:"postCount"`
 	UserVote  *string `json:"userVote"`
+	// AuthorUpvoted is set on a post's topics when the post's author has up-voted the topic.
+	AuthorUpvoted bool `json:"authorUpvoted"`
 }
+
+// authorUpvotedSQL is a column expression, for queries over post_topic_sum
+// aliased pts, telling whether the post's author has up-voted the topic.
+const authorUpvotedSQL = `EXISTS (
+	SELECT 1 FROM post_topic_vote av
+	JOIN post ap ON ap.id = av.post_id AND ap.author = av.user_id
+	WHERE av.post_id = pts.post_id AND av.topic_id = pts.topic_id AND av.vote_type = 'upvote')`
 
 func NormalizeTopicName(name string) string {
 	return strings.Join(strings.Fields(name), " ")
@@ -329,10 +338,11 @@ func SetPostTopicVote(conn *sql.DB, postID uint, topicID uint, userID uint, vote
 		}
 
 		if err := tx.QueryRow(`
-			SELECT t.id, t.name, pts.sum FROM post_topic_sum pts
+			SELECT t.id, t.name, pts.sum, `+authorUpvotedSQL+`
+			FROM post_topic_sum pts
 			JOIN topic t ON t.id = pts.topic_id
 			WHERE pts.post_id = $1 AND pts.topic_id = $2
-		`, postID, topicID).Scan(&topic.ID, &topic.Name, &topic.Sum); err != nil {
+		`, postID, topicID).Scan(&topic.ID, &topic.Name, &topic.Sum, &topic.AuthorUpvoted); err != nil {
 			return fmt.Errorf("loading updated topic: %w", err)
 		}
 
@@ -384,10 +394,11 @@ func RemovePostTopicVote(conn *sql.DB, postID uint, topicID uint, userID uint) (
 		}
 
 		if err := tx.QueryRow(`
-			SELECT t.id, t.name, pts.sum FROM post_topic_sum pts
+			SELECT t.id, t.name, pts.sum, `+authorUpvotedSQL+`
+			FROM post_topic_sum pts
 			JOIN topic t ON t.id = pts.topic_id
 			WHERE pts.post_id = $1 AND pts.topic_id = $2
-		`, postID, topicID).Scan(&topic.ID, &topic.Name, &topic.Sum); err != nil {
+		`, postID, topicID).Scan(&topic.ID, &topic.Name, &topic.Sum, &topic.AuthorUpvoted); err != nil {
 			return fmt.Errorf("loading updated topic: %w", err)
 		}
 

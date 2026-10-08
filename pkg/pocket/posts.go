@@ -385,13 +385,13 @@ func LoadPostTopics(db *sql.DB, postID uint, userID *uint, offset uint) ([]Topic
 	}
 
 	rows, err := db.Query(`
-		SELECT t.id, t.name, COALESCE(pts.sum, 0), ptv.vote_type
+		SELECT t.id, t.name, COALESCE(pts.sum, 0), ptv.vote_type, `+authorUpvotedSQL+` AS author_upvoted
 		FROM post_topic_sum pts
 		JOIN topic t ON t.id = pts.topic_id
 		LEFT JOIN post_topic_vote ptv
 			ON ptv.post_id = pts.post_id AND ptv.topic_id = pts.topic_id AND ptv.user_id = $2
 		WHERE pts.post_id = $1
-		ORDER BY pts.sum DESC, t.name ASC
+		ORDER BY author_upvoted DESC, pts.sum DESC, t.name ASC
 		LIMIT $3 OFFSET $4
 	`, postID, userIDParam, MaxTopicPageSize, offset)
 	if err != nil {
@@ -404,7 +404,7 @@ func LoadPostTopics(db *sql.DB, postID uint, userID *uint, offset uint) ([]Topic
 		var topic Topic
 		var sum int
 		var voteType sql.NullString
-		if err := rows.Scan(&topic.ID, &topic.Name, &sum, &voteType); err != nil {
+		if err := rows.Scan(&topic.ID, &topic.Name, &sum, &voteType, &topic.AuthorUpvoted); err != nil {
 			continue
 		}
 		topic.Sum = sum
@@ -615,11 +615,11 @@ func EnsureTopicOnPost(conn db.DBConn, postID uint, topicName string, createdBy 
 	}
 
 	err = conn.QueryRow(`
-		SELECT pts.sum, ptv.vote_type FROM post_topic_sum pts
+		SELECT pts.sum, ptv.vote_type, `+authorUpvotedSQL+` FROM post_topic_sum pts
 		LEFT JOIN post_topic_vote ptv
 			ON ptv.post_id = pts.post_id AND ptv.topic_id = pts.topic_id AND ptv.user_id = $3
 		WHERE pts.post_id = $1 AND pts.topic_id = $2
-	`, postID, topic.ID, createdBy).Scan(&topic.Sum, &topic.UserVote)
+	`, postID, topic.ID, createdBy).Scan(&topic.Sum, &topic.UserVote, &topic.AuthorUpvoted)
 	if err != nil {
 		return Topic{}, fmt.Errorf("loading topic sum after upvote: %w", err)
 	}

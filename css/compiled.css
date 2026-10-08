@@ -1210,6 +1210,9 @@ div.center {
   outline: 2px solid white;
   outline-offset: 1px;
 }
+.topic .topic-author {
+  font-size: 1.1em;
+}
 .topic .topic-checkbox {
   font-size: 1.1em;
 }

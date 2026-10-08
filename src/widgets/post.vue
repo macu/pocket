@@ -35,7 +35,7 @@
 		</small>
 	</div>
 	<div v-if="showTopics" class="topic-list flex-row">
-		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" @vote="vote(topic, $event)">
+		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" :author-upvoted="topic.authorUpvoted" @vote="vote(topic, $event)">
 			{{topic.name}}
 		</topic>
 		<el-button v-if="showLoadMoreTopics" @click.stop="loadMoreTopics()" type="primary" size="small">

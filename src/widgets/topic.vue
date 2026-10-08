@@ -5,6 +5,9 @@
 		class="topic-checkbox"
 		:icon="checked ? 'check_box' : 'check_box_outline_blank'"
 		:fill="checked"/>
+	<el-tooltip v-if="authorUpvoted" content="Up-voted by the author" placement="top">
+		<material-icon class="topic-author" icon="signature"/>
+	</el-tooltip>
 	<span class="topic-name"><slot/></span>
 	<span v-if="votable && authenticated" class="topic-votes" @click.stop>
 		<material-icon
@@ -57,6 +60,10 @@ export default {
 			default: false,
 		},
 		votable: {
+			type: Boolean,
+			default: false,
+		},
+		authorUpvoted: {
 			type: Boolean,
 			default: false,
 		},
@@ -133,6 +140,10 @@ export default {
 	&.checked {
 		outline: 2px solid white;
 		outline-offset: 1px;
+	}
+
+	.topic-author {
+		font-size: 1.1em;
 	}
 
 	.topic-checkbox {
