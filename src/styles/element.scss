@@ -137,6 +137,36 @@
 	--el-button-disabled-border-color: #{$button-disabled-border-color};
 }
 
+// Text buttons use a dark label on hover regardless of their button type.
+.el-button.is-text:not(.is-disabled):hover {
+	--el-button-hover-text-color: #222;
+	color: #222;
+}
+
+// dark theme for Element Plus pagination controls
+.el-pagination {
+	--el-pagination-bg-color: transparent;
+	--el-pagination-text-color: #{$app-fg-color};
+	--el-pagination-button-color: #{$app-fg-color};
+	--el-pagination-button-bg-color: transparent;
+	--el-pagination-button-disabled-color: rgba(255, 255, 255, 0.3);
+	--el-pagination-button-disabled-bg-color: transparent;
+	--el-pagination-hover-color: #{$button-primary-hover-bg-color};
+	color: $app-fg-color;
+
+	.btn-prev, .btn-next {
+		background-color: transparent;
+	}
+
+	.el-pager li {
+		background-color: transparent;
+
+		&.is-active {
+			color: $button-primary-hover-bg-color;
+		}
+	}
+}
+
 // dark theme for ElMessage (toasts); these are teleported to <body>
 .el-message.el-message {
 	--el-message-bg-color: #{$message-bg-color};

@@ -92,7 +92,8 @@ CREATE TABLE topic (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(50) NOT NULL,
 	created_by INTEGER NOT NULL REFERENCES user_account (id),
-	created_at TIMESTAMPTZ NOT NULL
+	created_at TIMESTAMPTZ NOT NULL,
+	banned BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE INDEX topic_name_trgm_idx ON topic USING GIN (name gin_trgm_ops);

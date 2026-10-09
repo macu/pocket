@@ -241,6 +241,7 @@ type AdminTopic struct {
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
 	PostCount int       `json:"postCount"`
+	Banned    bool      `json:"banned"`
 }
 
 // LoadUserCreatedTopics loads a page of topics created by the user, newest first,
@@ -254,7 +255,8 @@ func LoadUserCreatedTopics(conn *sql.DB, userID uint, offset uint) ([]AdminTopic
 
 	rows, err := conn.Query(`
 		SELECT t.id, t.name, t.created_at,
-			(SELECT COUNT(*) FROM post_topic_sum s WHERE s.topic_id = t.id)
+			(SELECT COUNT(*) FROM post_topic_sum s WHERE s.topic_id = t.id),
+			t.banned
 		FROM topic t
 		WHERE t.created_by = $1
 		ORDER BY t.created_at DESC, t.id DESC
@@ -267,7 +269,7 @@ func LoadUserCreatedTopics(conn *sql.DB, userID uint, offset uint) ([]AdminTopic
 	topics := make([]AdminTopic, 0)
 	for rows.Next() {
 		var t AdminTopic
-		if err := rows.Scan(&t.ID, &t.Name, &t.CreatedAt, &t.PostCount); err != nil {
+		if err := rows.Scan(&t.ID, &t.Name, &t.CreatedAt, &t.PostCount, &t.Banned); err != nil {
 			return nil, 0, fmt.Errorf("scanning topic: %w", err)
 		}
 		topics = append(topics, t)
@@ -279,27 +281,7 @@ func LoadUserCreatedTopics(conn *sql.DB, userID uint, offset uint) ([]AdminTopic
 	return topics, total, nil
 }
 
-// MaxBulkTopicDelete is the most topics that can be deleted in one request.
-const MaxBulkTopicDelete = 100
-
-// DeleteUserTopics deletes the given topics, along with their votes and tags
-// on posts, but only those created by the user. Returns the number deleted.
-func DeleteUserTopics(conn *sql.DB, userID uint, topicIDs []uint) (int64, error) {
-	if len(topicIDs) == 0 {
-		return 0, nil
-	}
-	args := []interface{}{userID}
-	placeholders := make([]string, 0, len(topicIDs))
-	for _, id := range topicIDs {
-		placeholders = append(placeholders, db.Arg(&args, id))
-	}
-	result, err := conn.Exec(`DELETE FROM topic WHERE created_by = $1 AND id IN (`+
-		strings.Join(placeholders, ",")+`)`, args...)
-	if err != nil {
-		return 0, fmt.Errorf("deleting topics of user %d: %w", userID, err)
-	}
-	return result.RowsAffected()
-}
+const MaxBulkTopicStatus = 100
 
 // AdminSiteTopic is a topic as shown in the admin site-wide topic table.
 type AdminSiteTopic struct {
@@ -328,7 +310,7 @@ func SearchAdminTopics(conn *sql.DB, query string, offset uint) ([]AdminSiteTopi
 	rows, err := conn.Query(`
 		SELECT t.id, t.name, t.created_at,
 			(SELECT COUNT(*) FROM post_topic_sum s WHERE s.topic_id = t.id),
-			t.created_by, u.display_name, u.handle
+			t.banned, t.created_by, u.display_name, u.handle
 		FROM topic t
 		JOIN user_account u ON u.id = t.created_by
 		WHERE `+where+`
@@ -344,7 +326,7 @@ func SearchAdminTopics(conn *sql.DB, query string, offset uint) ([]AdminSiteTopi
 		var t AdminSiteTopic
 		var handle sql.NullString
 		if err := rows.Scan(&t.ID, &t.Name, &t.CreatedAt, &t.PostCount,
-			&t.CreatedBy, &t.CreatedByName, &handle); err != nil {
+			&t.Banned, &t.CreatedBy, &t.CreatedByName, &handle); err != nil {
 			return nil, 0, fmt.Errorf("scanning topic: %w", err)
 		}
 		t.CreatedByHandle = handle.String
@@ -357,20 +339,20 @@ func SearchAdminTopics(conn *sql.DB, query string, offset uint) ([]AdminSiteTopi
 	return topics, total, nil
 }
 
-// DeleteTopics deletes the given topics, along with their votes and tags on
-// posts. Returns the number deleted.
-func DeleteTopics(conn *sql.DB, topicIDs []uint) (int64, error) {
+// SetTopicsBanned changes the banned status of the given topics.
+func SetTopicsBanned(conn *sql.DB, topicIDs []uint, banned bool) (int64, error) {
 	if len(topicIDs) == 0 {
 		return 0, nil
 	}
-	var args []interface{}
+	args := []interface{}{banned}
 	placeholders := make([]string, 0, len(topicIDs))
 	for _, id := range topicIDs {
 		placeholders = append(placeholders, db.Arg(&args, id))
 	}
-	result, err := conn.Exec(`DELETE FROM topic WHERE id IN (`+strings.Join(placeholders, ",")+`)`, args...)
+	result, err := conn.Exec(`UPDATE topic SET banned = $1 WHERE id IN (`+
+		strings.Join(placeholders, ",")+`)`, args...)
 	if err != nil {
-		return 0, fmt.Errorf("deleting topics: %w", err)
+		return 0, fmt.Errorf("updating topic banned status: %w", err)
 	}
 	return result.RowsAffected()
 }

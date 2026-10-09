@@ -53,11 +53,10 @@
 
 	<p v-else class="no-items"><em>No users found.</em></p>
 
-	<horizontal-controls v-if="total > pageSize">
-		<el-button @click="goToPage(page - 1)" :disabled="loading || page <= 1">Previous</el-button>
-		<span>Page {{page}} of {{pageCount}}</span>
-		<el-button @click="goToPage(page + 1)" :disabled="loading || page >= pageCount">Next</el-button>
-	</horizontal-controls>
+	<el-pagination v-if="total > pageSize" class="admin-pagination"
+		:current-page="page" :page-size="pageSize" :total="total"
+		layout="prev, pager, next" :disabled="loading"
+		@current-change="goToPage"/>
 
 </div>
 </template>

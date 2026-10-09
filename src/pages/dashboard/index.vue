@@ -433,6 +433,7 @@ export default {
 			}, {
 				// special error codes
 				'invalid-topic-name': 'The topic name provided is invalid.',
+				'topic-banned': () => showError('Topic banned.'),
 			}).then(response => {
 				if (response.exists) {
 					showError('That topic already exists.');

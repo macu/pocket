@@ -29,6 +29,14 @@ func AjaxPostTopic(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 	if exists {
+		banned, err := pocket.IsTopicBanned(db, normalizedName)
+		if err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		if banned {
+			return ajax.AjaxErrorPayload{ErrorCode: "topic-banned"}, http.StatusForbidden
+		}
 		return map[string]any{
 			"exists": true,
 			"topic":  nil,

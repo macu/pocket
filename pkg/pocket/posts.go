@@ -2,6 +2,7 @@ package pocket
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -500,6 +501,9 @@ func CreatePost(conn *sql.DB, parentPostID *uint, authorID uint, text string, to
 				continue
 			}
 			if _, err := EnsureTopicOnPost(tx, postID, topicName, authorID); err != nil {
+				if errors.Is(err, ErrTopicBanned) {
+					continue
+				}
 				return err
 			}
 		}
@@ -577,9 +581,14 @@ func EnsureTopicOnPost(conn db.DBConn, postID uint, topicName string, createdBy 
 	}
 	var topic Topic
 	if topicExists {
-		err = conn.QueryRow(`SELECT id, name FROM topic WHERE name = $1`, topicName).Scan(&topic.ID, &topic.Name)
+		var banned bool
+		err = conn.QueryRow(`SELECT id, name, banned FROM topic WHERE name = $1`, topicName).
+			Scan(&topic.ID, &topic.Name, &banned)
 		if err != nil {
 			return Topic{}, fmt.Errorf("querying topic by name: %w", err)
+		}
+		if banned {
+			return Topic{}, ErrTopicBanned
 		}
 	} else {
 		createdTopic, err := CreateTopic(conn, topicName, createdBy)

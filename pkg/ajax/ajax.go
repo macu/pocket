@@ -57,8 +57,7 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 		"/ajax/admin/user/status":         AjaxAdminSetUserStatus,
 		"/ajax/admin/user/delete-content": AjaxAdminDeleteUserContent,
 		"/ajax/admin/post/delete":         AjaxAdminDeletePost,
-		"/ajax/admin/topics/delete":       AjaxAdminDeleteTopics,
-		"/ajax/admin/user/topics/delete":  AjaxAdminDeleteUserTopics,
+		"/ajax/admin/topics/status":       AjaxAdminSetTopicsBanned,
 	},
 }
 

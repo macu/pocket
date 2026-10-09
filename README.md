@@ -39,6 +39,9 @@ sh ./bin/psql-execute-script.sh < sql/init.pgsql
 sh ./bin/psql-shell.sh
 ```
 
+For an existing database, apply any SQL scripts in `sql/migrations/` before
+deploying the updated application.
+
 ## Rebuild web app
 
 The app will re-compile automatically when any Go source files change.

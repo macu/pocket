@@ -2,6 +2,7 @@ package ajax
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -185,6 +186,9 @@ func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 		}
 		topic, err := pocket.EnsureTopicOnPost(db, uint(postID), topicName, auth.UserID)
 		if err != nil {
+			if errors.Is(err, pocket.ErrTopicBanned) {
+				continue
+			}
 			logging.LogError(r, &auth, err)
 			return nil, http.StatusInternalServerError
 		}

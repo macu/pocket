@@ -167,31 +167,6 @@ func AjaxAdminLoadUserTopics(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxAdminDeleteUserTopics(db *sql.DB, auth ajax.Auth,
-	w http.ResponseWriter, r *http.Request,
-) (any, int) {
-
-	userID, err := types.AtoUint(r.FormValue("userId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-	topicIDs, err := types.AtoUintList(r.FormValue("topicIds"))
-	if err != nil || len(topicIDs) == 0 || len(topicIDs) > pocket.MaxBulkTopicDelete {
-		return nil, http.StatusBadRequest
-	}
-
-	deleted, err := pocket.DeleteUserTopics(db, userID, topicIDs)
-	if err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
-	return map[string]any{
-		"deleted": deleted,
-	}, http.StatusOK
-
-}
-
 func AjaxAdminLoadTopics(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (any, int) {
@@ -215,23 +190,32 @@ func AjaxAdminLoadTopics(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxAdminDeleteTopics(db *sql.DB, auth ajax.Auth,
+func AjaxAdminSetTopicsBanned(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (any, int) {
 
 	topicIDs, err := types.AtoUintList(r.FormValue("topicIds"))
-	if err != nil || len(topicIDs) == 0 || len(topicIDs) > pocket.MaxBulkTopicDelete {
+	if err != nil || len(topicIDs) == 0 || len(topicIDs) > pocket.MaxBulkTopicStatus {
 		return nil, http.StatusBadRequest
 	}
 
-	deleted, err := pocket.DeleteTopics(db, topicIDs)
+	var banned bool
+	switch r.FormValue("banned") {
+	case "true":
+		banned = true
+	case "false":
+	default:
+		return nil, http.StatusBadRequest
+	}
+
+	updated, err := pocket.SetTopicsBanned(db, topicIDs, banned)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
 
 	return map[string]any{
-		"deleted": deleted,
+		"updated": updated,
 	}, http.StatusOK
 
 }

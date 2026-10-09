@@ -269,6 +269,31 @@
   --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
 }
 
+.el-button.is-text:not(.is-disabled):hover {
+  --el-button-hover-text-color: #222;
+  color: #222;
+}
+
+.el-pagination {
+  --el-pagination-bg-color: transparent;
+  --el-pagination-text-color: white;
+  --el-pagination-button-color: white;
+  --el-pagination-button-bg-color: transparent;
+  --el-pagination-button-disabled-color: rgba(255, 255, 255, 0.3);
+  --el-pagination-button-disabled-bg-color: transparent;
+  --el-pagination-hover-color: rgb(110, 110, 230);
+  color: white;
+}
+.el-pagination .btn-prev, .el-pagination .btn-next {
+  background-color: transparent;
+}
+.el-pagination .el-pager li {
+  background-color: transparent;
+}
+.el-pagination .el-pager li.is-active {
+  color: rgb(110, 110, 230);
+}
+
 .el-message.el-message {
   --el-message-bg-color: rgb(28, 28, 36);
   --el-message-border-color: rgba(255, 255, 255, 0.25);
@@ -1009,6 +1034,37 @@ div.center {
   \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .admin-search {
   max-width: 320px;
+}
+.topic-status.is-banned {
+  color: rgb(240, 100, 100);
+}
+.topic-status.is-enabled {
+  color: rgb(100, 210, 130);
+}
+.topic-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-table-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.admin-table-controls .admin-pagination {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  margin: 0;
+}
+@media (max-width: 600px) {
+.admin-table-controls {
+    align-items: flex-start;
+    flex-direction: column;
+}
+.admin-table-controls .admin-pagination {
+    justify-content: flex-start;
+}
 }
 /*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/admin/user.vue?vue&type=style&index=0&id=8da7a2e2&lang=scss ***!

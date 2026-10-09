@@ -5,11 +5,10 @@
 		<span class="total-items">{{total}} {{total === 1 ? 'post' : 'posts'}}</span>
 	</div>
 
-	<horizontal-controls v-if="total > pageSize" class="admin-pagination">
-		<el-button @click="goToPage(page - 1)" :disabled="loading || page <= 1">Previous</el-button>
-		<span>Page {{page}} of {{pageCount}}</span>
-		<el-button @click="goToPage(page + 1)" :disabled="loading || page >= pageCount">Next</el-button>
-	</horizontal-controls>
+	<el-pagination v-if="total > pageSize" class="admin-pagination"
+		:current-page="page" :page-size="pageSize" :total="total"
+		layout="prev, pager, next" :disabled="loading"
+		@current-change="goToPage"/>
 
 	<div v-if="posts.length > 0" class="admin-table-wrap">
 		<table class="admin-table">
@@ -43,11 +42,10 @@
 
 	<p v-else-if="!loading" class="no-items"><em>No posts found.</em></p>
 
-	<horizontal-controls v-if="total > pageSize" class="admin-pagination">
-		<el-button @click="goToPage(page - 1)" :disabled="loading || page <= 1">Previous</el-button>
-		<span>Page {{page}} of {{pageCount}}</span>
-		<el-button @click="goToPage(page + 1)" :disabled="loading || page >= pageCount">Next</el-button>
-	</horizontal-controls>
+	<el-pagination v-if="total > pageSize" class="admin-pagination"
+		:current-page="page" :page-size="pageSize" :total="total"
+		layout="prev, pager, next" :disabled="loading"
+		@current-change="goToPage"/>
 
 </div>
 </template>

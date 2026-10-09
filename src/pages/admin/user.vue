@@ -55,7 +55,7 @@
 			<div class="admin-user-column-right flex-column-lg">
 
 				<admin-section title="Topics created" v-model:open="open.topics">
-					<topics-table v-if="visited.topics" :user-id="user.id" @deleted="refreshUser()"/>
+					<topics-table v-if="visited.topics" :user-id="user.id"/>
 				</admin-section>
 				<admin-section title="Posts" v-model:open="open.posts">
 					<user-posts-table v-if="visited.posts" :user-id="user.id"/>

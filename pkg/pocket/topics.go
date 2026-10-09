@@ -3,6 +3,7 @@ package pocket
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -21,6 +22,8 @@ type Topic struct {
 	// AuthorUpvoted is set on a post's topics when the post's author has up-voted the topic.
 	AuthorUpvoted bool `json:"authorUpvoted"`
 }
+
+var ErrTopicBanned = errors.New("topic is banned")
 
 // authorUpvotedSQL is a column expression, for queries over post_topic_sum
 // aliased pts, telling whether the post's author has up-voted the topic.
@@ -89,6 +92,15 @@ func CheckTopicExists(conn db.DBConn, name string) (bool, error) {
 	return exists, nil
 }
 
+func IsTopicBanned(conn db.DBConn, name string) (bool, error) {
+	var banned bool
+	err := conn.QueryRow(`SELECT banned FROM topic WHERE name = $1`, name).Scan(&banned)
+	if err != nil {
+		return false, err
+	}
+	return banned, nil
+}
+
 // escapeLikePattern escapes the LIKE/ILIKE wildcard characters in s so it can
 // be safely embedded in a '%...%' search pattern.
 func escapeLikePattern(s string) string {
@@ -111,7 +123,7 @@ func SearchTopics(conn *sql.DB, query string) ([]Topic, error) {
 			COUNT(DISTINCT CASE WHEN pts.sum >= 0 THEN pts.post_id END) AS post_count
 		FROM topic t
 		LEFT JOIN post_topic_sum pts ON pts.topic_id = t.id
-		WHERE t.name ILIKE '%' || $1 || '%' ESCAPE '\'
+		WHERE NOT t.banned AND t.name ILIKE '%' || $1 || '%' ESCAPE '\'
 		GROUP BY t.id, t.name
 		ORDER BY post_count DESC, t.name ASC
 		LIMIT $2
@@ -164,12 +176,12 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scope Po
 	if len(selectedTopicIDs) == 0 {
 		topicJoin := "LEFT JOIN " + filteredPostTopicSumTable(&args, cutoff) + " pts ON pts.topic_id = t.id"
 		scopeJoin := ""
-		scopeWhere := ""
+		scopeWhere := "WHERE NOT t.banned"
 		if scope.isSet() {
 			// only topics actually tagged on a sub-post are of interest, so use an inner join
 			topicJoin = "JOIN " + filteredPostTopicSumTable(&args, cutoff) + " pts ON pts.topic_id = t.id"
 			scopeJoin = "JOIN post p ON p.id = pts.post_id"
-			scopeWhere = "WHERE " + scope.conditions(&args, "p")
+			scopeWhere += " AND " + scope.conditions(&args, "p")
 		}
 		query = `
 			SELECT t.id, t.name, COALESCE(SUM(pts.sum), 0) AS total_sum,
@@ -215,7 +227,7 @@ func loadTopicsPage(conn *sql.DB, offset uint, selectedTopicIDs []uint, scope Po
 				)
 				GROUP BY pts_self.topic_id
 			) topic_totals ON topic_totals.topic_id = t.id
-			WHERE NOT (` + excludeClause + `)
+			WHERE NOT t.banned AND NOT (` + excludeClause + `)
 			ORDER BY COALESCE(topic_totals.total_sum, 0) DESC, t.name ASC
 			LIMIT ` + db.Arg(&args, pageSize) + ` OFFSET ` + db.Arg(&args, offset)
 	}

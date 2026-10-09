@@ -12,17 +12,24 @@
 		<span class="total-items">
 			{{total}} {{total === 1 ? 'topic' : 'topics'}}<template v-if="selectedIds.length > 0">, {{selectedIds.length}} selected</template>
 		</span>
-		<el-button @click="deleteSelected()" type="danger"
-			:disabled="selectedIds.length === 0 || deleting">
-			Delete selected
-		</el-button>
 	</div>
 
-	<horizontal-controls v-if="total > pageSize" class="admin-pagination">
-		<el-button @click="goToPage(page - 1)" :disabled="loading || page <= 1">Previous</el-button>
-		<span>Page {{page}} of {{pageCount}}</span>
-		<el-button @click="goToPage(page + 1)" :disabled="loading || page >= pageCount">Next</el-button>
-	</horizontal-controls>
+	<div class="admin-table-controls">
+		<div class="topic-bulk-actions">
+			<el-button @click="setSelectedBanned(true)" type="warning"
+				:disabled="selectedIds.length === 0 || updating">
+				Ban selected
+			</el-button>
+			<el-button @click="setSelectedBanned(false)"
+				:disabled="selectedIds.length === 0 || updating">
+				Enable selected
+			</el-button>
+		</div>
+		<el-pagination v-if="total > pageSize" class="admin-pagination"
+			:current-page="page" :page-size="pageSize" :total="total"
+			layout="prev, pager, next" :disabled="loading"
+			@current-change="goToPage"/>
+	</div>
 
 	<div v-if="topics.length > 0" class="admin-table-wrap">
 		<table class="admin-table">
@@ -33,6 +40,7 @@
 							@change="toggleAll($event)"/>
 					</th>
 					<th>Topic</th>
+					<th>Status</th>
 					<th v-if="!userId">Created by</th>
 					<th>Created</th>
 					<th class="number">Posts</th>
@@ -46,6 +54,11 @@
 							@change="toggleOne(topic.id, $event)"/>
 					</td>
 					<td>{{topic.name}}</td>
+					<td>
+						<span class="topic-status" :class="topic.banned ? 'is-banned' : 'is-enabled'">
+							{{topic.banned ? 'Banned' : 'Enabled'}}
+						</span>
+					</td>
 					<td v-if="!userId">
 						<router-link :to="{name: 'admin-user', params: {id: topic.createdBy}}">
 							{{topic.createdByName}}
@@ -55,8 +68,8 @@
 					<td><moment :time="topic.createdAt" ago/></td>
 					<td class="number">{{topic.postCount}}</td>
 					<td class="number">
-						<el-button @click="deleteTopic(topic)" type="danger" text :disabled="deleting">
-							Delete
+						<el-button @click="setTopicBanned(topic, !topic.banned)" text :disabled="updating">
+							{{topic.banned ? 'Enable' : 'Ban'}}
 						</el-button>
 					</td>
 				</tr>
@@ -66,11 +79,22 @@
 
 	<p v-else-if="!loading" class="no-items"><em>No topics found.</em></p>
 
-	<horizontal-controls v-if="total > pageSize" class="admin-pagination">
-		<el-button @click="goToPage(page - 1)" :disabled="loading || page <= 1">Previous</el-button>
-		<span>Page {{page}} of {{pageCount}}</span>
-		<el-button @click="goToPage(page + 1)" :disabled="loading || page >= pageCount">Next</el-button>
-	</horizontal-controls>
+	<div class="admin-table-controls">
+		<div class="topic-bulk-actions">
+			<el-button @click="setSelectedBanned(true)" type="warning"
+				:disabled="selectedIds.length === 0 || updating">
+				Ban selected
+			</el-button>
+			<el-button @click="setSelectedBanned(false)"
+				:disabled="selectedIds.length === 0 || updating">
+				Enable selected
+			</el-button>
+		</div>
+		<el-pagination v-if="total > pageSize" class="admin-pagination"
+			:current-page="page" :page-size="pageSize" :total="total"
+			layout="prev, pager, next" :disabled="loading"
+			@current-change="goToPage"/>
+	</div>
 
 </div>
 </template>
@@ -103,7 +127,7 @@ export default {
 			pageSize: 25,
 			page: 1,
 			loading: false,
-			deleting: false,
+			updating: false,
 			selectedIds: [],
 			reloadTimeout: null,
 			requestId: 0,
@@ -157,7 +181,7 @@ export default {
 				this.topics = response.topics || [];
 				this.total = response.total || 0;
 				this.pageSize = response.pageSize || this.pageSize;
-				// the last page may have emptied after deletions
+				// the last page may have emptied after the result set changes
 				if (this.topics.length === 0 && this.total > 0 && this.page > this.pageCount) {
 					this.page = this.pageCount;
 					return this.load();
@@ -176,44 +200,66 @@ export default {
 				[...this.selectedIds, id] :
 				this.selectedIds.filter(selectedId => selectedId !== id);
 		},
-		deleteTopic(topic) {
-			this.confirmDelete([topic.id], `the topic "${topic.name}"`, topic.postCount);
+		setTopicBanned(topic, banned) {
+			this.setTopicsBanned([topic.id], banned);
 		},
-		deleteSelected() {
-			const selected = this.topics.filter(topic => this.selectedIds.includes(topic.id));
-			const postCount = selected.reduce((sum, topic) => sum + topic.postCount, 0);
-			this.confirmDelete(selected.map(topic => topic.id),
-				`${selected.length} ${selected.length === 1 ? 'topic' : 'topics'}`, postCount);
+		setSelectedBanned(banned) {
+			this.setTopicsBanned(this.selectedIds, banned);
 		},
-		confirmDelete(ids, description, postCount) {
-			this.$confirm(`Delete ${description}? ${postCount > 0 ? `They are used on ${postCount} post tags and will be removed from those posts. ` : ''}This cannot be undone.`, 'Delete topics', {
-				confirmButtonText: 'Delete',
-				cancelButtonText: 'Cancel',
-				type: 'warning',
-			}).then(() => {
-				this.deleting = true;
-				const params = {topicIds: ids.join(',')};
-				if (this.userId) {
-					params.userId = this.userId;
-				}
-				ajaxPost(this.userId ? '/ajax/admin/user/topics/delete' : '/ajax/admin/topics/delete', params).then(() => {
-					alertSuccess(ids.length === 1 ? 'Topic deleted.' : 'Topics deleted.');
-					this.$emit('deleted');
-					return this.load();
-				}).finally(() => {
-					this.deleting = false;
-				});
-			}).catch(() => {
-				// User cancelled
+		setTopicsBanned(ids, banned) {
+			this.updating = true;
+			const params = {
+				topicIds: ids.join(','),
+				banned,
+			};
+			ajaxPost('/ajax/admin/topics/status', params).then(() => {
+				const noun = ids.length === 1 ? 'Topic' : 'Topics';
+				alertSuccess(`${noun} ${banned ? 'banned' : 'enabled'}.`);
+				return this.load();
+			}).finally(() => {
+				this.updating = false;
 			});
 		},
 	},
-	emits: ['deleted'],
 };
 </script>
 
 <style lang="scss">
 .admin-search {
 	max-width: 320px;
+}
+
+.topic-status {
+	&.is-banned { color: rgb(240, 100, 100); }
+	&.is-enabled { color: rgb(100, 210, 130); }
+}
+
+.topic-bulk-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.admin-table-controls {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+
+	.admin-pagination {
+		flex: 0 0 auto;
+		justify-content: flex-end;
+		margin: 0;
+	}
+}
+
+@media (max-width: 600px) {
+	.admin-table-controls {
+		align-items: flex-start;
+		flex-direction: column;
+		.admin-pagination {
+			justify-content: flex-start;
+		}
+	}
 }
 </style>
