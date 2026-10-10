@@ -44,7 +44,7 @@
 		</form-field>
 
 		<form-field title="Message to admin (optional; say Hi)">
-			<el-input type="textarea" :maxlength="200"
+			<el-input v-model="message" type="textarea" :maxlength="200"
 				:autosize="{minRows: 2}" show-word-limit
 				autocapitalize="none" autocomplete="off"/>
 		</form-field>
@@ -83,6 +83,7 @@ export default {
 			verifyPassword: '',
 			handle: '',
 			displayName: '',
+			message: '',
 			submitting: false,
 		};
 	},

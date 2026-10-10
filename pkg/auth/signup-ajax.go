@@ -4,14 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
 
+	emailpkg "pocket/pkg/email"
 	"pocket/pkg/env"
 	"pocket/pkg/utils/ajax"
 	dbutil "pocket/pkg/utils/db"
 	"pocket/pkg/utils/logging"
+	netutil "pocket/pkg/utils/net"
 	"pocket/pkg/utils/random"
 	"pocket/pkg/utils/types"
 
@@ -149,7 +152,20 @@ func AjaxSignup(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Requ
 		}, http.StatusOK
 	}
 
-	// TODO Send email with verification link
+	verifyPath := (&url.URL{
+		Path:     "verify-signup",
+		RawQuery: url.Values{"token": {token}}.Encode(),
+	}).String()
+	verifyURL, err := netutil.BuildAbsoluteURL(r, verifyPath)
+	if err != nil {
+		logging.LogError(r, nil, fmt.Errorf("building signup verification URL: %w", err))
+		return nil, http.StatusInternalServerError
+	}
+	body := "To finish creating your Pocket account, follow this link:\n\n" + verifyURL
+	if err := emailpkg.Send(email, "Verify your new Pocket account", body); err != nil {
+		logging.LogError(r, nil, fmt.Errorf("sending signup verification email: %w", err))
+		return nil, http.StatusInternalServerError
+	}
 
 	return true, http.StatusOK
 
@@ -166,17 +182,12 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 	var password = r.FormValue("password")
 	var handle = strings.TrimSpace(r.FormValue("handle")) // optional
 	var displayName = strings.TrimSpace(r.FormValue("displayName"))
-
-	// load user message to send to admin
-	// var message = r.FormValue("message")
-	// if len(message) > 1000 {
-	// 	message = message[:1000]
-	// }
+	var message = strings.TrimSpace(r.FormValue("message"))
 
 	// enforce client-side validation
 	if token == "" || displayName == "" ||
 		len(handle) > userHandleMaxLength || len(displayName) > userDisplayNameMaxLength ||
-		len(strings.TrimSpace(password)) < PasswordMinLength {
+		len(strings.TrimSpace(password)) < PasswordMinLength || len(message) > 200 {
 		return nil, http.StatusBadRequest
 	}
 
@@ -309,11 +320,47 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 		displayName,
 	})
 
+	if err := notifyAdminsOfSignup(db, r, email, handle, displayName, message); err != nil {
+		logging.LogError(r, nil, fmt.Errorf("notifying admins of signup for user %d: %w", *userID, err))
+	}
+
 	// authenticate immediately
 	authUser(w, db, *userID)
 
-	// TODO Send email to admin
-
 	return userID, http.StatusOK
 
+}
+
+func notifyAdminsOfSignup(db *sql.DB, r *http.Request, newUserEmail, handle, displayName, message string) error {
+	rows, err := db.Query(`SELECT email FROM user_account WHERE user_role = 'admin' ORDER BY id`)
+	if err != nil {
+		return fmt.Errorf("loading admin email addresses: %w", err)
+	}
+	defer rows.Close()
+
+	var adminEmails []string
+	for rows.Next() {
+		var adminEmail string
+		if err := rows.Scan(&adminEmail); err != nil {
+			return fmt.Errorf("scanning admin email address: %w", err)
+		}
+		adminEmails = append(adminEmails, adminEmail)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("reading admin email addresses: %w", err)
+	}
+
+	body := fmt.Sprintf("A new Pocket account was created.\n\nName: %s\nEmail: %s", displayName, newUserEmail)
+	if handle != "" {
+		body += "\nHandle: " + handle
+	}
+	if message != "" {
+		body += "\n\nMessage from the new user:\n" + message
+	}
+	for _, adminEmail := range adminEmails {
+		if err := emailpkg.Send(adminEmail, "New Pocket account signup", body); err != nil {
+			logging.LogError(r, nil, fmt.Errorf("sending signup notification to admin %s: %w", adminEmail, err))
+		}
+	}
+	return nil
 }
