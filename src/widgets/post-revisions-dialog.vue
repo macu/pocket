@@ -5,7 +5,7 @@
 	<loading-message v-if="loading"/>
 
 	<div v-else class="flex-column-md">
-		<div v-for="(revision, index) in revisions" :key="index" class="revision flex-column-sm"
+		<div v-for="(revision, index) in visibleRevisions" :key="index" class="revision flex-column-sm"
 			:class="{current: revision.current}">
 			<small>{{revision.current ? 'Current revision' : 'Revision'}} &middot; <moment :time="revision.createdAt" ago/></small>
 			<div class="revision-diff">
@@ -22,6 +22,10 @@
 	</div>
 
 	<template #footer>
+		<el-pagination v-if="total > pageSize" class="revision-pagination"
+			:current-page="page" :page-size="pageSize" :total="total"
+			layout="prev, pager, next" :disabled="loading"
+			@current-change="load"/>
 		<el-button @click="$emit('update:modelValue', false)">Close</el-button>
 	</template>
 </el-dialog>
@@ -46,16 +50,37 @@ export default {
 	data() {
 		return {
 			revisions: [],
+			total: 0,
+			pageSize: 20,
+			page: 1,
 			loading: false,
+			requestId: 0,
 		};
 	},
+	computed: {
+		visibleRevisions() {
+			return this.revisions.slice(0, this.pageSize);
+		},
+	},
 	methods: {
-		load() {
+		load(page = 1) {
+			this.page = page;
 			this.loading = true;
-			ajaxGet('/ajax/post/revisions', {id: this.postId}).then(response => {
+			const requestId = ++this.requestId;
+			ajaxGet('/ajax/post/revisions', {
+				id: this.postId,
+				offset: (page - 1) * this.pageSize,
+			}).then(response => {
+				if (requestId !== this.requestId) {
+					return;
+				}
 				this.revisions = response.revisions || [];
+				this.total = response.total || 0;
+				this.pageSize = response.pageSize || this.pageSize;
 			}).finally(() => {
-				this.loading = false;
+				if (requestId === this.requestId) {
+					this.loading = false;
+				}
 			});
 		},
 		// diff of each revision against the one before it (revisions are newest first)

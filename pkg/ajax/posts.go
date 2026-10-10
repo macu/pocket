@@ -408,7 +408,12 @@ func AjaxLoadPostRevisions(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	revisions, err := pocket.LoadPostRevisions(db, id)
+	offset, err := types.AtoUint(r.FormValue("offset"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	revisions, total, err := pocket.LoadPostRevisions(db, id, offset)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound
@@ -419,6 +424,8 @@ func AjaxLoadPostRevisions(db *sql.DB, auth *ajax.Auth,
 
 	return map[string]any{
 		"revisions": revisions,
+		"total":     total,
+		"pageSize":  pocket.PostRevisionPageSize,
 	}, http.StatusOK
 
 }

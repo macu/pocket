@@ -677,44 +677,60 @@ type PostRevision struct {
 	Current   bool      `json:"current"`
 }
 
-// LoadPostRevisions returns all versions of a post, most recent first,
-// beginning with the current version.
-func LoadPostRevisions(conn *sql.DB, postID uint) ([]PostRevision, error) {
+const PostRevisionPageSize = 20
 
-	var currentText string
+// LoadPostRevisions returns a page of post versions, most recent first,
+// including one extra version for diff context. total excludes the context version.
+func LoadPostRevisions(conn *sql.DB, postID uint, offset uint) ([]PostRevision, int, error) {
 	var createdAt time.Time
-	err := conn.QueryRow(`SELECT post_text, created_at FROM post WHERE id = $1`, postID).Scan(&currentText, &createdAt)
-	if err != nil {
-		return nil, err
+	if err := conn.QueryRow(`SELECT created_at FROM post WHERE id = $1`, postID).Scan(&createdAt); err != nil {
+		return nil, 0, err
+	}
+
+	var total int
+	if err := conn.QueryRow(`
+		SELECT COUNT(*) + 1 FROM post_revision WHERE post_id = $1
+	`, postID).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("counting revisions of post %d: %w", postID, err)
 	}
 
 	rows, err := conn.Query(`
-		SELECT post_text, replaced_at FROM post_revision WHERE post_id = $1 ORDER BY replaced_at ASC, id ASC
-	`, postID)
+		WITH revision_versions AS (
+			SELECT pr.post_text,
+				LAG(pr.replaced_at, 1, $2) OVER (ORDER BY pr.replaced_at, pr.id) AS created_at,
+				ROW_NUMBER() OVER (ORDER BY pr.replaced_at DESC, pr.id DESC) AS position,
+				FALSE AS current
+			FROM post_revision pr
+			WHERE pr.post_id = $1
+		), versions AS (
+			SELECT p.post_text,
+				COALESCE((SELECT MAX(pr.replaced_at) FROM post_revision pr WHERE pr.post_id = p.id), p.created_at) AS created_at,
+				0 AS position,
+				TRUE AS current
+			FROM post p
+			WHERE p.id = $1
+			UNION ALL
+			SELECT post_text, created_at, position, current FROM revision_versions
+		)
+		SELECT post_text, created_at, current FROM versions
+		ORDER BY position
+		LIMIT $3 OFFSET $4
+	`, postID, createdAt, PostRevisionPageSize+1, offset)
 	if err != nil {
-		return nil, fmt.Errorf("loading revisions of post %d: %w", postID, err)
+		return nil, 0, fmt.Errorf("loading revisions of post %d: %w", postID, err)
 	}
 	defer rows.Close()
 
-	// each version became current when the previous one was replaced
-	var versions []PostRevision
-	start := createdAt
+	revisions := make([]PostRevision, 0, PostRevisionPageSize+1)
 	for rows.Next() {
-		var text string
-		var replacedAt time.Time
-		if err := rows.Scan(&text, &replacedAt); err != nil {
-			return nil, fmt.Errorf("scanning revision of post %d: %w", postID, err)
+		var revision PostRevision
+		if err := rows.Scan(&revision.PostText, &revision.CreatedAt, &revision.Current); err != nil {
+			return nil, 0, fmt.Errorf("scanning revision of post %d: %w", postID, err)
 		}
-		versions = append(versions, PostRevision{PostText: text, CreatedAt: start})
-		start = replacedAt
+		revisions = append(revisions, revision)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("reading revisions of post %d: %w", postID, err)
+		return nil, 0, fmt.Errorf("reading revisions of post %d: %w", postID, err)
 	}
-	versions = append(versions, PostRevision{PostText: currentText, CreatedAt: start, Current: true})
-
-	for i, j := 0, len(versions)-1; i < j; i, j = i+1, j-1 {
-		versions[i], versions[j] = versions[j], versions[i]
-	}
-	return versions, nil
+	return revisions, total, nil
 }
