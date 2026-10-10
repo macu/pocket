@@ -188,6 +188,9 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 		}
 		posts = append(posts, post)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating top posts: %w", err)
+	}
 
 	return posts, nil
 }
@@ -313,6 +316,9 @@ func loadScopedPosts(conn *sql.DB, auth *ajax.Auth, scope PostScope, offset uint
 		}
 		posts = append(posts, post)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating scoped posts: %w", err)
+	}
 
 	return posts, nil
 }
@@ -416,6 +422,9 @@ func LoadPostTopics(db *sql.DB, postID uint, userID *uint, offset uint) ([]Topic
 			topic.UserVote = &v
 		}
 		topics = append(topics, topic)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating topics for post %d: %w", postID, err)
 	}
 	return topics, nil
 }
