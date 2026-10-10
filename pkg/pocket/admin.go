@@ -50,9 +50,16 @@ func SearchAdminUsers(conn *sql.DB, query string, role string, offset uint) ([]A
 	query = strings.TrimSpace(query)
 	if query != "" {
 		pattern := db.Arg(&args, "%"+escapeLikePattern(query)+"%")
+		emailMatch := ""
+		if localPart, domain, hasDomain := strings.Cut(strings.ToLower(query), "@"); hasDomain {
+			localPart, _, _ = strings.Cut(localPart, "+")
+			baseEmail := db.Arg(&args, localPart+"@"+domain)
+			emailMatch = " OR (split_part(split_part(lower(u.email), '@', 1), '+', 1) || '@' || " +
+				"split_part(lower(u.email), '@', 2)) = " + baseEmail
+		}
 		where += " AND (u.display_name ILIKE " + pattern +
 			" OR u.handle ILIKE " + pattern +
-			" OR u.email ILIKE " + pattern + ")"
+			" OR u.email ILIKE " + pattern + emailMatch + ")"
 	}
 	if role != "" {
 		if !user.CheckRoleValid(role) {

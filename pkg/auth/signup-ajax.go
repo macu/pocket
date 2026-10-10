@@ -18,6 +18,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func emailUnavailableForSignup(db *sql.DB, email string) (bool, error) {
+	localPart, domain, _ := strings.Cut(strings.ToLower(email), "@")
+	localPart, _, _ = strings.Cut(localPart, "+")
+	banMatchEmail := localPart + "@" + domain
+
+	var unavailable bool
+	err := db.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1 FROM user_account
+			WHERE email = $1 OR (
+				user_role = 'banned'
+				AND split_part(split_part(lower(email), '@', 1), '+', 1) || '@' ||
+					split_part(lower(email), '@', 2) = $2
+			)
+		)
+	`, email, banMatchEmail).Scan(&unavailable)
+	return unavailable, err
+}
+
 func AjaxLoadSignup(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
 	if auth != nil {
@@ -83,11 +102,7 @@ func AjaxSignup(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Requ
 	}
 
 	// check if user exists
-	var userExists bool
-	var err = db.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM user_account WHERE email = $1)",
-		email,
-	).Scan(&userExists)
+	userExists, err := emailUnavailableForSignup(db, email)
 
 	if err != nil {
 		logging.LogError(r, nil, fmt.Errorf("error checking if user exists: %v", err))
@@ -225,11 +240,7 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 	}
 
 	// verify email doesn't yet exist
-	var userExists bool
-	err = db.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM user_account WHERE email = $1)",
-		email,
-	).Scan(&userExists)
+	userExists, err := emailUnavailableForSignup(db, email)
 
 	if err != nil {
 		logging.LogError(r, nil, fmt.Errorf("error checking if user exists: %v", err))
