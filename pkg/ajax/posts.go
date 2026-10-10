@@ -117,6 +117,9 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 
 	post, err := pocket.CreatePost(db, parentPostID, auth.UserID, text, topicNames)
 	if err != nil {
+		if errors.Is(err, pocket.ErrPostRateLimitExceeded) {
+			return ajax.AjaxErrorPayload{ErrorCode: "post-rate-limit"}, http.StatusTooManyRequests
+		}
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
@@ -143,6 +146,9 @@ func AjaxUpdatePost(db *sql.DB, auth ajax.Auth,
 
 	post, err := pocket.UpdatePostText(db, id, auth.UserID, text)
 	if err != nil {
+		if errors.Is(err, pocket.ErrPostRateLimitExceeded) {
+			return ajax.AjaxErrorPayload{ErrorCode: "post-rate-limit"}, http.StatusTooManyRequests
+		}
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound
 		}

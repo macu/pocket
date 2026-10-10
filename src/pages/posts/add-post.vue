@@ -90,6 +90,7 @@ export default {
 				parentId: this.parentId,
 			}, {
 				'invalid-post-text': 'The post text is invalid or too long.',
+				'post-rate-limit': 'Whoa! Take a breath. You can create up to 60 posts per hour.',
 			}).then(response => {
 				const newPostId = response && response.post ? response.post.id : null;
 				if (newPostId) {

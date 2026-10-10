@@ -8,6 +8,7 @@ const MaxTopicSelectionCount = 20
 const MaxPostPageSize = 20
 const MaxPostLength = 1024
 const MaxNewPostTopics = 20
+const MaxPostsPerHour = 60
 
 const (
 	VoteTypeUpvote   = "upvote"

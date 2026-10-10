@@ -73,6 +73,7 @@ export default {
 					text: this.text,
 				}, {
 					'invalid-post-text': 'The post text is invalid or too long.',
+					'post-rate-limit': 'You can create up to 60 post revisions per hour.',
 				}).then(() => {
 					alertSuccess('Post updated.');
 					this.$router.push({name: 'post', params: {id: this.postId}});
