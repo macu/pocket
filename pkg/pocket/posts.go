@@ -11,8 +11,6 @@ import (
 	"pocket/pkg/utils/db"
 )
 
-var ErrPostRateLimitExceeded = errors.New("post rate limit exceeded")
-
 type Post struct {
 	ID                uint      `json:"id"`
 	ParentPostID      *uint     `json:"parentPostId,omitempty"`
@@ -479,17 +477,6 @@ func CreatePost(conn *sql.DB, parentPostID *uint, authorID uint, text string, to
 	var postID uint
 
 	err := db.InTransaction(conn, func(tx *sql.Tx) error {
-		var recentPosts int
-		if err := tx.QueryRow(`
-			SELECT COUNT(*) FROM post
-			WHERE author = $1 AND created_at >= CURRENT_TIMESTAMP - INTERVAL '1 hour'
-		`, authorID).Scan(&recentPosts); err != nil {
-			return fmt.Errorf("counting recent posts for user %d: %w", authorID, err)
-		}
-		if recentPosts >= MaxPostsPerHour {
-			return ErrPostRateLimitExceeded
-		}
-
 		err := tx.QueryRow(`
 			INSERT INTO post (parent_post_id, author, post_text, created_at)
 			VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
@@ -568,18 +555,6 @@ func UpdatePostText(conn *sql.DB, postID uint, authorID uint, text string) (*Pos
 	}
 
 	if oldText != text {
-		var recentRevisions int
-		if err := tx.QueryRow(`
-			SELECT COUNT(*) FROM post_revision pr
-			JOIN post p ON p.id = pr.post_id
-			WHERE p.author = $1 AND pr.replaced_at >= CURRENT_TIMESTAMP - INTERVAL '1 hour'
-		`, authorID).Scan(&recentRevisions); err != nil {
-			return nil, fmt.Errorf("counting recent revisions for user %d: %w", authorID, err)
-		}
-		if recentRevisions >= MaxPostsPerHour {
-			return nil, ErrPostRateLimitExceeded
-		}
-
 		_, err = tx.Exec(`
 			INSERT INTO post_revision (post_id, post_text, replaced_at) VALUES ($1, $2, NOW())
 		`, postID, oldText)
