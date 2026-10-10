@@ -40,6 +40,7 @@ func main() {
 	env.SetRecaptchaSecret(os.Getenv("RECAPTCHA_SECRET"))
 	env.SetMailjetApiKey(os.Getenv("MAILJET_API_KEY"))
 	env.SetMailjetSecret(os.Getenv("MAILJET_SECRET"))
+	env.SetMailjetFromEmail(os.Getenv("MAILJET_FROM_EMAIL"))
 
 	if env.IsAppEngine() {
 

@@ -21,6 +21,7 @@ RECAPTCHA_SITE_KEY=
 RECAPTCHA_SECRET=
 MAILJET_API_KEY=
 MAILJET_SECRET=
+MAILJET_FROM_EMAIL=cudmore.mb@gmail.com
 ```
 
 ## Start up containers

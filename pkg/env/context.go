@@ -8,6 +8,7 @@ var recaptchaSiteKey string
 var recaptchaSecret string
 var mailjetApiKey string
 var mailjetSecret string
+var mailjetFromEmail string
 
 func IsAppEngine() bool {
 	return isAppEngine
@@ -68,4 +69,12 @@ func GetMailjetSecret() string {
 
 func SetMailjetSecret(val string) {
 	mailjetSecret = val
+}
+
+func GetMailjetFromEmail() string {
+	return mailjetFromEmail
+}
+
+func SetMailjetFromEmail(val string) {
+	mailjetFromEmail = val
 }

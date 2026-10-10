@@ -2,9 +2,11 @@ package ajax
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strings"
 
+	"pocket/pkg/email"
 	"pocket/pkg/pocket"
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/logging"
@@ -51,7 +53,8 @@ func AjaxAdminSetUserStatus(db *sql.DB, auth ajax.Auth,
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-status"}, http.StatusBadRequest
 	}
 
-	if err := pocket.SetUserRole(db, userID, status); err != nil {
+	updatedUser, previousStatus, err := pocket.SetUserRole(db, userID, status)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound
 		}
@@ -60,6 +63,12 @@ func AjaxAdminSetUserStatus(db *sql.DB, auth ajax.Auth,
 		}
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
+	}
+	if previousStatus != status {
+		body := fmt.Sprintf("Your Pocket account status has changed from %s to %s.", previousStatus, status)
+		if err := email.Send(updatedUser.Email, "Your Pocket account status changed", body); err != nil {
+			logging.LogError(r, &auth, fmt.Errorf("sending account status email to user %d: %w", userID, err))
+		}
 	}
 
 	return map[string]any{
@@ -101,7 +110,7 @@ func AjaxAdminDeletePost(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	parentID, err := pocket.DeletePost(db, postID)
+	deletedPost, err := pocket.DeletePost(db, postID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound
@@ -109,9 +118,13 @@ func AjaxAdminDeletePost(db *sql.DB, auth ajax.Auth,
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
+	body := fmt.Sprintf("An administrator deleted your post from Pocket.\n\nPost:\n%s", deletedPost.PostText)
+	if err := email.Send(deletedPost.AuthorEmail, "Your Pocket post was deleted", body); err != nil {
+		logging.LogError(r, &auth, fmt.Errorf("sending post deletion email for post %d: %w", postID, err))
+	}
 
 	return map[string]any{
-		"parentPostId": parentID,
+		"parentPostId": deletedPost.ParentPostID,
 	}, http.StatusOK
 
 }

@@ -108,35 +108,42 @@ func SearchAdminUsers(conn *sql.DB, query string, role string, offset uint) ([]A
 }
 
 // SetUserRole changes a user's role. Admins can't be changed, and admin can't
-// be assigned. Returns ErrUserIsAdmin for admin targets and sql.ErrNoRows if
-// the user doesn't exist.
-func SetUserRole(conn *sql.DB, userID uint, role string) error {
+// be assigned. Returns the user's details and previous role, ErrUserIsAdmin
+// for admin targets, and sql.ErrNoRows if the user doesn't exist.
+func SetUserRole(conn *sql.DB, userID uint, role string) (AdminUser, string, error) {
 
 	if !IsAssignableRole(role) {
-		return fmt.Errorf("role %q cannot be assigned", role)
+		return AdminUser{}, "", fmt.Errorf("role %q cannot be assigned", role)
 	}
 
-	result, err := conn.Exec(`
-		UPDATE user_account SET user_role = $1::user_role_type
-		WHERE id = $2 AND user_role <> 'admin'
-	`, role, userID)
+	var user AdminUser
+	var previousRole string
+	err := conn.QueryRow(`
+		WITH target AS (
+			SELECT id, user_role FROM user_account
+			WHERE id = $2 AND user_role <> 'admin'
+			FOR UPDATE
+		)
+		UPDATE user_account u SET user_role = $1::user_role_type
+		FROM target
+		WHERE u.id = target.id
+		RETURNING u.id, u.email, u.display_name, u.user_role::text, target.user_role::text
+	`, role, userID).Scan(&user.ID, &user.Email, &user.DisplayName, &user.Role, &previousRole)
 	if err != nil {
-		return fmt.Errorf("updating role of user %d: %w", userID, err)
+		if err == sql.ErrNoRows {
+			var isAdmin bool
+			err = conn.QueryRow(`SELECT user_role = 'admin' FROM user_account WHERE id = $1`, userID).Scan(&isAdmin)
+			if err != nil {
+				return AdminUser{}, "", err
+			}
+			if isAdmin {
+				return AdminUser{}, "", ErrUserIsAdmin
+			}
+			return AdminUser{}, "", sql.ErrNoRows
+		}
+		return AdminUser{}, "", fmt.Errorf("updating role of user %d: %w", userID, err)
 	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("checking rows affected for user %d: %w", userID, err)
-	}
-	if affected > 0 {
-		return nil
-	}
-
-	var isAdmin bool
-	err = conn.QueryRow(`SELECT user_role = 'admin' FROM user_account WHERE id = $1`, userID).Scan(&isAdmin)
-	if err != nil {
-		return err // includes sql.ErrNoRows
-	}
-	return ErrUserIsAdmin
+	return user, previousRole, nil
 }
 
 // DeleteUserContent deletes everything a user has created or cast: their
@@ -205,20 +212,31 @@ func DeleteUserContent(conn *sql.DB, userID uint) error {
 	})
 }
 
+type DeletedPost struct {
+	ParentPostID *uint
+	AuthorEmail  string
+	PostText     string
+}
+
 // DeletePost deletes a post along with its sub-posts, votes and revisions.
-// Returns the deleted post's parent ID (if any) and sql.ErrNoRows if the post
-// doesn't exist.
-func DeletePost(conn *sql.DB, postID uint) (*uint, error) {
+// Returns details of the deleted post and sql.ErrNoRows if it doesn't exist.
+func DeletePost(conn *sql.DB, postID uint) (*DeletedPost, error) {
 	var parentID sql.NullInt64
-	err := conn.QueryRow(`DELETE FROM post WHERE id = $1 RETURNING parent_post_id`, postID).Scan(&parentID)
+	var deletedPost DeletedPost
+	err := conn.QueryRow(`
+		DELETE FROM post p
+		USING user_account u
+		WHERE p.id = $1 AND u.id = p.author
+		RETURNING p.parent_post_id, p.post_text, u.email
+	`, postID).Scan(&parentID, &deletedPost.PostText, &deletedPost.AuthorEmail)
 	if err != nil {
 		return nil, err
 	}
 	if parentID.Valid {
 		v := uint(parentID.Int64)
-		return &v, nil
+		deletedPost.ParentPostID = &v
 	}
-	return nil, nil
+	return &deletedPost, nil
 }
 
 // GetAdminUser loads a single user as shown to admins. Returns sql.ErrNoRows
