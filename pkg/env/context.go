@@ -1,80 +1,77 @@
 package env
 
-// this package holds environment variables
+import "os"
 
-var isAppEngine bool
-var cacheControlVersionStamp string
-var recaptchaSiteKey string
-var recaptchaSecret string
-var mailjetApiKey string
-var mailjetSecret string
-var mailjetFromEmail string
+// this package retrieves environment variables
 
 func IsAppEngine() bool {
-	return isAppEngine
+	return os.Getenv("APP_ENGINE") == "1"
 }
 
 func IsLocal() bool {
-	return !isAppEngine
+	return !IsAppEngine()
 }
 
-func SetIsAppEngine(val bool) {
-	isAppEngine = val
+func GetMaintenanceMode() string {
+	return os.Getenv("MAINTENANCE_MODE")
+}
+
+func GetPort() string {
+	return os.Getenv("PORT")
+}
+
+func GetDbHost() string {
+	return os.Getenv("DB_HOST")
+}
+
+func GetDbUser() string {
+	return os.Getenv("DB_USER")
+}
+
+func GetDbPass() string {
+	return os.Getenv("DB_PASS")
+}
+
+func GetDbPassSecret() string {
+	return os.Getenv("DB_PASS_SECRET")
+}
+
+func GetDbName() string {
+	return os.Getenv("DB_NAME")
+}
+
+func GetVersionStamp() string {
+	return os.Getenv("VERSION_STAMP")
+}
+
+func GetDomain() string {
+	return os.Getenv("DOMAIN")
+}
+
+func GetGoogleCloudProject() string {
+	return os.Getenv("GOOGLE_CLOUD_PROJECT")
 }
 
 func GetCacheControlVersionStamp() string {
-	// if IsLocal() {
-	// 	// Random string each time requested
-	// 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-	// 	b := make([]rune, 16)
-	// 	for i := range b {
-	// 		b[i] = letters[rand.Intn(len(letters))]
-	// 	}
-	// 	return string(b)
-	// }
-	return cacheControlVersionStamp
-}
-
-func SetCacheControlVersionStamp(val string) {
-	cacheControlVersionStamp = val
+	return GetVersionStamp()
 }
 
 func GetRecaptchaSiteKey() string {
-	return recaptchaSiteKey
-}
-
-func SetRecaptchaSiteKey(val string) {
-	recaptchaSiteKey = val
+	return os.Getenv("RECAPTCHA_SITE_KEY")
 }
 
 func GetRecaptchaSecret() string {
-	return recaptchaSecret
-}
-
-func SetRecaptchaSecret(val string) {
-	recaptchaSecret = val
+	return os.Getenv("RECAPTCHA_SECRET")
 }
 
 func GetMailjetApiKey() string {
-	return mailjetApiKey
-}
-
-func SetMailjetApiKey(val string) {
-	mailjetApiKey = val
+	return os.Getenv("MAILJET_API_KEY")
 }
 
 func GetMailjetSecret() string {
-	return mailjetSecret
-}
-
-func SetMailjetSecret(val string) {
-	mailjetSecret = val
+	return os.Getenv("MAILJET_SECRET")
 }
 
 func GetMailjetFromEmail() string {
-	return mailjetFromEmail
-}
-
-func SetMailjetFromEmail(val string) {
-	mailjetFromEmail = val
+	return os.Getenv("MAILJET_FROM_EMAIL")
 }

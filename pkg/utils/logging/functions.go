@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 	"runtime"
 
 	"cloud.google.com/go/errorreporting"
@@ -16,7 +15,7 @@ import (
 )
 
 var (
-	appEngineProjectName   = os.Getenv("GOOGLE_CLOUD_PROJECT")
+	appEngineProjectName   = env.GetGoogleCloudProject()
 	appEngineLoggingClient *logging.Client
 	appEngineLogger        *logging.Logger
 	appEngineErrorClient   *errorreporting.Client

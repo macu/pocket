@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 
 	"pocket/pkg/env"
@@ -38,7 +37,7 @@ func BuildAbsoluteURL(r *http.Request, path string) (string, error) {
 	path = strings.TrimPrefix(path, "/")
 
 	if env.IsAppEngine() {
-		return fmt.Sprintf("https://%s/%s", os.Getenv("DOMAIN"), path), nil
+		return fmt.Sprintf("https://%s/%s", env.GetDomain(), path), nil
 	}
 
 	port, err := GetLocalPort(r)

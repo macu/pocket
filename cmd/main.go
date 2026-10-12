@@ -20,32 +20,25 @@ import (
 
 func main() {
 
-	if types.AtoBool(os.Getenv("MAINTENANCE_MODE")) {
+	if types.AtoBool(env.GetMaintenanceMode()) {
 		// Site down for databae upgrades
 		maintenanceMode()
 		os.Exit(0)
 
 	}
 
-	var port = os.Getenv("PORT")
-	var dbHost = os.Getenv("DB_HOST")
-	var dbUser = os.Getenv("DB_USER")
-	var dbPass = os.Getenv("DB_PASS")
-	var dbName = os.Getenv("DB_NAME")
+	var port = env.GetPort()
+	var dbHost = env.GetDbHost()
+	var dbUser = env.GetDbUser()
+	var dbPass = env.GetDbPass()
+	var dbName = env.GetDbName()
 	var sslMode = ""
 	var err error
-
-	env.SetCacheControlVersionStamp(os.Getenv("VERSION_STAMP"))
-	env.SetRecaptchaSiteKey(os.Getenv("RECAPTCHA_SITE_KEY"))
-	env.SetRecaptchaSecret(os.Getenv("RECAPTCHA_SECRET"))
-	env.SetMailjetApiKey(os.Getenv("MAILJET_API_KEY"))
-	env.SetMailjetSecret(os.Getenv("MAILJET_SECRET"))
-	env.SetMailjetFromEmail(os.Getenv("MAILJET_FROM_EMAIL"))
 
 	if env.IsAppEngine() {
 
 		// Database password loaded from secret manager
-		secretName := os.Getenv("DB_PASS_SECRET")
+		secretName := env.GetDbPassSecret()
 		dbPass, err = secrets.LoadSecret(secretName)
 		if err != nil {
 			logging.LogErrorFatal(err)

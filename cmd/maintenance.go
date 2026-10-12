@@ -4,15 +4,15 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 
+	"pocket/pkg/env"
 	"pocket/pkg/utils/logging"
 	"pocket/pkg/utils/net"
 )
 
 func maintenanceMode() {
 
-	var port = os.Getenv("PORT")
+	var port = env.GetPort()
 
 	var maintenancePageTemplate *template.Template
 
