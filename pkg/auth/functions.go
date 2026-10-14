@@ -20,12 +20,7 @@ func makeSessionID() string {
 }
 
 func authUser(w http.ResponseWriter, db db.DBConn, userID uint) error {
-
-	token := makeSessionID()
-	expires := time.Now().Add(sessionTokenCookieExpiry)
-	_, err := db.Exec(
-		`INSERT INTO user_session (token, user_id, expires) VALUES ($1, $2, $3)`,
-		token, userID, expires)
+	token, expires, err := newSession(db, userID)
 	if err != nil {
 		return err
 	}
@@ -34,6 +29,13 @@ func authUser(w http.ResponseWriter, db db.DBConn, userID uint) error {
 
 	return nil
 
+}
+
+func newSession(db db.DBConn, userID uint) (string, time.Time, error) {
+	token := makeSessionID()
+	expires := time.Now().Add(sessionTokenCookieExpiry)
+	_, err := db.Exec(`INSERT INTO user_session (token, user_id, expires) VALUES ($1, $2, $3)`, token, userID, expires)
+	return token, expires, err
 }
 
 func deleteSession(db *sql.DB, token string) error {

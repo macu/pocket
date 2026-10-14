@@ -10,7 +10,8 @@
 			<router-link v-if="isAdmin" :to="{name: 'admin'}">Admin</router-link>
 			<span class="flex-row nowrap">
 				<material-icon icon="account_circle"/>
-				<span v-text="currentUserDisplayName"/>
+				<span v-if="onOwnUserPage" v-text="currentUserDisplayName"/>
+				<router-link v-else :to="{name: 'user', params: {identifier: $store.getters.currentUserHandle || String($store.getters.currentUserId)}}" v-text="currentUserDisplayName"/>
 			</span>
 			<el-button @click="logout()">Log out</el-button>
 		</template>
@@ -51,6 +52,13 @@ export default {
 		},
 		onDashboard() {
 			return this.$route.name === 'dashboard';
+		},
+		onOwnUserPage() {
+			const identifier = this.$route.params.identifier;
+			return this.$route.name === 'user' && (
+				identifier === this.$store.getters.currentUserHandle ||
+				identifier === String(this.$store.getters.currentUserId)
+			);
 		},
 	},
 	mounted() {

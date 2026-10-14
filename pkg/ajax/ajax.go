@@ -31,14 +31,18 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 		"/ajax/topics/search": AjaxSearchTopics,
 	},
 	http.MethodPost: {
-		"/ajax/login":         auth.AjaxLogin,
-		"/ajax/signup":        auth.AjaxSignup,
-		"/ajax/signup-verify": auth.AjaxSignupVerify,
+		"/ajax/login":                  auth.AjaxLogin,
+		"/ajax/signup":                 auth.AjaxSignup,
+		"/ajax/signup-verify":          auth.AjaxSignupVerify,
+		"/ajax/account/confirm-email":  auth.AjaxConfirmEmail,
+		"/ajax/password-reset/request": auth.AjaxRequestPasswordReset,
+		"/ajax/password-reset":         auth.AjaxResetPassword,
 	},
 }
 
 var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 	http.MethodGet: {
+		"/ajax/account":           auth.AjaxLoadAccount,
 		"/ajax/admin/users":       AjaxAdminLoadUsers,
 		"/ajax/admin/user":        AjaxAdminLoadUser,
 		"/ajax/admin/user/topics": AjaxAdminLoadUserTopics,
@@ -46,7 +50,8 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 		"/ajax/admin/topics":      AjaxAdminLoadTopics,
 	},
 	http.MethodPost: {
-		"/ajax/logout": auth.AjaxLogout,
+		"/ajax/account": auth.AjaxSaveAccount,
+		"/ajax/logout":  auth.AjaxLogout,
 
 		"/ajax/topic":      AjaxPostTopic,
 		"/ajax/post":       AjaxCreatePost,

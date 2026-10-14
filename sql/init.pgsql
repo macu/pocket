@@ -17,7 +17,9 @@ DROP TYPE IF EXISTS vote_type;
 
 DROP INDEX IF EXISTS user_account_handle_idx;
 DROP INDEX IF EXISTS user_account_email_idx;
+DROP INDEX IF EXISTS password_reset_request_user_idx;
 DROP TABLE IF EXISTS user_signup_request CASCADE;
+DROP TABLE IF EXISTS user_email_change_request CASCADE;
 DROP TABLE IF EXISTS password_reset_request CASCADE;
 DROP TABLE IF EXISTS user_session CASCADE;
 DROP TABLE IF EXISTS user_account CASCADE;
@@ -67,8 +69,18 @@ CREATE TABLE password_reset_request (
 	id SERIAL PRIMARY KEY,
 	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
 	sent_to_address VARCHAR(50) NOT NULL,
-	token VARCHAR(15) UNIQUE,
-	created_at TIMESTAMPTZ
+	token VARCHAR(64) UNIQUE NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX password_reset_request_user_idx ON password_reset_request (user_id);
+
+CREATE TABLE user_email_change_request (
+	user_id INTEGER PRIMARY KEY REFERENCES user_account (id) ON DELETE CASCADE,
+	email VARCHAR(50) NOT NULL,
+	original_email VARCHAR(50) NOT NULL,
+	token VARCHAR(64) UNIQUE NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL
 );
 
 --------------------------------------------------

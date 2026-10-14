@@ -20,6 +20,7 @@
 	<form-actions>
 		<el-button @click="login()" :disabled="loginDisabled">Log in</el-button>
 		<router-link :to="{name: 'signup'}">Register</router-link>
+		<router-link :to="{name: 'reset-password'}">Reset password</router-link>
 	</form-actions>
 
 	<loading-message v-if="loading" message="Logging in..."/>

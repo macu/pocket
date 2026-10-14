@@ -48,6 +48,10 @@ func GetDomain() string {
 	return os.Getenv("DOMAIN")
 }
 
+func GetPublicURL() string {
+	return os.Getenv("PUBLIC_URL")
+}
+
 func GetGoogleCloudProject() string {
 	return os.Getenv("GOOGLE_CLOUD_PROJECT")
 }

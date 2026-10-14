@@ -33,11 +33,14 @@ type mailjetAddress struct {
 
 // Send sends a plain-text email through Mailjet.
 func Send(to, subject, text string) error {
+	if env.IsLocal() {
+		return nil
+	}
 	apiKey := env.GetMailjetApiKey()
 	secret := env.GetMailjetSecret()
 	from := strings.TrimSpace(env.GetMailjetFromEmail())
 	if apiKey == "" || secret == "" || from == "" {
-		return nil
+		return fmt.Errorf("Mailjet email configuration is incomplete")
 	}
 
 	payload, err := json.Marshal(message{

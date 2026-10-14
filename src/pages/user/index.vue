@@ -20,6 +20,9 @@
 			<router-link v-if="isAdmin" :to="{name: 'admin-user', params: {id: user.id}}">
 				Manage user
 			</router-link>
+			<router-link v-if="user.id === $store.getters.currentUserId" :to="{name: 'account'}">
+				Account settings
+			</router-link>
 
 			<horizontal-controls class="align-start">
 				<div class="flex-column-sm">

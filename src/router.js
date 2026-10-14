@@ -15,6 +15,9 @@ import UserPage from '@/pages/user/index.vue';
 import AdminPage from '@/pages/admin/index.vue';
 import AdminUserPage from '@/pages/admin/user.vue';
 import PostPage from '@/pages/posts/post.vue';
+import AccountPage from '@/pages/user-account/account.vue';
+import ConfirmEmailPage from '@/pages/user-account/confirm-email.vue';
+import ResetPasswordPage from '@/pages/user-account/reset-password.vue';
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -38,6 +41,21 @@ const router = createRouter({
 			path: '/verify-signup',
 			name: 'signup-verify',
 			component: SignupVerifyPage,
+		},
+		{
+			path: '/account',
+			name: 'account',
+			component: AccountPage,
+		},
+		{
+			path: '/confirm-email',
+			name: 'confirm-email',
+			component: ConfirmEmailPage,
+		},
+		{
+			path: '/reset-password',
+			name: 'reset-password',
+			component: ResetPasswordPage,
 		},
 		{
 			path: '/add-post',

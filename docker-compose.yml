@@ -12,6 +12,7 @@ services:
       - db
     environment:
       - DB_HOST=db
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:2026}
       - GOOGLE_APPLICATION_CREDENTIALS=/var/run/google/application_default_credentials.json
     volumes:
       - .:/app
