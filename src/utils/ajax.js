@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {requestRecaptchaToken} from './recaptcha.js';
 
 import {
 	ElMessageBox,
@@ -8,6 +9,13 @@ export const ajax = axios.create({
 	headers: {
 		'Content-Type': 'multipart/form-data',
 	},
+});
+
+ajax.interceptors.request.use(async config => {
+	if (config.method?.toLowerCase() === 'post') {
+		config.headers['X-Recaptcha-Token'] = await requestRecaptchaToken(config.url);
+	}
+	return config;
 });
 
 export default ajax;
@@ -40,7 +48,10 @@ export function alertError(error, errorCodeMessages = {}) {
 	console.error("AJAX error", error);
 
 	let message = null;
-	if (error) {
+	if (error?.response?.data?.errorCode === 'recaptcha_failed') {
+		message = 'reCAPTCHA verification failed.';
+	}
+	if (error && !message) {
 		if (error.response && error.response.status) {
 
 			let customResponse = null;

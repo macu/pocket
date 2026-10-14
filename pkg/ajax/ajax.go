@@ -3,6 +3,7 @@ package ajax
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"pocket/pkg/user"
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/logging"
+	"pocket/pkg/utils/recaptcha"
 )
 
 var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
@@ -71,6 +73,30 @@ func AjaxHandler(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Req
 			if auth == nil || !user.CheckRoleAdmin(auth.Role) {
 				logging.LogError(r, auth, fmt.Errorf("forbidden admin access on %s", r.URL.Path))
 				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+		}
+
+		if r.Method == http.MethodPost && auth != nil {
+			ok, err := recaptcha.VerifyRecaptcha(r)
+			if !ok || err != nil {
+				logging.LogError(r, auth, err)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				var verificationError *recaptcha.VerificationError
+				var score *float64
+				reason := "verification_failed"
+				if errors.As(err, &verificationError) {
+					score = verificationError.Score
+					reason = verificationError.Reason
+				}
+				if err := json.NewEncoder(w).Encode(struct {
+					ErrorCode string   `json:"errorCode"`
+					Score     *float64 `json:"score"`
+					Reason    string   `json:"reason"`
+				}{"recaptcha_failed", score, reason}); err != nil {
+					logging.LogError(r, auth, fmt.Errorf("encoding reCAPTCHA failure: %w", err))
+				}
 				return
 			}
 		}

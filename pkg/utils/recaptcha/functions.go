@@ -1,34 +1,47 @@
 package recaptcha
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
+	"math"
 	"net/http"
-	"net/url"
+	"strings"
 	"time"
+
+	"google.golang.org/api/recaptchaenterprise/v1"
 
 	"pocket/pkg/env"
 	"pocket/pkg/utils/net"
-	"pocket/pkg/utils/secrets"
 )
 
 const DefaultMinScore = 0.5
 
-var siteVerifyURL = "https://www.google.com/recaptcha/api/siteverify"
+type VerificationError struct {
+	Score  *float64
+	Reason string
+	cause  error
+}
 
-type Response struct {
-	Success     bool     `json:"success"`
-	Score       float64  `json:"score"`
-	Action      string   `json:"action"`
-	ChallengeTS string   `json:"challenge_ts"`
-	Hostname    string   `json:"hostname"`
-	ErrorCodes  []string `json:"error-codes"`
+func (e *VerificationError) Error() string {
+	return e.cause.Error()
+}
+
+func (e *VerificationError) Unwrap() error {
+	return e.cause
+}
+
+var newAssessmentService = func(ctx context.Context) (*recaptchaenterprise.Service, error) {
+	return recaptchaenterprise.NewService(ctx)
+}
+
+func ActionForPath(path string) string {
+	return strings.NewReplacer("/", "_", "-", "_").Replace(strings.TrimPrefix(path, "/ajax/"))
 }
 
 func extractToken(r *http.Request) string {
-	token := r.FormValue("g-recaptcha-response")
+	token := r.Header.Get("X-Recaptcha-Token")
 	if token == "" {
-		token = r.Header.Get("X-Recaptcha-Token")
+		token = r.FormValue("g-recaptcha-response")
 	}
 	if token == "" {
 		token = r.FormValue("recaptcha_token")
@@ -36,107 +49,89 @@ func extractToken(r *http.Request) string {
 	return token
 }
 
-func getSecretKey() (string, error) {
-	if env.IsAppEngine() {
-		secretName := env.GetRecaptchaSecret()
-		if secretName == "" {
-			return "", fmt.Errorf("reCAPTCHA secret key undefined")
-		}
-		secretKey, err := secrets.LoadSecret(secretName)
-		if err != nil {
-			return "", fmt.Errorf("loading reCAPTCHA secret key: %w", err)
-		}
-		return secretKey, nil
-	}
-
-	secretKey := env.GetRecaptchaSecret()
-	if secretKey == "" {
-		return "", fmt.Errorf("reCAPTCHA secret key undefined")
-	}
-	return secretKey, nil
-}
-
-// Verify sends the token to Google's reCAPTCHA v3 siteverify API and returns the full response.
-func Verify(r *http.Request) (*Response, error) {
+func Verify(r *http.Request, expectedAction ...string) (*recaptchaenterprise.GoogleCloudRecaptchaenterpriseV1Assessment, error) {
 	token := extractToken(r)
 	if token == "" {
-		if env.IsLocal() {
-			return &Response{
-				Success: true,
-				Score:   1.0,
-			}, nil
-		}
 		return nil, fmt.Errorf("reCAPTCHA token undefined")
 	}
+	key := env.GetRecaptchaKey()
+	if key == "" {
+		return nil, fmt.Errorf("reCAPTCHA key undefined")
+	}
+	project := env.GetGoogleCloudProject()
+	if project == "" {
+		return nil, fmt.Errorf("reCAPTCHA Google Cloud project undefined")
+	}
+	action := ActionForPath(r.URL.Path)
+	if len(expectedAction) > 0 && expectedAction[0] != "" {
+		action = expectedAction[0]
+	}
 
-	secretKey, err := getSecretKey()
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	service, err := newAssessmentService(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating reCAPTCHA Enterprise client: %w", err)
 	}
-
-	ip := net.GetUserIP(r)
-
-	form := url.Values{}
-	form.Set("secret", secretKey)
-	form.Set("response", token)
-	if ip != "" {
-		form.Set("remoteip", ip)
-	}
-
-	client := http.Client{
-		Timeout: 5 * time.Second,
-	}
-
-	res, err := client.PostForm(siteVerifyURL, form)
+	assessment, err := service.Projects.Assessments.Create(
+		"projects/"+project,
+		&recaptchaenterprise.GoogleCloudRecaptchaenterpriseV1Assessment{
+			Event: &recaptchaenterprise.GoogleCloudRecaptchaenterpriseV1Event{
+				Token:          token,
+				SiteKey:        key,
+				ExpectedAction: action,
+				UserIpAddress:  net.GetUserIP(r),
+				UserAgent:      r.UserAgent(),
+			},
+		},
+	).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("error fetching URL: %w", err)
+		return nil, fmt.Errorf("creating reCAPTCHA Enterprise assessment: %w", err)
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("reCAPTCHA verify error: status %d", res.StatusCode)
-	}
-
-	var response Response
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
-	}
-
-	return &response, nil
+	return assessment, nil
 }
 
-// VerifyRecaptcha validates that the reCAPTCHA token is valid and score meets DefaultMinScore (0.5).
-// An optional expected action name can be provided to ensure the token was generated for the intended action.
 func VerifyRecaptcha(r *http.Request, expectedAction ...string) (bool, error) {
 	return VerifyRecaptchaWithMinScore(r, DefaultMinScore, expectedAction...)
 }
 
-// VerifyRecaptchaWithMinScore validates that the reCAPTCHA token is valid, score meets minScore,
-// and optionally verifies the expected action name.
 func VerifyRecaptchaWithMinScore(r *http.Request, minScore float64, expectedAction ...string) (bool, error) {
-	token := extractToken(r)
-	if token == "" && env.IsLocal() {
-		// Allow bypass on local
-		return true, nil
+	if math.IsNaN(minScore) || minScore < 0 || minScore > 1 {
+		return false, fmt.Errorf("invalid reCAPTCHA score threshold")
 	}
-
-	resp, err := Verify(r)
+	assessment, err := Verify(r, expectedAction...)
 	if err != nil {
-		return false, err
+		return false, &VerificationError{Reason: "assessment_failed", cause: err}
 	}
-
-	if !resp.Success {
-		return false, nil
+	var score *float64
+	if assessment.RiskAnalysis != nil && !math.IsNaN(assessment.RiskAnalysis.Score) && !math.IsInf(assessment.RiskAnalysis.Score, 0) {
+		score = &assessment.RiskAnalysis.Score
 	}
-
-	if len(expectedAction) > 0 && expectedAction[0] != "" && resp.Action != expectedAction[0] {
-		return false, nil
+	fail := func(reason string, err error) (bool, error) {
+		return false, &VerificationError{Score: score, Reason: reason, cause: err}
 	}
-
-	if resp.Score < minScore {
-		return false, nil
+	action := ActionForPath(r.URL.Path)
+	if len(expectedAction) > 0 && expectedAction[0] != "" {
+		action = expectedAction[0]
 	}
-
+	if assessment.TokenProperties == nil || !assessment.TokenProperties.Valid {
+		reason := "invalid_token"
+		if assessment.TokenProperties != nil && assessment.TokenProperties.InvalidReason != "" {
+			reason += ":" + assessment.TokenProperties.InvalidReason
+		}
+		return fail(reason, fmt.Errorf("invalid reCAPTCHA token: %s", reason))
+	}
+	if assessment.TokenProperties.Action != action {
+		return fail("action_mismatch", fmt.Errorf("reCAPTCHA action mismatch"))
+	}
+	if assessment.RiskAnalysis == nil {
+		return fail("missing_risk_analysis", fmt.Errorf("reCAPTCHA risk analysis missing"))
+	}
+	if score == nil || *score < 0 || *score > 1 {
+		return fail("invalid_score", fmt.Errorf("reCAPTCHA score invalid"))
+	}
+	if *score < minScore {
+		return fail("low_score", fmt.Errorf("reCAPTCHA score %g below threshold %g", *score, minScore))
+	}
 	return true, nil
 }

@@ -26,6 +26,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		MaxPostPageSize        int
 		MaxNewPostTopics       int
 		MaxTopicSelectionCount int
+		RecaptchaKey           string
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
@@ -37,5 +38,6 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		pocket.MaxPostPageSize,
 		pocket.MaxNewPostTopics,
 		pocket.MaxTopicSelectionCount,
+		env.GetRecaptchaKey(),
 	})
 }

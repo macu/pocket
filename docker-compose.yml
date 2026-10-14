@@ -12,8 +12,15 @@ services:
       - db
     environment:
       - DB_HOST=db
+      - GOOGLE_APPLICATION_CREDENTIALS=/var/run/google/application_default_credentials.json
     volumes:
       - .:/app
+      - type: bind
+        source: ${HOME}/.config/gcloud/application_default_credentials.json
+        target: /var/run/google/application_default_credentials.json
+        read_only: true
+        bind:
+          create_host_path: false
 
   db:
     image: postgres:latest

@@ -56,12 +56,8 @@ func GetCacheControlVersionStamp() string {
 	return GetVersionStamp()
 }
 
-func GetRecaptchaSiteKey() string {
-	return os.Getenv("RECAPTCHA_SITE_KEY")
-}
-
-func GetRecaptchaSecret() string {
-	return os.Getenv("RECAPTCHA_SECRET")
+func GetRecaptchaKey() string {
+	return os.Getenv("RECAPTCHA_KEY")
 }
 
 func GetMailjetApiKey() string {
