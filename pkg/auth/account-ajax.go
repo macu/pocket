@@ -18,11 +18,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	emailpkg "pocket/pkg/email"
-	"pocket/pkg/env"
 	"pocket/pkg/user"
 	"pocket/pkg/utils/ajax"
 	dbutil "pocket/pkg/utils/db"
 	"pocket/pkg/utils/logging"
+	netutil "pocket/pkg/utils/net"
 	"pocket/pkg/utils/types"
 )
 
@@ -75,16 +75,7 @@ func accountTokenHash(token string) string {
 }
 
 func accountLink(path, token string) (string, error) {
-	base := strings.TrimSpace(env.GetPublicURL())
-	if base == "" && env.IsAppEngine() && env.GetDomain() != "" {
-		base = "https://" + env.GetDomain()
-	}
-	u, err := url.Parse(base)
-	if err != nil || u.Host == "" || (u.Scheme != "https" && !(env.IsLocal() && u.Scheme == "http")) ||
-		u.User != nil || u.RawQuery != "" || u.Fragment != "" {
-		return "", fmt.Errorf("PUBLIC_URL must be a valid absolute application URL")
-	}
-	return u.ResolveReference(&url.URL{Path: path, RawQuery: url.Values{"token": {token}}.Encode()}).String(), nil
+	return netutil.BuildAbsoluteURL(path, url.Values{"token": {token}})
 }
 
 func validAccountPassword(password string) bool {
@@ -92,12 +83,23 @@ func validAccountPassword(password string) bool {
 		len(strings.TrimSpace(password)) > 0 && len(password) <= 72
 }
 
+// validDisplayName checks the raw submitted display name, so that
+// non-printable characters are rejected even where trimming would remove them.
+func validDisplayName(raw string) bool {
+	name := strings.TrimSpace(raw)
+	return name != "" && utf8.ValidString(raw) && utf8.RuneCountInString(name) <= userDisplayNameMaxLength &&
+		!types.HasUnprintableChar(raw)
+}
+
+func validHandle(handle string) bool {
+	return handlePattern.MatchString(handle)
+}
+
 func validateAccountProfile(name, handle, email string) error {
-	if name == "" || !utf8.ValidString(name) || utf8.RuneCountInString(name) > userDisplayNameMaxLength ||
-		types.HasUnprintableChar(name) {
+	if !validDisplayName(name) {
 		return invalidAccountInput("invalid-name")
 	}
-	if handle != "" && (len(handle) > userHandleMaxLength || !handlePattern.MatchString(handle)) {
+	if handle != "" && !validHandle(handle) {
 		return invalidAccountInput("invalid-handle")
 	}
 	if len(email) > 50 || !types.ValidateEmailAddress(email) {
@@ -141,12 +143,15 @@ func AjaxLoadAccount(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.
 }
 
 func AjaxSaveAccount(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
-	if types.HasUnprintableChar(r.FormValue("displayName")) {
+	if !validDisplayName(r.FormValue("displayName")) {
 		return accountFailure(r, &auth, invalidAccountInput("invalid-name"))
 	}
 	name := strings.TrimSpace(r.FormValue("displayName"))
 	handle := strings.TrimSpace(r.FormValue("handle"))
 	email := strings.ToLower(strings.TrimSpace(r.FormValue("email")))
+	if handle == "" {
+		return accountFailure(r, &auth, invalidAccountInput("invalid-handle"))
+	}
 	if err := validateAccountProfile(name, handle, email); err != nil {
 		return accountFailure(r, &auth, err)
 	}
@@ -181,16 +186,14 @@ func AjaxSaveAccount(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.
 			return err
 		}
 		var handleExists bool
-		if handle != "" {
-			if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM user_account WHERE handle = $1 AND id <> $2)`, handle, auth.UserID).
-				Scan(&handleExists); err != nil {
-				return err
-			}
-			if handleExists {
-				return invalidAccountInput("handle-exists")
-			}
+		if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM user_account WHERE handle = $1 AND id <> $2)`, handle, auth.UserID).
+			Scan(&handleExists); err != nil {
+			return err
 		}
-		if _, err := tx.Exec(`UPDATE user_account SET display_name = $1, handle = NULLIF($2, '') WHERE id = $3`,
+		if handleExists {
+			return invalidAccountInput("handle-exists")
+		}
+		if _, err := tx.Exec(`UPDATE user_account SET display_name = $1, handle = $2 WHERE id = $3`,
 			name, handle, auth.UserID); err != nil {
 			return err
 		}
@@ -218,11 +221,11 @@ func AjaxSaveAccount(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.
 			if err != nil && err != sql.ErrNoRows {
 				return err
 			}
-			if err == nil && pendingEmail == email && time.Since(created) < accountTokenExpiry && !env.IsLocal() {
+			if err == nil && pendingEmail == email && time.Since(created) < accountTokenExpiry && !emailpkg.Bypass() {
 				emailPending = true
 				return nil
 			}
-			if err == nil && time.Since(created) < accountEmailCooldown && !env.IsLocal() {
+			if err == nil && time.Since(created) < accountEmailCooldown && !emailpkg.Bypass() {
 				return &accountError{"email-rate-limit", http.StatusTooManyRequests}
 			}
 			token, err := accountToken()
@@ -235,15 +238,23 @@ func AjaxSaveAccount(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.
 				auth.UserID, email, currentEmail, accountTokenHash(token), time.Now()); err != nil {
 				return err
 			}
-			if env.IsLocal() {
+			if emailpkg.Bypass() {
 				localToken = token
 			} else {
 				link, err := accountLink("/confirm-email", token)
 				if err != nil {
 					return err
 				}
-				if err := sendAccountEmail(email, "Confirm your Pocket email change",
-					"Confirm your new email address using this link (expires in one hour):\n\n"+link); err != nil {
+				if err := sendAccountEmail(email, emailpkg.Message{
+					Subject: "Confirm your Pocket email change",
+					Heading: "Confirm your new email address",
+					Paragraphs: []string{
+						"You asked to change the email address on your Pocket account to " + email + ".",
+						"Confirm the change using the button below. This link expires in one hour.",
+					},
+					Action: &emailpkg.Action{Label: "Confirm email address", URL: link},
+					Note:   "If you did not request this change, you can ignore this email and your account will keep its current address.",
+				}); err != nil {
 					return fmt.Errorf("sending email change confirmation: %w", err)
 				}
 			}
@@ -262,8 +273,9 @@ func AjaxSaveAccount(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.
 	}
 	return struct {
 		EmailPending bool   `json:"emailPending"`
+		BypassEmail  bool   `json:"bypassEmail,omitempty"`
 		Token        string `json:"token,omitempty"`
-	}{emailPending, localToken}, http.StatusOK
+	}{emailPending, localToken != "", localToken}, http.StatusOK
 }
 
 func AjaxConfirmEmail(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {

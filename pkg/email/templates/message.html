@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<title>{{.Subject}}</title>
+</head>
+<body style="margin:0; padding:0; background-color:{{.Colors.Background}}; color:{{.Colors.Text}}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+{{- if .Preheader}}
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">{{.Preheader}}</div>
+{{- end}}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{.Colors.Background}}" style="background-color:{{.Colors.Background}};">
+	<tr>
+		<td align="center" style="padding:32px 16px;">
+			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+				<tr>
+					<td bgcolor="{{.Colors.Brand}}" style="background-color:{{.Colors.Brand}}; border-radius:8px 8px 0 0; padding:18px 28px;">
+						<span style="font-size:22px; font-weight:700; letter-spacing:0.5px; color:{{.Colors.BrandText}};">Pocket</span>
+					</td>
+				</tr>
+				<tr>
+					<td bgcolor="{{.Colors.Card}}" style="background-color:{{.Colors.Card}}; border:1px solid {{.Colors.Border}}; border-top:0; border-radius:0 0 8px 8px; padding:32px 28px;">
+						{{- if .Heading}}
+						<h1 style="margin:0 0 20px; font-size:22px; line-height:1.3; font-weight:700; color:{{.Colors.Text}};">{{.Heading}}</h1>
+						{{- end}}
+						{{- range .Paragraphs}}
+						<p style="margin:0 0 16px; font-size:16px; line-height:1.55; color:{{$.Colors.Text}};">{{.}}</p>
+						{{- end}}
+						{{- if .Details}}
+						<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 20px; border-collapse:collapse;">
+							{{- range .Details}}
+							<tr>
+								<td width="1%" style="padding:8px 24px 8px 0; border-bottom:1px solid {{$.Colors.Border}}; font-size:14px; color:{{$.Colors.Muted}}; white-space:nowrap; vertical-align:top;">{{.Label}}</td>
+								<td style="padding:8px 0; border-bottom:1px solid {{$.Colors.Border}}; font-size:15px; color:{{$.Colors.Text}}; word-break:break-word;">{{.Value}}</td>
+							</tr>
+							{{- end}}
+						</table>
+						{{- end}}
+						{{- if .Quote}}
+						{{- if .QuoteLabel}}
+						<p style="margin:8px 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:0.6px; color:{{.Colors.Muted}};">{{.QuoteLabel}}</p>
+						{{- end}}
+						<div style="margin:0 0 20px; padding:14px 16px; background-color:{{.Colors.QuoteBackground}}; border-left:4px solid {{.Colors.Accent}}; border-radius:4px; font-size:15px; line-height:1.5; color:{{.Colors.Text}}; white-space:pre-wrap; word-break:break-word;">{{.Quote}}</div>
+						{{- end}}
+						{{- if .Action}}
+						<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 24px;">
+							<tr>
+								<td bgcolor="{{.Colors.Button}}" style="background-color:{{.Colors.Button}}; border:1px solid {{.Colors.ButtonBorder}}; border-radius:5px;">
+									<a href="{{.Action.URL}}" target="_blank" style="display:inline-block; padding:12px 24px; font-size:16px; font-weight:600; color:{{.Colors.ButtonText}}; text-decoration:none; border-radius:5px;">{{.Action.Label}}</a>
+								</td>
+							</tr>
+						</table>
+						<p style="margin:0 0 16px; font-size:13px; line-height:1.5; color:{{.Colors.Muted}};">If the button doesn't work, copy this link into your browser:<br>
+							<a href="{{.Action.URL}}" target="_blank" style="color:{{.Colors.Link}}; word-break:break-all;">{{.Action.URL}}</a>
+						</p>
+						{{- end}}
+						{{- if .Note}}
+						<p style="margin:16px 0 0; padding-top:16px; border-top:1px solid {{.Colors.Border}}; font-size:13px; line-height:1.5; color:{{.Colors.Muted}};">{{.Note}}</p>
+						{{- end}}
+					</td>
+				</tr>
+				<tr>
+					<td align="center" style="padding:20px 28px 0; font-size:12px; line-height:1.5; color:{{.Colors.Muted}};">
+						This is an automated message from Pocket.
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+</body>
+</html>

@@ -70,7 +70,8 @@ export default {
 				'invalid-email': 'The given email address is invalid.',
 				'email-exists': 'An account with this email address already exists.',
 			}).then(response => {
-				if (typeof response === 'object' && response.token) {
+				if (response?.bypassEmail && response.token) {
+					// Running locally without Mailjet: skip the email step
 					this.$router.replace({
 						name: 'signup-verify',
 						query: {

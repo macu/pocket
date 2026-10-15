@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
 	emailpkg "pocket/pkg/email"
-	"pocket/pkg/env"
 	"pocket/pkg/utils/ajax"
 	dbutil "pocket/pkg/utils/db"
 	"pocket/pkg/utils/logging"
@@ -143,26 +141,32 @@ func AjaxSignup(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Requ
 		// getUserIP(r),
 	})
 
-	if env.IsLocal() {
-		// Return token for immediate redirect
+	if emailpkg.Bypass() {
+		// Return token so the frontend can skip the email step
 		return struct {
-			Token string `json:"token"`
+			BypassEmail bool   `json:"bypassEmail"`
+			Token       string `json:"token"`
 		}{
-			Token: token,
+			BypassEmail: true,
+			Token:       token,
 		}, http.StatusOK
 	}
 
-	verifyPath := (&url.URL{
-		Path:     "verify-signup",
-		RawQuery: url.Values{"token": {token}}.Encode(),
-	}).String()
-	verifyURL, err := netutil.BuildAbsoluteURL(r, verifyPath)
+	verifyURL, err := netutil.BuildAbsoluteURL("/verify-signup", url.Values{"token": {token}})
 	if err != nil {
 		logging.LogError(r, nil, fmt.Errorf("building signup verification URL: %w", err))
 		return nil, http.StatusInternalServerError
 	}
-	body := "To finish creating your Pocket account, follow this link:\n\n" + verifyURL
-	if err := emailpkg.Send(email, "Verify your new Pocket account", body); err != nil {
+	if err := emailpkg.Send(email, emailpkg.Message{
+		Subject: "Verify your new Pocket account",
+		Heading: "Welcome to Pocket",
+		Paragraphs: []string{
+			"Please verify your email address by clicking the link below to finish creating your account.",
+			"This link expires in one hour.",
+		},
+		Action: &emailpkg.Action{Label: "Finish creating account", URL: verifyURL},
+		Note:   "If you did not sign up for Pocket, you can ignore this email.",
+	}); err != nil {
 		logging.LogError(r, nil, fmt.Errorf("sending signup verification email: %w", err))
 		return nil, http.StatusInternalServerError
 	}
@@ -180,15 +184,20 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 
 	var token = strings.TrimSpace(r.FormValue("token"))
 	var password = r.FormValue("password")
-	var handle = strings.TrimSpace(r.FormValue("handle")) // optional
+	var handle = strings.TrimSpace(r.FormValue("handle"))
 	var displayName = strings.TrimSpace(r.FormValue("displayName"))
 	var message = strings.TrimSpace(r.FormValue("message"))
 
 	// enforce client-side validation
-	if token == "" || displayName == "" ||
-		len(handle) > userHandleMaxLength || len(displayName) > userDisplayNameMaxLength ||
+	if token == "" ||
 		len(strings.TrimSpace(password)) < PasswordMinLength || len(message) > 200 {
 		return nil, http.StatusBadRequest
+	}
+
+	if !validDisplayName(r.FormValue("displayName")) {
+		return ajax.AjaxErrorPayload{
+			ErrorCode: "invalid-name",
+		}, http.StatusBadRequest
 	}
 
 	// load request
@@ -219,35 +228,28 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 		}, http.StatusBadRequest
 	}
 
-	var handleValue *string
-	if handle != "" {
-		// verify pattern
-		var pattern = regexp.MustCompile(UserHandlePattern)
-		if !pattern.MatchString(handle) {
-			return ajax.AjaxErrorPayload{
-				ErrorCode: "invalid-handle",
-			}, http.StatusBadRequest
-		}
+	if !validHandle(handle) {
+		return ajax.AjaxErrorPayload{
+			ErrorCode: "invalid-handle",
+		}, http.StatusBadRequest
+	}
 
-		// verify handle is unused
-		var handleExists bool
-		err = db.QueryRow(
-			"SELECT EXISTS(SELECT 1 FROM user_account WHERE handle = $1)",
-			handle,
-		).Scan(&handleExists)
+	// verify handle is unused
+	var handleExists bool
+	err = db.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM user_account WHERE handle = $1)",
+		handle,
+	).Scan(&handleExists)
 
-		if err != nil {
-			logging.LogError(r, nil, fmt.Errorf("error checking if handle exists: %v", err))
-			return nil, http.StatusInternalServerError
-		}
+	if err != nil {
+		logging.LogError(r, nil, fmt.Errorf("error checking if handle exists: %v", err))
+		return nil, http.StatusInternalServerError
+	}
 
-		if handleExists {
-			return ajax.AjaxErrorPayload{
-				ErrorCode: "handle-exists",
-			}, http.StatusBadRequest
-		}
-
-		handleValue = &handle
+	if handleExists {
+		return ajax.AjaxErrorPayload{
+			ErrorCode: "handle-exists",
+		}, http.StatusBadRequest
 	}
 
 	// verify email doesn't yet exist
@@ -280,7 +282,7 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 			`INSERT INTO user_account (email, handle, display_name, auth_hash, created_at)
 				VALUES ($1, $2, $3, $4, $5)
 				RETURNING id`,
-			email, handleValue, displayName, authHash, time.Now(),
+			email, handle, displayName, authHash, time.Now(),
 		).Scan(&userID)
 
 		if err != nil {
@@ -350,15 +352,22 @@ func notifyAdminsOfSignup(db *sql.DB, r *http.Request, newUserEmail, handle, dis
 		return fmt.Errorf("reading admin email addresses: %w", err)
 	}
 
-	body := fmt.Sprintf("A new Pocket account was created.\n\nName: %s\nEmail: %s", displayName, newUserEmail)
-	if handle != "" {
-		body += "\nHandle: " + handle
+	msg := emailpkg.Message{
+		Subject:    "New Pocket account signup",
+		Heading:    "New account created",
+		Paragraphs: []string{"A new user just signed up for Pocket."},
+		Details: []emailpkg.Detail{
+			{Label: "Name", Value: displayName},
+			{Label: "Handle", Value: handle},
+			{Label: "Email", Value: newUserEmail},
+		},
 	}
 	if message != "" {
-		body += "\n\nMessage from the new user:\n" + message
+		msg.QuoteLabel = "Message from the new user"
+		msg.Quote = message
 	}
 	for _, adminEmail := range adminEmails {
-		if err := emailpkg.Send(adminEmail, "New Pocket account signup", body); err != nil {
+		if err := emailpkg.Send(adminEmail, msg); err != nil {
 			logging.LogError(r, nil, fmt.Errorf("sending signup notification to admin %s: %w", adminEmail, err))
 		}
 	}

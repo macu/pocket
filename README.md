@@ -15,6 +15,7 @@ DB_USER=dbuser
 DB_PASS=dbpass
 DB_NAME=pocket
 PORT=8080
+DOMAIN=localhost:2026
 MAINTENANCE_MODE=false
 VERSION_STAMP=
 RECAPTCHA_KEY=
@@ -24,6 +25,12 @@ MAILJET_SECRET=
 MAILJET_FROM_EMAIL=
 OPENAI_SECRET_KEY=
 ```
+
+## Links in emails
+
+Links in emails are built from `DOMAIN` (host with optional port, e.g.
+`localhost:2026`), using `http` locally and `https` on App Engine. Include a
+scheme (e.g. `https://dev.example`) to override this.
 
 ## AI moderation
 

@@ -117,7 +117,7 @@ func AjaxLoadLogin(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.R
 	}{}
 
 	err := db.QueryRow(
-		`SELECT id, user_role, handle, display_name, email FROM user_account WHERE id=$1`,
+		`SELECT id, user_role, COALESCE(handle, ''), display_name, email FROM user_account WHERE id=$1`,
 		auth.UserID,
 	).Scan(&user.ID, &user.Role, &user.Handle, &user.DisplayName, &user.Email)
 

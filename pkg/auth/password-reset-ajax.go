@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"pocket/pkg/env"
+	emailpkg "pocket/pkg/email"
 	"pocket/pkg/user"
 	"pocket/pkg/utils/ajax"
 	dbutil "pocket/pkg/utils/db"
@@ -40,7 +40,7 @@ func AjaxRequestPasswordReset(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter
 			Scan(&latest); err != nil {
 			return err
 		}
-		if latest.Valid && time.Since(latest.Time) < accountEmailCooldown && !env.IsLocal() {
+		if latest.Valid && time.Since(latest.Time) < accountEmailCooldown && !emailpkg.Bypass() {
 			return nil
 		}
 		token, err := accountToken()
@@ -54,16 +54,23 @@ func AjaxRequestPasswordReset(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter
 			VALUES ($1, $2, $3, $4)`, userID, email, accountTokenHash(token), time.Now()); err != nil {
 			return err
 		}
-		if env.IsLocal() {
+		if emailpkg.Bypass() {
 			localToken = token
 		} else {
 			link, err := accountLink("/reset-password", token)
 			if err != nil {
 				return err
 			}
-			if err := sendAccountEmail(email, "Reset your Pocket password",
-				"Reset your password using this link (expires in one hour):\n\n"+link+
-					"\n\nIf you did not request this, you can ignore this email."); err != nil {
+			if err := sendAccountEmail(email, emailpkg.Message{
+				Subject: "Reset your Pocket password",
+				Heading: "Reset your password",
+				Paragraphs: []string{
+					"We received a request to reset the password for your Pocket account.",
+					"Choose a new password using the button below. This link expires in one hour.",
+				},
+				Action: &emailpkg.Action{Label: "Reset password", URL: link},
+				Note:   "If you did not request this, you can ignore this email. Your password will not change.",
+			}); err != nil {
 				return fmt.Errorf("sending password reset email: %w", err)
 			}
 		}
@@ -73,8 +80,9 @@ func AjaxRequestPasswordReset(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter
 		return accountFailure(r, auth, fmt.Errorf("requesting password reset: %w", err))
 	}
 	return struct {
-		Token string `json:"token,omitempty"`
-	}{localToken}, http.StatusOK
+		BypassEmail bool   `json:"bypassEmail,omitempty"`
+		Token       string `json:"token,omitempty"`
+	}{localToken != "", localToken}, http.StatusOK
 }
 
 func AjaxResetPassword(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {

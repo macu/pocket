@@ -65,8 +65,16 @@ func AjaxAdminSetUserStatus(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 	if previousStatus != status {
-		body := fmt.Sprintf("Your Pocket account status has changed from %s to %s.", previousStatus, status)
-		if err := email.Send(updatedUser.Email, "Your Pocket account status changed", body); err != nil {
+		msg := email.Message{
+			Subject:    "Your Pocket account status changed",
+			Heading:    "Your account status changed",
+			Paragraphs: []string{"An administrator updated the status of your Pocket account."},
+			Details: []email.Detail{
+				{Label: "Previous status", Value: previousStatus},
+				{Label: "New status", Value: status},
+			},
+		}
+		if err := email.Send(updatedUser.Email, msg); err != nil {
 			logging.LogError(r, &auth, fmt.Errorf("sending account status email to user %d: %w", userID, err))
 		}
 	}
@@ -118,8 +126,14 @@ func AjaxAdminDeletePost(db *sql.DB, auth ajax.Auth,
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
-	body := fmt.Sprintf("An administrator deleted your post from Pocket.\n\nPost:\n%s", deletedPost.PostText)
-	if err := email.Send(deletedPost.AuthorEmail, "Your Pocket post was deleted", body); err != nil {
+	msg := email.Message{
+		Subject:    "Your Pocket post was deleted",
+		Heading:    "Your post was deleted",
+		Paragraphs: []string{"An administrator deleted one of your posts from Pocket."},
+		QuoteLabel: "Deleted post",
+		Quote:      deletedPost.PostText,
+	}
+	if err := email.Send(deletedPost.AuthorEmail, msg); err != nil {
 		logging.LogError(r, &auth, fmt.Errorf("sending post deletion email for post %d: %w", postID, err))
 	}
 

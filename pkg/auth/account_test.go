@@ -14,6 +14,7 @@ import (
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 
+	emailpkg "pocket/pkg/email"
 	"pocket/pkg/utils/ajax"
 )
 
@@ -43,7 +44,8 @@ func TestAccountValidation(t *testing.T) {
 
 func TestAccountTokenAndLink(t *testing.T) {
 	t.Setenv("APP_ENGINE", "1")
-	t.Setenv("PUBLIC_URL", "https://pocket.example")
+	t.Setenv("DOMAIN", "pocket.example")
+	t.Setenv("PUBLIC_URL", "")
 	first, err := accountToken()
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +61,7 @@ func TestAccountTokenAndLink(t *testing.T) {
 	if err != nil || link != "https://pocket.example/reset-password?token="+first {
 		t.Fatalf("unexpected link: %s %v", link, err)
 	}
-	t.Setenv("PUBLIC_URL", "http://pocket.example")
+	t.Setenv("DOMAIN", "http://pocket.example")
 	if _, err := accountLink("/reset-password", first); err == nil {
 		t.Fatal("production links must use HTTPS")
 	}
@@ -127,10 +129,14 @@ func responseToken(t *testing.T, response interface{}) string {
 		t.Fatal(err)
 	}
 	var payload struct {
-		Token string `json:"token"`
+		BypassEmail bool   `json:"bypassEmail"`
+		Token       string `json:"token"`
 	}
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		t.Fatal(err)
+	}
+	if payload.BypassEmail != (payload.Token != "") {
+		t.Fatalf("bypassEmail flag (%v) must accompany a returned token", payload.BypassEmail)
 	}
 	return payload.Token
 }
@@ -138,9 +144,11 @@ func responseToken(t *testing.T, response interface{}) string {
 func TestAccountFlowsPostgres(t *testing.T) {
 	db := accountTestDB(t)
 	t.Setenv("APP_ENGINE", "0")
+	t.Setenv("MAILJET_API_KEY", "")
+	t.Setenv("MAILJET_SECRET", "")
 	originalSend := sendAccountEmail
-	sendAccountEmail = func(to, subject, body string) error {
-		t.Fatal("local flows must not send email")
+	sendAccountEmail = func(to string, msg emailpkg.Message) error {
+		t.Fatal("local flows without Mailjet keys must not send email")
 		return nil
 	}
 	t.Cleanup(func() { sendAccountEmail = originalSend })
@@ -153,6 +161,14 @@ func TestAccountFlowsPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	auth := ajax.Auth{UserID: 1, Role: "user"}
+	missingHandle := url.Values{"displayName": {"Updated"}, "handle": {"  "}, "email": {"old@example.com"}}
+	if _, status := AjaxSaveAccount(db, auth, httptest.NewRecorder(), accountRequest(missingHandle)); status != http.StatusBadRequest {
+		t.Fatalf("empty handle must be rejected, got %d", status)
+	}
+	var currentHandle string
+	if err := db.QueryRow(`SELECT handle FROM user_account WHERE id = 1`).Scan(&currentHandle); err != nil || currentHandle != "first" {
+		t.Fatalf("handle cleared by rejected save: %q %v", currentHandle, err)
+	}
 	params := url.Values{"displayName": {"Updated"}, "handle": {"updated"}, "email": {"new@example.com"}}
 	response, status := AjaxSaveAccount(db, auth, httptest.NewRecorder(), accountRequest(params))
 	if status != http.StatusOK {
@@ -257,12 +273,20 @@ func TestAccountFlowsPostgres(t *testing.T) {
 func TestProductionAccountEmailsPostgres(t *testing.T) {
 	db := accountTestDB(t)
 	t.Setenv("APP_ENGINE", "1")
-	t.Setenv("PUBLIC_URL", "https://pocket.example")
+	t.Setenv("DOMAIN", "pocket.example")
+	t.Setenv("PUBLIC_URL", "")
 	originalSend := sendAccountEmail
-	type sentMessage struct{ to, subject, body string }
+	type sentMessage struct{ to, subject, body, link string }
 	var messages []sentMessage
-	sendAccountEmail = func(to, subject, body string) error {
-		messages = append(messages, sentMessage{to, subject, body})
+	sendAccountEmail = func(to string, msg emailpkg.Message) error {
+		if _, err := msg.HTML(); err != nil {
+			t.Fatalf("rendering email HTML: %v", err)
+		}
+		link := ""
+		if msg.Action != nil {
+			link = msg.Action.URL
+		}
+		messages = append(messages, sentMessage{to, msg.Subject, msg.Text(), link})
 		return nil
 	}
 	t.Cleanup(func() { sendAccountEmail = originalSend })
@@ -270,7 +294,7 @@ func TestProductionAccountEmailsPostgres(t *testing.T) {
 		VALUES ('original@example.com', 'Original', 'unused')`); err != nil {
 		t.Fatal(err)
 	}
-	params := url.Values{"displayName": {"Updated"}, "email": {"changed@example.com"}}
+	params := url.Values{"displayName": {"Updated"}, "handle": {"updated"}, "email": {"changed@example.com"}}
 	response, status := AjaxSaveAccount(db, ajax.Auth{UserID: 1, Role: "user"}, httptest.NewRecorder(), accountRequest(params))
 	if status != http.StatusOK || responseToken(t, response) != "" || len(messages) != 1 {
 		t.Fatal("production settings must send an email and never return a token")
@@ -278,8 +302,7 @@ func TestProductionAccountEmailsPostgres(t *testing.T) {
 	if messages[0].to != "changed@example.com" || !strings.Contains(messages[0].body, "https://pocket.example/confirm-email?token=") {
 		t.Fatal("confirmation email has wrong address or URL")
 	}
-	rawLink := strings.Split(messages[0].body, "\n\n")[1]
-	link, err := url.Parse(rawLink)
+	link, err := url.Parse(messages[0].link)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,5 +320,32 @@ func TestProductionAccountEmailsPostgres(t *testing.T) {
 	if _, status := AjaxRequestPasswordReset(db, nil, httptest.NewRecorder(), accountRequest(url.Values{"email": {"changed@example.com"}})); status != http.StatusOK ||
 		len(messages) != 2 {
 		t.Fatal("reset email cooldown must prevent duplicate delivery")
+	}
+}
+
+func TestValidDisplayName(t *testing.T) {
+	for _, name := range []string{"Matt", "  Jos\u00e9 Smith  ", strings.Repeat("\u00e9", 50)} {
+		if !validDisplayName(name) {
+			t.Errorf("valid display name rejected: %q", name)
+		}
+	}
+	for _, name := range []string{"", "   ", "Matt\n", "\tMatt", "Ma\u0000tt", "Ma\u200btt", "Matt\u2028", "\xff", strings.Repeat("a", 51)} {
+		if validDisplayName(name) {
+			t.Errorf("invalid display name accepted: %q", name)
+		}
+	}
+}
+
+func TestValidHandle(t *testing.T) {
+	for _, handle := range []string{"a", "Matt_99", "a" + strings.Repeat("b", userHandleMaxLength-1)} {
+		if !validHandle(handle) {
+			t.Errorf("valid handle rejected: %q", handle)
+		}
+	}
+	for _, handle := range []string{"", "_matt", "9matt", "matt smith", "matt-smith", "matt\n", "m\u00e9tt", "matt\u200b",
+		"a" + strings.Repeat("b", userHandleMaxLength)} {
+		if validHandle(handle) {
+			t.Errorf("invalid handle accepted: %q", handle)
+		}
 	}
 }

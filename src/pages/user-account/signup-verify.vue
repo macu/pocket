@@ -14,7 +14,7 @@
 				readonly autocomplete="username"/>
 		</form-field>
 
-		<form-field title="Handle">
+		<form-field title="Handle" required>
 			<p>This handle will make your user profile accessible via URL.</p>
 			<p>Format: letters A-Z, numbers, and underscores, with no spaces.</p>
 			<el-input v-model="handle" type="text"
@@ -24,7 +24,7 @@
 
 		<form-field title="Display name" required>
 			<label></label>
-			<p>This name will be displayed on your user profile and posts you create.</p>
+			<p>This name will be displayed on your user profile and posts you create. Use printable characters only.</p>
 			<el-input v-model="displayName" type="text"
 				:maxlength="50" show-word-limit
 				autocapitalize="none" autocomplete="off"/>
@@ -72,6 +72,7 @@ import {
 	ajaxGet,
 	ajaxPost,
 } from '@/utils/ajax.js';
+import {validName} from '@/utils/account.js';
 
 export default {
 	data() {
@@ -93,8 +94,8 @@ export default {
 		},
 		createDisabled() {
 			return this.loading || !this.signupRequest ||
-				this.submitting || !this.displayName.trim() ||
-				(!!this.handle.trim() && !this.handlePattern.test(this.handle.trim())) ||
+				this.submitting || !validName(this.displayName) ||
+				!this.handlePattern.test(this.handle.trim()) ||
 				!this.password.trim() ||
 				this.password.length < this.$store.getters.passwordMinLength ||
 				this.password !== this.verifyPassword;
@@ -141,7 +142,8 @@ export default {
 			}, {
 				'invalid-token': 'Invalid token.',
 				'token-expired': 'This signup request has expired.',
-				'invalid-handle': 'The given handle is invalid.',
+				'invalid-name': 'Enter a non-empty display name containing only printable characters (maximum 50 characters).',
+				'invalid-handle': 'The handle must start with a letter and contain only letters, numbers, and underscores (maximum 25 characters).',
 				'handle-exists': 'The given handle already exists.',
 				'email-exists': 'A user with the given email address already exists.',
 			}).then(() => {

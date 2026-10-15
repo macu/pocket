@@ -44,7 +44,8 @@ export default {
 			this.saving = true;
 			ajaxPost('/ajax/password-reset/request', {email: this.email.trim()}, accountErrors).then(async response => {
 				this.sent = true;
-				if (response.token) {
+				if (response.bypassEmail && response.token) {
+					// Running locally without Mailjet: skip the email step
 					await this.$router.replace({name: 'reset-password', query: {token: response.token}});
 				}
 			}).catch(() => {}).finally(() => { this.saving = false; });

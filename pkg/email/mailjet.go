@@ -24,6 +24,7 @@ type mailjetMessage struct {
 	To      []mailjetAddress `json:"To"`
 	Subject string           `json:"Subject"`
 	Text    string           `json:"TextPart"`
+	HTML    string           `json:"HTMLPart"`
 }
 
 type mailjetAddress struct {
@@ -31,10 +32,24 @@ type mailjetAddress struct {
 	Name  string `json:"Name,omitempty"`
 }
 
-// Send sends a plain-text email through Mailjet.
-func Send(to, subject, text string) error {
-	if env.IsLocal() {
+// Bypass reports whether email delivery should be skipped: only when running
+// locally with no Mailjet API keys configured. Flows that require an emailed
+// link should instead return their token so the frontend can proceed directly.
+func Bypass() bool {
+	return env.IsLocal() &&
+		strings.TrimSpace(env.GetMailjetApiKey()) == "" &&
+		strings.TrimSpace(env.GetMailjetSecret()) == ""
+}
+
+// Send sends a site-styled HTML email, with a plain-text alternative, through Mailjet.
+// It is a no-op when Bypass reports true.
+func Send(to string, msg Message) error {
+	if Bypass() {
 		return nil
+	}
+	html, err := msg.HTML()
+	if err != nil {
+		return err
 	}
 	apiKey := env.GetMailjetApiKey()
 	secret := env.GetMailjetSecret()
@@ -47,8 +62,9 @@ func Send(to, subject, text string) error {
 		Messages: []mailjetMessage{{
 			From:    mailjetAddress{Email: from, Name: "Pocket"},
 			To:      []mailjetAddress{{Email: to}},
-			Subject: subject,
-			Text:    text,
+			Subject: msg.Subject,
+			Text:    msg.Text(),
+			HTML:    html,
 		}},
 	})
 	if err != nil {

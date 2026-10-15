@@ -1,6 +1,6 @@
 export const accountErrors = {
 	'invalid-name': 'Enter a non-empty name containing only printable characters (maximum 50 characters).',
-	'invalid-handle': 'The handle must start with a letter and contain only letters, numbers, and underscores.',
+	'invalid-handle': 'The handle must start with a letter and contain only letters, numbers, and underscores (maximum 25 characters).',
 	'handle-exists': 'That handle is already in use.',
 	'invalid-email': 'Enter a valid email address (maximum 50 characters).',
 	'email-exists': 'That email address is unavailable.',

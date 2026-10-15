@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"pocket/pkg/env"
@@ -32,17 +33,40 @@ func GetLocalPort(r *http.Request) (string, error) {
 	return port, nil
 }
 
-// buildAbsoluteURL returns an absolute URL to the given path on the currently running server.
-func BuildAbsoluteURL(r *http.Request, path string) (string, error) {
-	path = strings.TrimPrefix(path, "/")
-
-	if env.IsAppEngine() {
-		return fmt.Sprintf("https://%s/%s", env.GetDomain(), path), nil
+// BaseURL returns the public base URL used for links to the site, such as in emails.
+// It is built from DOMAIN (e.g. "localhost:2026" or "pocket.example"), using https in
+// App Engine and http locally; DOMAIN may also include an explicit scheme.
+// PUBLIC_URL is used only when DOMAIN is unset.
+func BaseURL() (*url.URL, error) {
+	base := strings.TrimSpace(env.GetDomain())
+	if base != "" && !strings.Contains(base, "://") {
+		scheme := "http"
+		if env.IsAppEngine() {
+			scheme = "https"
+		}
+		base = scheme + "://" + base
 	}
+	if base == "" {
+		base = strings.TrimSpace(env.GetPublicURL())
+	}
+	u, err := url.Parse(base)
+	if base == "" || err != nil || u.Host == "" || (u.Path != "" && u.Path != "/") ||
+		(u.Scheme != "https" && !(env.IsLocal() && u.Scheme == "http")) ||
+		u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return nil, fmt.Errorf("DOMAIN must be a valid host (with optional port) for the public site")
+	}
+	u.Path = "/"
+	return u, nil
+}
 
-	port, err := GetLocalPort(r)
+// BuildAbsoluteURL returns an absolute public URL to the given path and query.
+func BuildAbsoluteURL(path string, query url.Values) (string, error) {
+	base, err := BaseURL()
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("http://localhost:%s/%s", port, path), nil
+	return base.ResolveReference(&url.URL{
+		Path:     "/" + strings.TrimPrefix(path, "/"),
+		RawQuery: query.Encode(),
+	}).String(), nil
 }
