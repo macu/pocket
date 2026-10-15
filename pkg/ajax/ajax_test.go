@@ -46,20 +46,23 @@ func TestAuthenticatedPostsRequireRecaptcha(t *testing.T) {
 	}
 }
 
-func TestUnauthenticatedLoginRequiresRecaptcha(t *testing.T) {
+func TestUnauthenticatedOptionalPostsRequireRecaptcha(t *testing.T) {
 	t.Setenv("APP_ENGINE", "0")
-	w := httptest.NewRecorder()
-	AjaxHandler(nil, nil, w, httptest.NewRequest(http.MethodPost, "/ajax/login", nil))
-
-	if w.Code != http.StatusForbidden {
-		t.Fatalf("got HTTP %d, want 403", w.Code)
-	}
-	var payload ajaxutil.AjaxErrorPayload
-	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
-		t.Fatal(err)
-	}
-	if payload.ErrorCode != "recaptcha_failed" {
-		t.Fatalf("unexpected payload: %+v", payload)
+	for path := range ajaxHandlersAuthOptional[http.MethodPost] {
+		t.Run(path, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			AjaxHandler(nil, nil, w, httptest.NewRequest(http.MethodPost, path, nil))
+			if w.Code != http.StatusForbidden {
+				t.Fatalf("got HTTP %d, want 403", w.Code)
+			}
+			var payload ajaxutil.AjaxErrorPayload
+			if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+				t.Fatal(err)
+			}
+			if payload.ErrorCode != "recaptcha_failed" {
+				t.Fatalf("unexpected payload: %+v", payload)
+			}
+		})
 	}
 }
 
@@ -75,7 +78,7 @@ func TestRecaptchaRequirementPolicy(t *testing.T) {
 		{"unauthenticated login", http.MethodPost, "/ajax/login", nil, true},
 		{"authenticated post", http.MethodPost, "/ajax/post", auth, true},
 		{"logout", http.MethodPost, "/ajax/logout", auth, false},
-		{"unauthenticated signup", http.MethodPost, "/ajax/signup", nil, false},
+		{"unauthenticated signup", http.MethodPost, "/ajax/signup", nil, true},
 		{"get request", http.MethodGet, "/ajax/login", auth, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -94,7 +97,6 @@ func TestUnchangedRequests(t *testing.T) {
 		status int
 	}{
 		{http.MethodGet, "/ajax/load-login", http.StatusOK},
-		{http.MethodPost, "/ajax/signup", http.StatusBadRequest},
 		{http.MethodPost, "/ajax/post", http.StatusForbidden},
 		{http.MethodPost, "/ajax/unknown", http.StatusNotFound},
 	} {

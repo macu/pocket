@@ -161,5 +161,6 @@ func requiresRecaptcha(method, path string, auth *ajax.Auth) bool {
 	if method != http.MethodPost || path == "/ajax/logout" {
 		return false
 	}
-	return auth != nil || path == "/ajax/login"
+	_, authOptional := ajaxHandlersAuthOptional[method][path]
+	return auth != nil || authOptional
 }
