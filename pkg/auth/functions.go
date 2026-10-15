@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"pocket/pkg/env"
 	"pocket/pkg/utils/db"
 	"pocket/pkg/utils/random"
 )
@@ -60,6 +61,7 @@ func createCookie(w http.ResponseWriter, expires time.Time, token string) {
 		Path:     "/",
 		Expires:  expires,
 		HttpOnly: true,                    // don't expose cookie to JavaScript
+		Secure:   env.IsAppEngine(),       // HTTPS only in production; local dev runs over HTTP
 		SameSite: http.SameSiteStrictMode, // send in first-party contexts only
 	})
 }
@@ -71,6 +73,7 @@ func clearCookie(w http.ResponseWriter) {
 		Path:     "/", // enable AJAX
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,                    // don't expose cookie to JavaScript
+		Secure:   env.IsAppEngine(),       // HTTPS only in production; local dev runs over HTTP
 		SameSite: http.SameSiteStrictMode, // send in first-party contexts only
 	})
 }
