@@ -36,10 +36,53 @@ func TestAuthenticatedPostsRequireRecaptcha(t *testing.T) {
 		})
 	}
 	for path := range ajaxHandlersAuthRequired[http.MethodPost] {
+		if path == "/ajax/logout" {
+			continue
+		}
 		check(path)
 	}
 	for path := range ajaxHandlersAuthOptional[http.MethodPost] {
 		check(path)
+	}
+}
+
+func TestUnauthenticatedLoginRequiresRecaptcha(t *testing.T) {
+	t.Setenv("APP_ENGINE", "0")
+	w := httptest.NewRecorder()
+	AjaxHandler(nil, nil, w, httptest.NewRequest(http.MethodPost, "/ajax/login", nil))
+
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("got HTTP %d, want 403", w.Code)
+	}
+	var payload ajaxutil.AjaxErrorPayload
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.ErrorCode != "recaptcha_failed" {
+		t.Fatalf("unexpected payload: %+v", payload)
+	}
+}
+
+func TestRecaptchaRequirementPolicy(t *testing.T) {
+	auth := &ajaxutil.Auth{UserID: 1}
+	for _, tc := range []struct {
+		name   string
+		method string
+		path   string
+		auth   *ajaxutil.Auth
+		want   bool
+	}{
+		{"unauthenticated login", http.MethodPost, "/ajax/login", nil, true},
+		{"authenticated post", http.MethodPost, "/ajax/post", auth, true},
+		{"logout", http.MethodPost, "/ajax/logout", auth, false},
+		{"unauthenticated signup", http.MethodPost, "/ajax/signup", nil, false},
+		{"get request", http.MethodGet, "/ajax/login", auth, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := requiresRecaptcha(tc.method, tc.path, tc.auth); got != tc.want {
+				t.Fatalf("requiresRecaptcha(%q, %q, auth) = %t, want %t", tc.method, tc.path, got, tc.want)
+			}
+		})
 	}
 }
 
@@ -51,7 +94,6 @@ func TestUnchangedRequests(t *testing.T) {
 		status int
 	}{
 		{http.MethodGet, "/ajax/load-login", http.StatusOK},
-		{http.MethodPost, "/ajax/login", http.StatusBadRequest},
 		{http.MethodPost, "/ajax/signup", http.StatusBadRequest},
 		{http.MethodPost, "/ajax/post", http.StatusForbidden},
 		{http.MethodPost, "/ajax/unknown", http.StatusNotFound},

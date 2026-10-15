@@ -82,7 +82,7 @@ func AjaxHandler(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Req
 			}
 		}
 
-		if r.Method == http.MethodPost && auth != nil {
+		if requiresRecaptcha(r.Method, r.URL.Path, auth) {
 			ok, err := recaptcha.VerifyRecaptcha(r)
 			if !ok || err != nil {
 				logging.LogError(r, auth, err)
@@ -155,4 +155,11 @@ func AjaxHandler(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Req
 	}{r.Method, r.URL.Path})
 
 	w.WriteHeader(http.StatusNotFound)
+}
+
+func requiresRecaptcha(method, path string, auth *ajax.Auth) bool {
+	if method != http.MethodPost || path == "/ajax/logout" {
+		return false
+	}
+	return auth != nil || path == "/ajax/login"
 }
