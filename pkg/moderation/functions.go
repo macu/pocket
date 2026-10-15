@@ -1,0 +1,139 @@
+package moderation
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
+	"pocket/pkg/env"
+)
+
+const (
+	Model = "omni-moderation-latest"
+
+	// ScoreThreshold is the maximum allowed score for any moderation category.
+	ScoreThreshold = 0.5
+
+	requestTimeout = 10 * time.Second
+)
+
+var skipWarning sync.Once
+
+var moderationURL = "https://api.openai.com/v1/moderations"
+
+// ErrRejected is returned when content fails the moderation check.
+var ErrRejected = errors.New("content rejected by moderation")
+
+type RejectedError struct {
+	Categories map[string]float64
+}
+
+func (e *RejectedError) Error() string {
+	names := make([]string, 0, len(e.Categories))
+	for name, score := range e.Categories {
+		names = append(names, fmt.Sprintf("%s=%.3f", name, score))
+	}
+	sort.Strings(names)
+	return fmt.Sprintf("%s: %s", ErrRejected.Error(), strings.Join(names, ", "))
+}
+
+func (e *RejectedError) Unwrap() error {
+	return ErrRejected
+}
+
+type moderationRequest struct {
+	Model string `json:"model"`
+	Input string `json:"input"`
+}
+
+type moderationResponse struct {
+	Results []struct {
+		CategoryScores map[string]float64 `json:"category_scores"`
+	} `json:"results"`
+}
+
+// CheckText sends text to the OpenAI moderation API and returns a *RejectedError
+// (matching ErrRejected) if any category score exceeds ScoreThreshold.
+// Other errors indicate the check could not be performed.
+func CheckText(ctx context.Context, text string) error {
+	if strings.TrimSpace(text) == "" {
+		return nil
+	}
+	apiKey := env.GetOpenAISecretKey()
+	if apiKey == "" {
+		if env.IsLocal() {
+			skipWarning.Do(func() {
+				log.Println("WARNING: OPENAI_SECRET_KEY not set; skipping AI moderation")
+			})
+			return nil
+		}
+		return fmt.Errorf("OpenAI secret key undefined")
+	}
+
+	payload, err := json.Marshal(moderationRequest{Model: Model, Input: text})
+	if err != nil {
+		return fmt.Errorf("encoding moderation request: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, moderationURL, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("creating moderation request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("sending moderation request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return fmt.Errorf("OpenAI moderation returned status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	var result moderationResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return fmt.Errorf("decoding moderation response: %w", err)
+	}
+	if len(result.Results) == 0 {
+		return fmt.Errorf("moderation response contained no results")
+	}
+
+	exceeded := map[string]float64{}
+	for _, r := range result.Results {
+		for category, score := range r.CategoryScores {
+			if score > ScoreThreshold {
+				exceeded[category] = score
+			}
+		}
+	}
+	if len(exceeded) > 0 {
+		return &RejectedError{Categories: exceeded}
+	}
+	return nil
+}
+
+// CheckPost moderates a post's topics and text together in a single request,
+// with the topics listed at the start of the text.
+func CheckPost(ctx context.Context, topicNames []string, text string) error {
+	var b strings.Builder
+	if len(topicNames) > 0 {
+		b.WriteString("Topics: ")
+		b.WriteString(strings.Join(topicNames, ", "))
+		b.WriteString("\n\n")
+	}
+	b.WriteString(text)
+	return CheckText(ctx, b.String())
+}

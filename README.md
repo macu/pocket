@@ -22,7 +22,14 @@ GOOGLE_CLOUD_PROJECT=
 MAILJET_API_KEY=
 MAILJET_SECRET=
 MAILJET_FROM_EMAIL=
+OPENAI_SECRET_KEY=
 ```
+
+## AI moderation
+
+New topics, posts, and post edits are checked with the OpenAI moderation API
+(`omni-moderation-latest`). Set `OPENAI_SECRET_KEY` to enable it; when unset,
+moderation is skipped locally and requests fail in App Engine.
 
 ## reCAPTCHA and local testing
 

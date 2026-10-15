@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"pocket/pkg/moderation"
 	"pocket/pkg/pocket"
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/logging"
@@ -115,6 +116,10 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 		return ajax.AjaxErrorPayload{ErrorCode: "too-many-topics"}, http.StatusBadRequest
 	}
 
+	if payload, status, ok := moderationFailure(r, &auth, moderation.CheckPost(r.Context(), topicNames, text)); !ok {
+		return payload, status
+	}
+
 	post, err := pocket.CreatePost(db, parentPostID, auth.UserID, text, topicNames)
 	if err != nil {
 		logging.LogError(r, &auth, err)
@@ -139,6 +144,10 @@ func AjaxUpdatePost(db *sql.DB, auth ajax.Auth,
 	text := strings.TrimSpace(r.FormValue("text"))
 	if err := pocket.ValidatePostText(text); err != nil {
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-post-text"}, http.StatusBadRequest
+	}
+
+	if payload, status, ok := moderationFailure(r, &auth, moderation.CheckText(r.Context(), text)); !ok {
+		return payload, status
 	}
 
 	post, err := pocket.UpdatePostText(db, id, auth.UserID, text)
@@ -171,6 +180,10 @@ func AjaxAddPostTopic(db *sql.DB, auth ajax.Auth,
 	}
 	if len(topicNames) > pocket.MaxNewPostTopics {
 		return ajax.AjaxErrorPayload{ErrorCode: "too-many-topics"}, http.StatusBadRequest
+	}
+
+	if payload, status, ok := moderationFailure(r, &auth, moderation.CheckPost(r.Context(), topicNames, "")); !ok {
+		return payload, status
 	}
 
 	existingNames := make(map[string]bool, len(topicNames))

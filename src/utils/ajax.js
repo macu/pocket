@@ -50,6 +50,8 @@ export function alertError(error, errorCodeMessages = {}) {
 	let message = null;
 	if (error?.response?.data?.errorCode === 'recaptcha_failed') {
 		message = 'reCAPTCHA verification failed.';
+	} else if (error?.response?.data?.errorCode === 'moderation-rejected') {
+		message = 'Content in this post has been rejected by AI moderation.';
 	}
 	if (error && !message) {
 		if (error.response && error.response.status) {

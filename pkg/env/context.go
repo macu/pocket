@@ -75,3 +75,7 @@ func GetMailjetSecret() string {
 func GetMailjetFromEmail() string {
 	return os.Getenv("MAILJET_FROM_EMAIL")
 }
+
+func GetOpenAISecretKey() string {
+	return os.Getenv("OPENAI_SECRET_KEY")
+}

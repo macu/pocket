@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"pocket/pkg/moderation"
 	"pocket/pkg/pocket"
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/logging"
@@ -41,6 +42,10 @@ func AjaxPostTopic(db *sql.DB, auth ajax.Auth,
 			"exists": true,
 			"topic":  nil,
 		}, http.StatusOK
+	}
+
+	if payload, status, ok := moderationFailure(r, &auth, moderation.CheckText(r.Context(), normalizedName)); !ok {
+		return payload, status
 	}
 
 	topic, err := pocket.CreateTopic(db, normalizedName, auth.UserID)
