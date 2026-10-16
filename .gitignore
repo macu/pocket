@@ -1,6 +1,8 @@
 node_modules
 .DS_Store
 .env
+.env.*
+/app.yaml
 /tmp
 /bin/server
 /documents/prompts.md

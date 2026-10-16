@@ -40,6 +40,9 @@ function loadEnterprise(key) {
 
 export async function requestRecaptchaToken(url) {
 	const key = window.appConstants.recaptchaKey;
+	if (window.appConstants.local && !key) {
+		return '';
+	}
 	if (!key) {
 		throw new Error(failureMessage);
 	}

@@ -1,0 +1,12 @@
+.gcloudignore
+.git
+.gitignore
+.env
+.env.*
+.DS_Store
+.air.toml
+docker-compose.yml
+Dockerfile
+node_modules/
+tmp/
+bin/

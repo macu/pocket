@@ -11,6 +11,7 @@ import (
 
 func TestAuthenticatedPostsRequireRecaptcha(t *testing.T) {
 	t.Setenv("APP_ENGINE", "0")
+	t.Setenv("RECAPTCHA_KEY", "site-key")
 	auth := &ajaxutil.Auth{UserID: 1, Role: "admin"}
 	check := func(path string) {
 		t.Run(path, func(t *testing.T) {
@@ -48,6 +49,7 @@ func TestAuthenticatedPostsRequireRecaptcha(t *testing.T) {
 
 func TestUnauthenticatedOptionalPostsRequireRecaptcha(t *testing.T) {
 	t.Setenv("APP_ENGINE", "0")
+	t.Setenv("RECAPTCHA_KEY", "site-key")
 	for path := range ajaxHandlersAuthOptional[http.MethodPost] {
 		t.Run(path, func(t *testing.T) {
 			w := httptest.NewRecorder()

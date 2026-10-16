@@ -12,6 +12,7 @@ import (
 
 	"pocket/pkg/ajax"
 	"pocket/pkg/auth"
+	"pocket/pkg/database"
 	"pocket/pkg/env"
 	"pocket/pkg/utils/logging"
 	"pocket/pkg/utils/secrets"
@@ -32,7 +33,6 @@ func main() {
 	var dbUser = env.GetDbUser()
 	var dbPass = env.GetDbPass()
 	var dbName = env.GetDbName()
-	var sslMode = ""
 	var err error
 
 	if env.IsAppEngine() {
@@ -44,17 +44,31 @@ func main() {
 			logging.LogErrorFatal(err)
 		}
 
-	} else {
-
-		// Disable SSL locally
-		sslMode = " sslmode=disable"
+		for _, secret := range []struct {
+			name        string
+			environment string
+		}{
+			{name: env.GetOpenAISecretKeySecret(), environment: "OPENAI_SECRET_KEY"},
+			{name: env.GetMailjetApiKeySecret(), environment: "MAILJET_API_KEY"},
+			{name: env.GetMailjetSecretSecret(), environment: "MAILJET_SECRET"},
+		} {
+			if secret.name == "" {
+				continue
+			}
+			value, loadErr := secrets.LoadSecret(secret.name)
+			if loadErr != nil {
+				logging.LogErrorFatal(loadErr)
+			}
+			if setErr := os.Setenv(secret.environment, value); setErr != nil {
+				logging.LogErrorFatal(setErr)
+			}
+		}
 
 	}
 
 	// Connect to postgres, using DB_HOST, DB_USER, DB_PASS, DB_NAME
-	dbUrl := fmt.Sprintf("host=%s user=%s password=%s dbname=%s"+sslMode,
-		dbHost, dbUser, dbPass, dbName)
-	db, err := sql.Open("postgres", dbUrl)
+	dbURL := database.PostgresConnectionURL(dbHost, dbUser, dbPass, dbName)
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
 	}

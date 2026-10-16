@@ -99,6 +99,9 @@ func VerifyRecaptchaWithMinScore(r *http.Request, minScore float64, expectedActi
 	if math.IsNaN(minScore) || minScore < 0 || minScore > 1 {
 		return false, fmt.Errorf("invalid reCAPTCHA score threshold")
 	}
+	if env.IsLocal() && env.GetRecaptchaKey() == "" {
+		return true, nil
+	}
 	assessment, err := Verify(r, expectedAction...)
 	if err != nil {
 		return false, &VerificationError{Reason: "assessment_failed", cause: err}

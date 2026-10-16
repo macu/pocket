@@ -21,16 +21,20 @@ func TestVerifyMissingConfiguration(t *testing.T) {
 			t.Setenv("RECAPTCHA_KEY", "")
 			t.Setenv("GOOGLE_CLOUD_PROJECT", "")
 			req := httptest.NewRequest(http.MethodPost, "/ajax/post", nil)
-			if ok, err := VerifyRecaptcha(req); ok || err == nil {
-				t.Fatal("missing token must fail, including locally")
+			if ok, err := VerifyRecaptcha(req); ok != (appEngine == "0") || (err == nil) != (appEngine == "0") {
+				t.Fatalf("empty key bypass must be local only: ok=%v err=%v", ok, err)
 			}
 			req.Header.Set("X-Recaptcha-Token", "token")
-			if ok, err := VerifyRecaptcha(req); ok || err == nil {
-				t.Fatal("missing key must fail")
+			if ok, err := VerifyRecaptcha(req); ok != (appEngine == "0") || (err == nil) != (appEngine == "0") {
+				t.Fatalf("empty key bypass must be local only: ok=%v err=%v", ok, err)
 			}
 			t.Setenv("RECAPTCHA_KEY", "site-key")
 			if ok, err := VerifyRecaptcha(req); ok || err == nil {
 				t.Fatal("missing project must fail")
+			}
+			req.Header.Del("X-Recaptcha-Token")
+			if ok, err := VerifyRecaptcha(req); ok || err == nil {
+				t.Fatal("configured key must require a token, including locally")
 			}
 		})
 	}
