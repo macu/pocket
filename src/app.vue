@@ -6,6 +6,8 @@
 			<span v-if="onDashboard">Pocket</span>
 			<router-link v-else :to="{name: 'dashboard'}">Pocket</router-link>
 		</h1>
+		<span v-if="onAboutPage">About</span>
+		<router-link v-else :to="{name: 'about'}">About</router-link>
 		<template v-if="showUser">
 			<router-link v-if="isAdmin" :to="{name: 'admin'}">Admin</router-link>
 			<span class="flex-row nowrap">
@@ -49,6 +51,9 @@ export default {
 		},
 		currentUserDisplayName() {
 			return this.$store.getters.currentUserDisplayName;
+		},
+		onAboutPage() {
+			return this.$route.name === 'about';
 		},
 		onDashboard() {
 			return this.$route.name === 'dashboard';

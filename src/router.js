@@ -18,6 +18,7 @@ import PostPage from '@/pages/posts/post.vue';
 import AccountPage from '@/pages/user-account/account.vue';
 import ConfirmEmailPage from '@/pages/user-account/confirm-email.vue';
 import ResetPasswordPage from '@/pages/user-account/reset-password.vue';
+import AboutPage from '@/pages/about/index.vue';
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -26,6 +27,11 @@ const router = createRouter({
 			path: '/',
 			name: 'dashboard',
 			component: DashboardPage,
+		},
+		{
+			path: '/about',
+			name: 'about',
+			component: AboutPage,
 		},
 		{
 			path: '/login',
