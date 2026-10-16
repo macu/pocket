@@ -8,6 +8,10 @@ html, body {
 	background-color: $app-bg-color;
 }
 
+.grecaptcha-badge {
+	visibility: hidden;
+}
+
 * {
 	box-sizing: border-box;
 }

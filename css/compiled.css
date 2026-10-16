@@ -388,6 +388,10 @@ html, body {
   background-color: black;
 }
 
+.grecaptcha-badge {
+  visibility: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
