@@ -11,11 +11,44 @@ export const ajax = axios.create({
 	},
 });
 
+let pendingPostRequests = 0;
+
+function showRecaptchaBadge() {
+	pendingPostRequests++;
+	document.documentElement.classList.add('recaptcha-request-active');
+	let active = true;
+	return () => {
+		if (!active) {
+			return;
+		}
+		active = false;
+		pendingPostRequests--;
+		if (!pendingPostRequests) {
+			document.documentElement.classList.remove('recaptcha-request-active');
+		}
+	};
+}
+
 ajax.interceptors.request.use(async config => {
 	if (config.method?.toLowerCase() === 'post') {
-		config.headers['X-Recaptcha-Token'] = await requestRecaptchaToken(config.url);
+		const hideRecaptchaBadge = showRecaptchaBadge();
+		config.hideRecaptchaBadge = hideRecaptchaBadge;
+		try {
+			config.headers['X-Recaptcha-Token'] = await requestRecaptchaToken(config.url);
+		} catch (error) {
+			hideRecaptchaBadge();
+			throw error;
+		}
 	}
 	return config;
+});
+
+ajax.interceptors.response.use(response => {
+	response.config.hideRecaptchaBadge?.();
+	return response;
+}, error => {
+	error.config?.hideRecaptchaBadge?.();
+	return Promise.reject(error);
 });
 
 export default ajax;

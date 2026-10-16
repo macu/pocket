@@ -392,6 +392,10 @@ html, body {
   visibility: hidden;
 }
 
+.recaptcha-request-active .grecaptcha-badge {
+  visibility: visible;
+}
+
 * {
   box-sizing: border-box;
 }
