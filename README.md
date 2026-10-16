@@ -146,12 +146,17 @@ env_variables:
   DB_NAME: ""
   DB_PASS_SECRET: ""
   DOMAIN: ""
+  VERSION_STAMP: 20261016204052
   RECAPTCHA_KEY: ""
   OPENAI_SECRET_KEY_SECRET: ""
   MAILJET_API_KEY_SECRET: ""
   MAILJET_SECRET_SECRET: ""
   MAILJET_FROM_EMAIL: ""
 ```
+
+Run `sh rebuild.sh` before deploying to rebuild the frontend and refresh
+`VERSION_STAMP` in both `.env` and `app.yaml`. The stamp is appended as `?v=`
+to the compiled CSS and JavaScript URLs for cache busting.
 
 The app uses the App Engine standard environment with Go 1.27 and PostgreSQL on
 Cloud SQL. Set `cloud_sql_instances` to `PROJECT_ID:REGION:INSTANCE_ID` and
