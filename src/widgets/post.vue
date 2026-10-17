@@ -250,7 +250,7 @@ export default {
 
 		.topic {
 			padding: 4px 8px;
-			font-size: 0.8em;
+			font-size: 1.04rem;
 			gap: 6px;
 		}
 	}

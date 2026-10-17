@@ -7,7 +7,7 @@
 
 		<div v-if="parentPost" class="parent-post-card flex-column-sm">
 			<small>Parent post</small>
-			<post-widget :post="parentPost" clickable @click="openPost(parentPost.id)" size="small" />
+			<post-widget :post="parentPost" clickable @click="openPost(parentPost.id)" size="medium" />
 		</div>
 
 		<div class="post-card">
