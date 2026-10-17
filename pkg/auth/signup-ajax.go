@@ -28,7 +28,7 @@ func emailUnavailableForSignup(db *sql.DB, email string) (bool, error) {
 	err := db.QueryRow(`
 		SELECT EXISTS (
 			SELECT 1 FROM user_account
-			WHERE email = $1 OR (
+			WHERE lower(email) = lower($1) OR (
 				user_role = 'banned'
 				AND split_part(split_part(lower(email), '@', 1), '+', 1) || '@' ||
 					split_part(lower(email), '@', 2) = $2

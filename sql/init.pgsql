@@ -50,7 +50,7 @@ CREATE TABLE user_account (
 );
 
 CREATE UNIQUE INDEX user_account_handle_idx ON user_account (handle);
-CREATE UNIQUE INDEX user_account_email_idx ON user_account (email);
+CREATE UNIQUE INDEX user_account_email_idx ON user_account (lower(email));
 
 CREATE TABLE user_session (
 	token VARCHAR(30) PRIMARY KEY,

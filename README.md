@@ -93,6 +93,11 @@ sh ./bin/psql-shell.sh
 For an existing database, apply any SQL scripts in `sql/migrations/` before
 deploying the updated application.
 
+The `20261017_case_insensitive_email.pgsql` migration enforces case-insensitive
+email uniqueness, including the domain. Resolve any existing accounts whose
+emails differ only by case before applying it; the migration fails without
+changing the index if such duplicates exist.
+
 ## Rebuild web app
 
 The app will re-compile automatically when any Go source files change.

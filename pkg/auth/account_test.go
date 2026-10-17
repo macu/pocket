@@ -120,6 +120,52 @@ func TestOwnerPostDeletionPostgres(t *testing.T) {
 	}
 }
 
+func TestSignupEmailCaseInsensitivePostgres(t *testing.T) {
+	db := accountTestDB(t)
+	if _, err := db.Exec(`INSERT INTO user_account (email, display_name, auth_hash, user_role) VALUES
+		('Person@Example.COM', 'Person', 'unused', 'user'),
+		('Blocked+old@Example.COM', 'Blocked', 'unused', 'banned')`); err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		email string
+		want  bool
+	}{
+		{"person@example.com", true},
+		{"PERSON@EXAMPLE.COM", true},
+		{"Person@example.COM", true},
+		{"person@other.example", false},
+		{"person+new@example.com", false},
+		{"blocked@example.com", true},
+		{"BLOCKED+new@EXAMPLE.COM", true},
+		{"blocked@other.example", false},
+	} {
+		got, err := emailUnavailableForSignup(db, test.email)
+		if err != nil || got != test.want {
+			t.Errorf("email %q: unavailable=%v, want %v, err=%v", test.email, got, test.want, err)
+		}
+	}
+	migration, err := os.ReadFile("../../sql/migrations/20261017_case_insensitive_email.pgsql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(string(migration)); err != nil {
+		t.Fatal(err)
+	}
+	for _, email := range []string{"person@example.com", "Person@EXAMPLE.com"} {
+		_, err := db.Exec(`INSERT INTO user_account (email, display_name, auth_hash)
+			VALUES ($1, 'Duplicate', 'unused')`, email)
+		var pgError *pq.Error
+		if !errors.As(err, &pgError) || pgError.Code != "23505" || pgError.Constraint != "user_account_email_idx" {
+			t.Errorf("case-insensitive unique index did not reject %q: %v", email, err)
+		}
+	}
+	if _, err := db.Exec(`INSERT INTO user_account (email, display_name, auth_hash)
+		VALUES ('person@other.example', 'Other domain', 'unused')`); err != nil {
+		t.Fatalf("distinct domain rejected: %v", err)
+	}
+}
+
 func TestAccountValidation(t *testing.T) {
 	for _, name := range []string{"", " \n ", "Name\tHere", "Name\u200b", strings.Repeat("a", 51)} {
 		if validateAccountProfile(name, "", "user@example.com") == nil {
