@@ -16,31 +16,40 @@
 
 		<form-field title="Handle" required>
 			<p>This handle will make your user profile accessible via URL.</p>
-			<p>Format: letters A-Z, numbers, and underscores, with no spaces.</p>
+			<p>Start with a letter, then use letters, numbers, or underscores, with no spaces.</p>
 			<el-input v-model="handle" type="text"
 				:maxlength="25" show-word-limit
-				autocapitalize="none" autocomplete="off"/>
+				autocapitalize="none" autocomplete="off"
+				:aria-invalid="!!handleError" :aria-describedby="handleError ? 'signup-handle-error' : undefined"/>
+			<p v-if="handleError" id="signup-handle-error" class="form-field-error" role="alert">{{handleError}}</p>
 		</form-field>
 
 		<form-field title="Display name" required>
 			<label></label>
-			<p>This name will be displayed on your user profile and posts you create. Use printable characters only.</p>
+			<p>This name will be displayed on your user profile and posts you create. Use printable characters only. Extra spaces are removed.</p>
 			<el-input v-model="displayName" type="text"
 				:maxlength="50" show-word-limit
 				autocapitalize="none" autocomplete="off"/>
 		</form-field>
 
 		<form-field title="Password">
-			<p>Minimum length is {{$store.getters.passwordMinLength}} characters.</p>
+			<p>Minimum length is {{$store.getters.passwordMinLength}} characters; maximum is 72 bytes.</p>
 			<el-input v-model="password" type="password"
 				:maxlength="100" show-password
-				autocapitalize="none" autocomplete="new-password"/>
+				autocapitalize="none" autocomplete="new-password"
+				@blur="passwordTouched = true"
+				:aria-invalid="!!passwordError" :aria-describedby="passwordError ? 'signup-password-error' : undefined"/>
+			<p v-if="passwordError" id="signup-password-error" class="form-field-error" role="alert">{{passwordError}}</p>
 		</form-field>
 
 		<form-field title="Verify password">
 			<el-input v-model="verifyPassword" type="password"
 				:maxlength="100" show-password
-				autocapitalize="none" autocomplete="new-password"/>
+				autocapitalize="none" autocomplete="new-password"
+				@focus="confirmPasswordTouched = false"
+				@blur="confirmPasswordTouched = true"
+				:aria-invalid="!!confirmPasswordError" :aria-describedby="confirmPasswordError ? 'signup-confirm-password-error' : undefined"/>
+			<p v-if="confirmPasswordError" id="signup-confirm-password-error" class="form-field-error" role="alert">{{confirmPasswordError}}</p>
 		</form-field>
 
 		<form-field title="Message to admin (optional; say Hi)">
@@ -72,7 +81,7 @@ import {
 	ajaxGet,
 	ajaxPost,
 } from '@/utils/ajax.js';
-import {validName} from '@/utils/account.js';
+import {accountErrors, normalizeName, passwordValidationError, validName, validPassword} from '@/utils/account.js';
 
 export default {
 	data() {
@@ -82,6 +91,8 @@ export default {
 
 			password: '',
 			verifyPassword: '',
+			passwordTouched: false,
+			confirmPasswordTouched: false,
 			handle: '',
 			displayName: '',
 			message: '',
@@ -89,15 +100,24 @@ export default {
 		};
 	},
 	computed: {
-		handlePattern() {
-			return new RegExp(this.$const.handlePattern);
+		passwordError() {
+			return this.passwordTouched ? passwordValidationError(this.password, this.$store.getters.passwordMinLength) : '';
+		},
+		confirmPasswordError() {
+			return this.confirmPasswordTouched && this.password !== this.verifyPassword ?
+				'Passwords do not match.' : '';
+		},
+		handleValid() {
+			return new RegExp(this.$const.handlePattern).test(this.handle.trim());
+		},
+		handleError() {
+			return this.handle && !this.handleValid ? accountErrors['invalid-handle'] : '';
 		},
 		createDisabled() {
 			return this.loading || !this.signupRequest ||
 				this.submitting || !validName(this.displayName) ||
-				!this.handlePattern.test(this.handle.trim()) ||
-				!this.password.trim() ||
-				this.password.length < this.$store.getters.passwordMinLength ||
+				!this.handleValid ||
+				!validPassword(this.password, this.$store.getters.passwordMinLength) ||
 				this.password !== this.verifyPassword;
 		},
 	},
@@ -134,12 +154,13 @@ export default {
 			}
 			this.submitting = true;
 			ajaxPost('/ajax/signup-verify', {
-				token: this.signupRequest.token,
+				token: this.signupRequest.token.trim(),
 				password: this.password,
 				handle: this.handle.trim(),
-				displayName: this.displayName.trim(),
-				message: this.message,
+				displayName: normalizeName(this.displayName),
+				message: this.message.trim(),
 			}, {
+				...accountErrors,
 				'invalid-token': 'Invalid token.',
 				'token-expired': 'This signup request has expired.',
 				'invalid-name': 'Enter a non-empty display name containing only printable characters (maximum 50 characters).',

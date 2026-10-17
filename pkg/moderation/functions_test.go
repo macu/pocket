@@ -66,3 +66,21 @@ func TestCheckPostPrependsTopics(t *testing.T) {
 		t.Fatalf("unexpected input %q", input)
 	}
 }
+
+func TestCheckProfileIncludesPublicFields(t *testing.T) {
+	var input string
+	withServer(t, map[string]float64{}, &input)
+	if err := CheckProfile(context.Background(), "Matt_99", "Matt Smith"); err != nil {
+		t.Fatal(err)
+	}
+	if input != "Handle: Matt_99\nDisplay name: Matt Smith" {
+		t.Fatalf("unexpected input %q", input)
+	}
+}
+
+func TestCheckProfileRejects(t *testing.T) {
+	withServer(t, map[string]float64{"hate": 0.9}, nil)
+	if err := CheckProfile(context.Background(), "handle", "Name"); !errors.Is(err, ErrRejected) {
+		t.Fatalf("expected ErrRejected, got %v", err)
+	}
+}

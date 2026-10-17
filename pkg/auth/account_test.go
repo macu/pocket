@@ -1,8 +1,10 @@
 package auth
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,6 +17,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	emailpkg "pocket/pkg/email"
+	"pocket/pkg/moderation"
 	"pocket/pkg/utils/ajax"
 )
 
@@ -100,7 +103,9 @@ func accountTestDB(t *testing.T) *sql.DB {
 	if _, err := db.Exec(`
 		CREATE TABLE user_account (id SERIAL PRIMARY KEY, email VARCHAR(50) UNIQUE NOT NULL,
 			handle VARCHAR(25) UNIQUE, display_name VARCHAR(50) NOT NULL, auth_hash VARCHAR(60) NOT NULL,
-			user_role TEXT NOT NULL DEFAULT 'user');
+			user_role TEXT NOT NULL DEFAULT 'user', created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+		CREATE TABLE user_signup_request (id SERIAL PRIMARY KEY, email VARCHAR(50) NOT NULL,
+			token VARCHAR(15) UNIQUE NOT NULL, created_at TIMESTAMPTZ NOT NULL);
 		CREATE TABLE user_session (token VARCHAR(30) PRIMARY KEY, user_id INTEGER REFERENCES user_account(id), expires TIMESTAMPTZ NOT NULL);
 		CREATE TABLE password_reset_request (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES user_account(id),
 			sent_to_address VARCHAR(50) NOT NULL, token VARCHAR(15) UNIQUE, created_at TIMESTAMPTZ);`); err != nil {
@@ -143,6 +148,7 @@ func responseToken(t *testing.T, response interface{}) string {
 
 func TestAccountFlowsPostgres(t *testing.T) {
 	db := accountTestDB(t)
+	stubProfileModeration(t, func(context.Context, string, string) error { return nil })
 	t.Setenv("APP_ENGINE", "0")
 	t.Setenv("MAILJET_API_KEY", "")
 	t.Setenv("MAILJET_SECRET", "")
@@ -272,6 +278,7 @@ func TestAccountFlowsPostgres(t *testing.T) {
 
 func TestProductionAccountEmailsPostgres(t *testing.T) {
 	db := accountTestDB(t)
+	stubProfileModeration(t, func(context.Context, string, string) error { return nil })
 	t.Setenv("APP_ENGINE", "1")
 	t.Setenv("DOMAIN", "pocket.example")
 	t.Setenv("PUBLIC_URL", "")
@@ -324,15 +331,148 @@ func TestProductionAccountEmailsPostgres(t *testing.T) {
 }
 
 func TestValidDisplayName(t *testing.T) {
-	for _, name := range []string{"Matt", "  Jos\u00e9 Smith  ", strings.Repeat("\u00e9", 50)} {
+	for _, name := range []string{"Matt", "  Jos\u00e9 Smith  ", strings.Repeat("\u00e9", 50),
+		"  Matt    Smith  ", strings.Repeat("a", 48) + "    b"} {
 		if !validDisplayName(name) {
 			t.Errorf("valid display name rejected: %q", name)
 		}
 	}
-	for _, name := range []string{"", "   ", "Matt\n", "\tMatt", "Ma\u0000tt", "Ma\u200btt", "Matt\u2028", "\xff", strings.Repeat("a", 51)} {
+	for _, name := range []string{"", "   ", "Matt\n", "\tMatt", "Ma\u0000tt", "Ma\u200btt", "Matt\u2028",
+		"Matt\u00a0Smith", "\xff", strings.Repeat("a", 51)} {
 		if validDisplayName(name) {
 			t.Errorf("invalid display name accepted: %q", name)
 		}
+	}
+}
+
+func stubProfileModeration(t *testing.T, check func(context.Context, string, string) error) {
+	t.Helper()
+	original := moderateAccountProfile
+	moderateAccountProfile = check
+	t.Cleanup(func() { moderateAccountProfile = original })
+}
+
+func TestSaveAccountModerationFailure(t *testing.T) {
+	t.Setenv("APP_ENGINE", "0")
+	for _, test := range []struct {
+		name   string
+		err    error
+		status int
+		code   string
+	}{
+		{"rejected", moderation.ErrRejected, http.StatusUnprocessableEntity, "profile-moderation-rejected"},
+		{"unavailable", errors.New("moderation unavailable"), http.StatusInternalServerError, ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			called := false
+			stubProfileModeration(t, func(ctx context.Context, handle, name string) error {
+				called = true
+				if handle != "Matt_99" || name != "Matt Smith" {
+					t.Fatalf("moderating unnormalized profile: %q %q", handle, name)
+				}
+				return test.err
+			})
+			params := url.Values{"displayName": {"  Matt   Smith  "}, "handle": {" Matt_99 "}, "email": {" user@example.com "}}
+			payload, status := AjaxSaveAccount(nil, ajax.Auth{UserID: 1}, httptest.NewRecorder(), accountRequest(params))
+			if !called || status != test.status {
+				t.Fatalf("called=%v, status=%d, want %d", called, status, test.status)
+			}
+			if test.code != "" && payload.(ajax.AjaxErrorPayload).ErrorCode != test.code {
+				t.Fatalf("unexpected error payload: %+v", payload)
+			}
+		})
+	}
+}
+
+func TestProfileRejectsNonPrintableNames(t *testing.T) {
+	stubProfileModeration(t, func(context.Context, string, string) error {
+		t.Fatal("invalid names must be rejected before moderation")
+		return nil
+	})
+	for _, name := range []string{"\tMatt", "Matt\n", "Ma\u200btt", "Matt\u00a0Smith", "Ma\x00tt"} {
+		params := url.Values{"displayName": {name}, "handle": {"Matt"}, "email": {"user@example.com"},
+			"token": {"signup-token"}, "password": {"valid-password"}}
+		for _, signup := range []bool{false, true} {
+			var payload interface{}
+			var status int
+			if signup {
+				payload, status = AjaxSignupVerify(nil, nil, httptest.NewRecorder(), accountRequest(params))
+			} else {
+				payload, status = AjaxSaveAccount(nil, ajax.Auth{UserID: 1}, httptest.NewRecorder(), accountRequest(params))
+			}
+			if status != http.StatusBadRequest || payload.(ajax.AjaxErrorPayload).ErrorCode != "invalid-name" {
+				t.Errorf("name %q, signup=%v: status=%d payload=%+v", name, signup, status, payload)
+			}
+		}
+	}
+}
+
+func TestProfileModerationPostgres(t *testing.T) {
+	db := accountTestDB(t)
+	t.Setenv("APP_ENGINE", "0")
+	if _, err := db.Exec(`INSERT INTO user_signup_request (email, token, created_at)
+				VALUES ('user@example.com', 'signup-token', now())`); err != nil {
+		t.Fatal(err)
+	}
+	var moderationErr error
+	var checkedHandle, checkedName string
+	stubProfileModeration(t, func(ctx context.Context, handle, name string) error {
+		checkedHandle, checkedName = handle, name
+		return moderationErr
+	})
+	params := url.Values{"token": {" signup-token "}, "password": {"valid-password"},
+		"handle": {" Matt_99 "}, "displayName": {"  Matt   Smith  "}}
+	for _, failure := range []struct {
+		err    error
+		status int
+	}{
+		{moderation.ErrRejected, http.StatusUnprocessableEntity},
+		{errors.New("moderation unavailable"), http.StatusInternalServerError},
+	} {
+		moderationErr = failure.err
+		if _, status := AjaxSignupVerify(db, nil, httptest.NewRecorder(), accountRequest(params)); status != failure.status {
+			t.Fatalf("signup moderation failure: status=%d, want %d", status, failure.status)
+		}
+		var count int
+		if err := db.QueryRow(`SELECT count(*) FROM user_account`).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("failed moderation created an account: count=%d err=%v", count, err)
+		}
+		if err := db.QueryRow(`SELECT count(*) FROM user_signup_request`).Scan(&count); err != nil || count != 1 {
+			t.Fatalf("failed moderation consumed signup token: count=%d err=%v", count, err)
+		}
+	}
+	moderationErr = nil
+	if payload, status := AjaxSignupVerify(db, nil, httptest.NewRecorder(), accountRequest(params)); status != http.StatusOK {
+		t.Fatalf("signup failed: %d %+v", status, payload)
+	}
+	if checkedHandle != "Matt_99" || checkedName != "Matt Smith" {
+		t.Fatalf("unexpected moderated signup profile: %q %q", checkedHandle, checkedName)
+	}
+	var id uint
+	var handle, name string
+	if err := db.QueryRow(`SELECT id, handle, display_name FROM user_account`).Scan(&id, &handle, &name); err != nil ||
+		handle != checkedHandle || name != checkedName {
+		t.Fatalf("unexpected saved signup profile: %q %q %v", handle, name, err)
+	}
+	params.Set("displayName", "  New    Name  ")
+	params.Set("handle", " New_handle ")
+	params.Set("email", " USER@example.com ")
+	auth := ajax.Auth{UserID: id, Role: "user"}
+	moderationErr = moderation.ErrRejected
+	if _, status := AjaxSaveAccount(db, auth, httptest.NewRecorder(), accountRequest(params)); status != http.StatusUnprocessableEntity {
+		t.Fatalf("account moderation rejection: status=%d", status)
+	}
+	if err := db.QueryRow(`SELECT handle, display_name FROM user_account WHERE id = $1`, id).Scan(&handle, &name); err != nil ||
+		handle != "Matt_99" || name != "Matt Smith" {
+		t.Fatalf("rejected update changed profile: %q %q %v", handle, name, err)
+	}
+	moderationErr = nil
+	if payload, status := AjaxSaveAccount(db, auth, httptest.NewRecorder(), accountRequest(params)); status != http.StatusOK {
+		t.Fatalf("account save failed: %d %+v", status, payload)
+	}
+	if err := db.QueryRow(`SELECT handle, display_name FROM user_account WHERE id = $1`, id).Scan(&handle, &name); err != nil ||
+		handle != "New_handle" || name != "New Name" || handle != checkedHandle || name != checkedName {
+		t.Fatalf("unexpected saved account profile: %q %q %v", handle, name, err)
 	}
 }
 

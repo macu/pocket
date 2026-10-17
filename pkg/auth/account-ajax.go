@@ -18,6 +18,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	emailpkg "pocket/pkg/email"
+	"pocket/pkg/moderation"
 	"pocket/pkg/user"
 	"pocket/pkg/utils/ajax"
 	dbutil "pocket/pkg/utils/db"
@@ -30,6 +31,7 @@ const accountTokenExpiry = time.Hour
 const accountEmailCooldown = time.Minute
 
 var sendAccountEmail = emailpkg.Send
+var moderateAccountProfile = moderation.CheckProfile
 var handlePattern = regexp.MustCompile(UserHandlePattern)
 
 type accountError struct {
@@ -58,6 +60,9 @@ func accountFailure(r *http.Request, auth *ajax.Auth, err error) (interface{}, i
 		}
 	}
 	logging.LogError(r, auth, err)
+	if errors.Is(err, moderation.ErrRejected) {
+		return ajax.AjaxErrorPayload{ErrorCode: "profile-moderation-rejected"}, http.StatusUnprocessableEntity
+	}
 	return nil, http.StatusInternalServerError
 }
 
@@ -86,7 +91,7 @@ func validAccountPassword(password string) bool {
 // validDisplayName checks the raw submitted display name, so that
 // non-printable characters are rejected even where trimming would remove them.
 func validDisplayName(raw string) bool {
-	name := strings.TrimSpace(raw)
+	name := types.NormalizeSpaces(raw)
 	return name != "" && utf8.ValidString(raw) && utf8.RuneCountInString(name) <= userDisplayNameMaxLength &&
 		!types.HasUnprintableChar(raw)
 }
@@ -146,7 +151,7 @@ func AjaxSaveAccount(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.
 	if !validDisplayName(r.FormValue("displayName")) {
 		return accountFailure(r, &auth, invalidAccountInput("invalid-name"))
 	}
-	name := strings.TrimSpace(r.FormValue("displayName"))
+	name := types.NormalizeSpaces(r.FormValue("displayName"))
 	handle := strings.TrimSpace(r.FormValue("handle"))
 	email := strings.ToLower(strings.TrimSpace(r.FormValue("email")))
 	if handle == "" {
@@ -159,6 +164,9 @@ func AjaxSaveAccount(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.
 	password := r.FormValue("newPassword")
 	if changePassword && (!validAccountPassword(password) || password != r.FormValue("confirmPassword")) {
 		return accountFailure(r, &auth, invalidAccountInput("invalid-password"))
+	}
+	if err := moderateAccountProfile(r.Context(), handle, name); err != nil {
+		return accountFailure(r, &auth, err)
 	}
 	var newHash []byte
 	var session string

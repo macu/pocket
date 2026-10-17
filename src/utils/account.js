@@ -9,13 +9,28 @@ export const accountErrors = {
 	'invalid-token': 'This link is invalid or has already been used.',
 	'token-expired': 'This link has expired. Please request a new one.',
 	'email-rate-limit': 'Please wait a minute before requesting another confirmation email.',
+	'profile-moderation-rejected': 'Your display name or handle was rejected by AI moderation. Please choose different profile details.',
 };
 
+export function normalizeName(name) {
+	return name.trim().replace(/ +/g, ' ');
+}
+
 export function validName(name) {
-	return !!name.trim() && Array.from(name.trim()).length <= 50 && !/[\p{C}\p{Zl}\p{Zp}\p{Zs}]/u.test(name.replace(/ /g, ''));
+	const normalized = normalizeName(name);
+	return !!normalized && Array.from(normalized).length <= 50 && !/[\p{C}\p{Zl}\p{Zp}\p{Zs}]/u.test(name.replace(/ /g, ''));
 }
 
 export function validPassword(password, minLength) {
-	return !!password.trim() && Array.from(password).length >= minLength &&
-		new TextEncoder().encode(password).length <= 72;
+	return passwordValidationError(password, minLength) === '';
+}
+
+export function passwordValidationError(password, minLength) {
+	if (!password.trim() || Array.from(password).length < minLength) {
+		return `Password must contain at least ${minLength} characters and cannot be blank.`;
+	}
+	if (new TextEncoder().encode(password).length > 72) {
+		return 'Password must be at most 72 bytes.';
+	}
+	return '';
 }

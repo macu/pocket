@@ -24,6 +24,12 @@ html, body {
 	white-space: pre-wrap;
 }
 
+.form-field-error {
+	color: $message-error-color;
+	margin: 0;
+	font-size: 0.875em;
+}
+
 div.center {
 	display: flex;
 	justify-content: center;

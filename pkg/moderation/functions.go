@@ -125,6 +125,11 @@ func CheckText(ctx context.Context, text string) error {
 	return nil
 }
 
+// CheckProfile moderates the public profile fields together in a single request.
+func CheckProfile(ctx context.Context, handle, displayName string) error {
+	return CheckText(ctx, fmt.Sprintf("Handle: %s\nDisplay name: %s", handle, displayName))
+}
+
 // CheckPost moderates a post's topics and text together in a single request,
 // with the topics listed at the start of the text.
 func CheckPost(ctx context.Context, topicNames []string, text string) error {

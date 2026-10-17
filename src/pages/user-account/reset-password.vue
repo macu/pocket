@@ -15,7 +15,9 @@
 	<template v-else>
 		<p>Enter your account email address to request a password reset link.</p>
 		<form-field title="Email address" required>
-			<el-input v-model="email" type="email" :maxlength="50" autocomplete="email" autocapitalize="none"/>
+			<el-input v-model="email" type="email" :maxlength="50" autocomplete="email" autocapitalize="none">
+				<template #suffix>{{email.length}} / 50</template>
+			</el-input>
 		</form-field>
 		<form-actions>
 			<el-button @click="request" :disabled="saving || !email.trim()" :loading="saving">Send reset link</el-button>

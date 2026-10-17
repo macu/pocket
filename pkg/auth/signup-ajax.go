@@ -185,7 +185,7 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 	var token = strings.TrimSpace(r.FormValue("token"))
 	var password = r.FormValue("password")
 	var handle = strings.TrimSpace(r.FormValue("handle"))
-	var displayName = strings.TrimSpace(r.FormValue("displayName"))
+	var displayName = types.NormalizeSpaces(r.FormValue("displayName"))
 	var message = strings.TrimSpace(r.FormValue("message"))
 
 	// enforce client-side validation
@@ -264,6 +264,10 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 		return ajax.AjaxErrorPayload{
 			ErrorCode: "email-exists",
 		}, http.StatusBadRequest
+	}
+
+	if err := moderateAccountProfile(r.Context(), handle, displayName); err != nil {
+		return accountFailure(r, nil, err)
 	}
 
 	// hash password

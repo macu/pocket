@@ -6,8 +6,9 @@
 	<form-field title="Email address">
 		<el-input v-model="email" type="email" :maxlength="50"
 			autocapitalize="none" autocomplete="username"
-			@keyup.enter.native="login()"
-			/>
+			@keyup.enter.native="login()">
+			<template #suffix>{{email.length}} / 50</template>
+		</el-input>
 	</form-field>
 
 	<form-field title="Password">

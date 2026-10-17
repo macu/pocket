@@ -34,8 +34,11 @@ scheme (e.g. `https://dev.example`) to override this.
 
 ## AI moderation
 
-New topics, posts, and post edits are checked with the OpenAI moderation API
-(`omni-moderation-latest`). Set `OPENAI_SECRET_KEY` to enable it; when unset,
+New topics, posts, post edits, and user handles and display names (on signup and
+account updates) are checked with the OpenAI moderation API
+(`omni-moderation-latest`). Profile display names are trimmed, repeated spaces
+are collapsed, and non-printable characters are rejected. Passwords are not trimmed.
+Set `OPENAI_SECRET_KEY` to enable moderation; when unset,
 moderation is skipped locally and requests fail in App Engine.
 
 ## reCAPTCHA and local testing

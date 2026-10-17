@@ -33,6 +33,17 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+.el-input .el-input__suffix,
+.el-input .el-input__count,
+.el-textarea .el-input__count {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.el-input .el-input__count .el-input__count-inner,
+.el-textarea .el-input__count {
+  background: transparent;
+}
+
 .el-input.is-disabled .el-input__wrapper,
 .el-textarea.is-disabled .el-textarea__inner,
 .el-select__wrapper.is-disabled {
@@ -402,6 +413,12 @@ html, body {
 
 .pre-wrap {
   white-space: pre-wrap;
+}
+
+.form-field-error {
+  color: rgb(235, 125, 125);
+  margin: 0;
+  font-size: 0.875em;
 }
 
 div.center {
