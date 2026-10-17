@@ -189,7 +189,7 @@ export default {
 	border: thin solid rgba(255, 255, 255, 0.15);
 	display: flex;
 	flex-direction: column;
-	row-gap: 10px;
+	row-gap: 16px;
 
 	.top-post-header {
 		align-items: center;
@@ -220,6 +220,7 @@ export default {
 			.vote-btn {
 				cursor: pointer;
 				font-size: 26px;
+				padding: 4px;
 				opacity: 0.6;
 				border-radius: 999px;
 				&:hover {
@@ -228,7 +229,6 @@ export default {
 				&.active {
 					opacity: 1;
 					color: white;
-					padding: 4px;
 					background-color: rgb(76, 175, 80);
 					&.downvote {
 						background-color: rgb(211, 86, 86);
@@ -245,8 +245,20 @@ export default {
 		}
 	}
 
+	.topic-list {
+		gap: 8px;
+
+		.topic {
+			padding: 4px 8px;
+			font-size: 0.8em;
+			gap: 6px;
+		}
+	}
+
 	.top-post-text {
 		cursor: pointer;
+		font-size: 1.08em;
+		line-height: 1.5;
 		white-space: pre-wrap;
 		word-break: break-word;
 		display: -webkit-box;
@@ -266,7 +278,7 @@ export default {
 
 	&.size-small {
 		padding: 8px;
-		row-gap: 6px;
+		row-gap: 10px;
 		font-size: 0.85em;
 
 		.top-post-header {
@@ -279,7 +291,7 @@ export default {
 
 	&.size-medium {
 		padding: 12px;
-		row-gap: 10px;
+		row-gap: 16px;
 		font-size: 1em;
 
 		.top-post-header {
@@ -292,7 +304,7 @@ export default {
 
 	&.size-large {
 		padding: 20px;
-		row-gap: 24px;
+		row-gap: 28px;
 		font-size: 1.3em;
 
 		.top-post-header {

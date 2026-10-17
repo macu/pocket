@@ -199,7 +199,8 @@ export default {
 
 		.vote-btn {
 			cursor: pointer;
-			font-size: 18px;
+			font-size: 16px;
+			padding: 2px;
 			opacity: 0.6;
 			border-radius: 999px;
 
@@ -210,7 +211,6 @@ export default {
 			&.active {
 				opacity: 1;
 				color: white;
-				padding: 4px;
 				background-color: rgb(76, 175, 80);
 
 				&.downvote {
