@@ -221,14 +221,25 @@ type DeletedPost struct {
 // DeletePost deletes a post along with its sub-posts, votes and revisions.
 // Returns details of the deleted post and sql.ErrNoRows if it doesn't exist.
 func DeletePost(conn *sql.DB, postID uint) (*DeletedPost, error) {
+	return deletePost(conn, postID, nil)
+}
+
+// DeleteOwnPost deletes a post only if it belongs to authorID.
+// Returns sql.ErrNoRows for missing posts or posts belonging to someone else.
+func DeleteOwnPost(conn *sql.DB, postID, authorID uint) (*DeletedPost, error) {
+	return deletePost(conn, postID, &authorID)
+}
+
+func deletePost(conn *sql.DB, postID uint, authorID *uint) (*DeletedPost, error) {
 	var parentID sql.NullInt64
 	var deletedPost DeletedPost
 	err := conn.QueryRow(`
 		DELETE FROM post p
 		USING user_account u
 		WHERE p.id = $1 AND u.id = p.author
+			AND ($2::integer IS NULL OR p.author = $2)
 		RETURNING p.parent_post_id, p.post_text, u.email
-	`, postID).Scan(&parentID, &deletedPost.PostText, &deletedPost.AuthorEmail)
+	`, postID, authorID).Scan(&parentID, &deletedPost.PostText, &deletedPost.AuthorEmail)
 	if err != nil {
 		return nil, err
 	}

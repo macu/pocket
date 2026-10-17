@@ -100,6 +100,7 @@ func TestUnchangedRequests(t *testing.T) {
 	}{
 		{http.MethodGet, "/ajax/load-login", http.StatusOK},
 		{http.MethodPost, "/ajax/post", http.StatusForbidden},
+		{http.MethodPost, "/ajax/post/delete", http.StatusForbidden},
 		{http.MethodPost, "/ajax/unknown", http.StatusNotFound},
 	} {
 		t.Run(tc.path, func(t *testing.T) {

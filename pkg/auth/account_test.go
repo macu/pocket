@@ -61,6 +61,65 @@ func TestAdminUserSearchPostgres(t *testing.T) {
 	}
 }
 
+func TestOwnerPostDeletionPostgres(t *testing.T) {
+	db := accountTestDB(t)
+	if _, err := db.Exec(`
+		CREATE TABLE post (id SERIAL PRIMARY KEY,
+			parent_post_id INTEGER REFERENCES post(id) ON DELETE CASCADE,
+			author INTEGER REFERENCES user_account(id), post_text TEXT,
+			created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE post_vote (post_id INTEGER REFERENCES post(id) ON DELETE CASCADE);
+		CREATE TABLE post_revision (post_id INTEGER REFERENCES post(id) ON DELETE CASCADE);
+		INSERT INTO user_account (email, display_name, auth_hash) VALUES
+			('owner@example.com', 'Owner', 'unused'), ('other@example.com', 'Other', 'unused');
+		INSERT INTO post (author, post_text, created_at) VALUES (1, 'Root post', now() - interval '10 days');
+		INSERT INTO post (author, post_text, parent_post_id) VALUES (2, 'Child post', 1);
+		INSERT INTO post_vote VALUES (1), (2);
+		INSERT INTO post_revision VALUES (1), (2);`); err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct{ postID, authorID uint }{{1, 2}, {2, 1}, {999, 1}} {
+		if _, err := pocket.DeleteOwnPost(db, test.postID, test.authorID); !errors.Is(err, sql.ErrNoRows) {
+			t.Fatalf("unauthorized or missing post deletion: %v", err)
+		}
+	}
+	var count int
+	if err := db.QueryRow(`SELECT count(*) FROM post`).Scan(&count); err != nil || count != 2 {
+		t.Fatalf("unauthorized deletion changed posts: count=%d err=%v", count, err)
+	}
+	deleted, err := pocket.DeleteOwnPost(db, 2, 2)
+	if err != nil || deleted.ParentPostID == nil || *deleted.ParentPostID != 1 {
+		t.Fatalf("child deletion did not return parent: %+v err=%v", deleted, err)
+	}
+	deleted, err = pocket.DeleteOwnPost(db, 1, 1)
+	if err != nil || deleted.ParentPostID != nil {
+		t.Fatalf("old post deletion failed: %+v err=%v", deleted, err)
+	}
+	if _, err := pocket.DeleteOwnPost(db, 1, 1); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("repeated deletion should return no rows: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO post (id, author, post_text) VALUES (3, 1, 'Root');
+		INSERT INTO post (id, author, post_text, parent_post_id) VALUES (4, 2, 'Child', 3);
+		INSERT INTO post_vote VALUES (3), (4);
+		INSERT INTO post_revision VALUES (3), (4);`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pocket.DeleteOwnPost(db, 3, 1); err != nil {
+		t.Fatal(err)
+	}
+	for _, table := range []string{"post", "post_vote", "post_revision"} {
+		if err := db.QueryRow(`SELECT count(*) FROM ` + table).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("cascade cleanup of %s failed: count=%d err=%v", table, count, err)
+		}
+	}
+	if _, err := db.Exec(`INSERT INTO post (id, author, post_text) VALUES (5, 2, 'Admin target')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pocket.DeletePost(db, 5); err != nil {
+		t.Fatalf("admin deletion regressed: %v", err)
+	}
+}
+
 func TestAccountValidation(t *testing.T) {
 	for _, name := range []string{"", " \n ", "Name\tHere", "Name\u200b", strings.Repeat("a", 51)} {
 		if validateAccountProfile(name, "", "user@example.com") == nil {

@@ -132,6 +132,26 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 
 }
 
+func AjaxDeletePost(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (any, int) {
+	id, err := types.AtoUint(r.FormValue("id"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+	deletedPost, err := pocket.DeleteOwnPost(db, id, auth.UserID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, http.StatusNotFound
+		}
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+	return map[string]any{
+		"parentPostId": deletedPost.ParentPostID,
+	}, http.StatusOK
+}
+
 func AjaxUpdatePost(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (any, int) {

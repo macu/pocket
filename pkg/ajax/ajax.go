@@ -53,10 +53,11 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 		"/ajax/account": auth.AjaxSaveAccount,
 		"/ajax/logout":  auth.AjaxLogout,
 
-		"/ajax/topic":      AjaxPostTopic,
-		"/ajax/post":       AjaxCreatePost,
-		"/ajax/post/edit":  AjaxUpdatePost,
-		"/ajax/post/topic": AjaxAddPostTopic,
+		"/ajax/topic":       AjaxPostTopic,
+		"/ajax/post":        AjaxCreatePost,
+		"/ajax/post/edit":   AjaxUpdatePost,
+		"/ajax/post/delete": AjaxDeletePost,
+		"/ajax/post/topic":  AjaxAddPostTopic,
 
 		"/ajax/post/topic/vote": AjaxVotePostTopic,
 		"/ajax/post/vote":       AjaxVotePost,

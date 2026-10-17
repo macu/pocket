@@ -42,6 +42,7 @@
 					Revisions
 				</el-button>
 				<el-button v-if="isAdmin" @click="deletePost()" type="danger">
+					<material-icon icon="admin_panel_settings"/>
 					Delete
 				</el-button>
 			</horizontal-controls>
@@ -235,7 +236,7 @@ export default {
 		},
 
 		deletePost() {
-			this.$confirm('Delete this post, including its sub-posts, votes and revisions? This cannot be undone.', 'Delete post', {
+			this.$confirm('Delete this post, including its sub-posts, votes and revisions? This cannot be undone.', 'Confirm admin delete', {
 				confirmButtonText: 'Delete',
 				cancelButtonText: 'Cancel',
 				type: 'warning',

@@ -109,6 +109,12 @@ Run the following command to re-compile the frontend web bundle.
 sh rebuild.sh
 ```
 
+## Deleting posts
+
+Authors can delete their own posts from the edit page at any time. Deletion also
+removes sub-posts, votes, and revisions and cannot be undone. Administrators can
+delete posts from the post page using the admin-marked Delete button.
+
 ## Test in browser
 
 http://localhost:2026/
