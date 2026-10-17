@@ -805,6 +805,9 @@ div.center {
   align-items: center;
   gap: 4px;
 }
+.top-post .top-post-header .top-post-votes .vote-buttons.is-pending .vote-btn {
+  cursor: wait;
+}
 .top-post .top-post-header .top-post-votes .vote-btn {
   cursor: pointer;
   font-size: 26px;
@@ -1348,6 +1351,9 @@ div.center {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+.topic .topic-votes.is-pending .vote-btn {
+  cursor: wait;
 }
 .topic .topic-votes .vote-btn {
   cursor: pointer;

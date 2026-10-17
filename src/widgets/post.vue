@@ -2,7 +2,8 @@
 <div class="top-post" :class="[sizeClass, {clickable}]" @click="$emit('click', $event)">
 	<div class="top-post-header flex-row-md">
 		<span class="top-post-votes" @click.stop>
-			<span v-if="authenticated" class="vote-buttons">
+			<span v-if="authenticated" class="vote-buttons" :class="{'is-pending': pendingVotes.has(post)}"
+				:aria-busy="pendingVotes.has(post)" :aria-disabled="pendingVotes.has(post)">
 				<material-icon
 					v-if="!post.userVote || post.userVote === 'upvote'"
 					icon="thumb_up" class="vote-btn upvote"
@@ -35,7 +36,7 @@
 		</small>
 	</div>
 	<div v-if="showTopics" class="topic-list flex-row">
-		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :user-vote="topic.userVote" :author-upvoted="topic.authorUpvoted" @vote="vote(topic, $event)">
+		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :vote-pending="pendingVotes.has(topic)" :user-vote="topic.userVote" :author-upvoted="topic.authorUpvoted" @vote="vote(topic, $event)">
 			{{topic.name}}
 		</topic>
 		<el-button v-if="showLoadMoreTopics" @click.stop="loadMoreTopics()" type="primary" size="small">
@@ -82,6 +83,7 @@ export default {
 		return {
 			expanded: this.defaultExpanded,
 			hasMoreTopics: true,
+			pendingVotes: new Set(),
 		};
 	},
 	computed: {
@@ -115,24 +117,50 @@ export default {
 			});
 		},
 		votePost(voteType) {
-			ajaxPost('/ajax/post/vote', {
-				postId: this.post.id,
-				voteType,
-			}).then(response => {
-				this.post.sum = response.sum;
-				this.post.userVote = response.userVote;
+			const post = this.post;
+			return this.submitVote(post, voteType, '/ajax/post/vote', {
+				postId: post.id,
+			}, response => {
+				post.sum = response.sum;
+				post.userVote = response.userVote;
 			});
 		},
 		vote(topic, voteType) {
-			ajaxPost('/ajax/post/topic/vote', {
+			return this.submitVote(topic, voteType, '/ajax/post/topic/vote', {
 				postId: this.post.id,
 				topicId: topic.id,
-				voteType,
-			}).then(response => {
+			}, response => {
 				if (response.topic) {
 					Object.assign(topic, response.topic);
 				}
 			});
+		},
+		async submitVote(target, voteType, url, params, applyResponse) {
+			if (this.pendingVotes.has(target)) {
+				return;
+			}
+			const previous = {
+				sum: target.sum,
+				userVote: target.userVote,
+				authorUpvoted: target.authorUpvoted,
+			};
+			const voteValue = vote => vote === 'upvote' ? 1 : vote === 'downvote' ? -1 : 0;
+			const nextVote = target.userVote === voteType ? null : voteType;
+			this.pendingVotes.add(target);
+			target.sum += voteValue(nextVote) - voteValue(target.userVote);
+			target.userVote = nextVote;
+			if (target !== this.post && this.post.authorId === this.$store.getters.currentUserId) {
+				target.authorUpvoted = nextVote === 'upvote';
+			}
+			try {
+				const response = await ajaxPost(url, {...params, voteType});
+				applyResponse(response);
+			} catch (error) {
+				// ajaxPost reports the failure; restore the last confirmed vote.
+				Object.assign(target, previous);
+			} finally {
+				this.pendingVotes.delete(target);
+			}
 		},
 		toggleExpanded(event) {
 			if (!this.expandable) {
@@ -185,6 +213,9 @@ export default {
 				display: inline-flex;
 				align-items: center;
 				gap: 4px;
+				&.is-pending .vote-btn {
+					cursor: wait;
+				}
 			}
 			.vote-btn {
 				cursor: pointer;

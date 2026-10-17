@@ -9,19 +9,20 @@
 		<material-icon class="topic-author" icon="signature"/>
 	</el-tooltip>
 	<span class="topic-name"><slot/></span>
-	<span v-if="votable && authenticated" class="topic-votes" @click.stop>
+	<span v-if="votable && authenticated" class="topic-votes" :class="{'is-pending': votePending}"
+		:aria-busy="votePending" :aria-disabled="votePending" @click.stop>
 		<material-icon
 			v-if="!userVote || userVote === 'upvote'"
 			icon="thumb_up" class="vote-btn upvote"
 			:fill="userVote === 'upvote'"
 			:class="{active: userVote === 'upvote'}"
-			@click="$emit('vote', 'upvote')"/>
+			@click="setVote('upvote')"/>
 		<material-icon
 			v-if="!userVote || userVote === 'downvote'"
 			icon="thumb_down" class="vote-btn downvote"
 			:fill="userVote === 'downvote'"
 			:class="{active: userVote === 'downvote'}"
-			@click="$emit('vote', 'downvote')"/>
+			@click="setVote('downvote')"/>
 	</span>
 	<span v-if="showCount" class="topic-count">{{formattedCount}}</span>
 </div>
@@ -60,6 +61,10 @@ export default {
 			default: false,
 		},
 		votable: {
+			type: Boolean,
+			default: false,
+		},
+		votePending: {
 			type: Boolean,
 			default: false,
 		},
@@ -102,7 +107,9 @@ export default {
 	},
 	methods: {
 		setVote(vote) {
-			this.$emit('vote', vote);
+			if (!this.votePending) {
+				this.$emit('vote', vote);
+			}
 		},
 		undoVote() {
 			this.$emit('vote', null);
@@ -186,6 +193,9 @@ export default {
 		display: inline-flex;
 		align-items: center;
 		gap: 4px;
+		&.is-pending .vote-btn {
+			cursor: wait;
+		}
 
 		.vote-btn {
 			cursor: pointer;
