@@ -40,7 +40,7 @@ func IsAssignableRole(role string) bool {
 }
 
 // SearchAdminUsers loads a page of users, newest first, whose name, handle or
-// email contain query (if not empty) and whose role is role (if not empty),
+// email contain query case-insensitively (if not empty) and whose role is role (if not empty),
 // along with the total number of matching users.
 func SearchAdminUsers(conn *sql.DB, query string, role string, offset uint) ([]AdminUser, int, error) {
 
@@ -49,7 +49,7 @@ func SearchAdminUsers(conn *sql.DB, query string, role string, offset uint) ([]A
 
 	query = strings.TrimSpace(query)
 	if query != "" {
-		pattern := db.Arg(&args, "%"+escapeLikePattern(query)+"%")
+		pattern := "lower(" + db.Arg(&args, "%"+escapeLikePattern(query)+"%") + ")"
 		emailMatch := ""
 		if localPart, domain, hasDomain := strings.Cut(strings.ToLower(query), "@"); hasDomain {
 			localPart, _, _ = strings.Cut(localPart, "+")
@@ -57,9 +57,9 @@ func SearchAdminUsers(conn *sql.DB, query string, role string, offset uint) ([]A
 			emailMatch = " OR (split_part(split_part(lower(u.email), '@', 1), '+', 1) || '@' || " +
 				"split_part(lower(u.email), '@', 2)) = " + baseEmail
 		}
-		where += " AND (u.display_name ILIKE " + pattern +
-			" OR u.handle ILIKE " + pattern +
-			" OR u.email ILIKE " + pattern + emailMatch + ")"
+		where += " AND (lower(u.display_name) LIKE " + pattern +
+			" OR lower(u.handle) LIKE " + pattern +
+			" OR lower(u.email) LIKE " + pattern + emailMatch + ")"
 	}
 	if role != "" {
 		if !user.CheckRoleValid(role) {

@@ -18,8 +18,48 @@ import (
 
 	emailpkg "pocket/pkg/email"
 	"pocket/pkg/moderation"
+	"pocket/pkg/pocket"
 	"pocket/pkg/utils/ajax"
 )
+
+func TestAdminUserSearchPostgres(t *testing.T) {
+	db := accountTestDB(t)
+	if _, err := db.Exec(`
+		CREATE TABLE post_topic_vote (user_id INTEGER);
+		CREATE TABLE post_vote (user_id INTEGER);
+		CREATE TABLE post (author INTEGER);
+		INSERT INTO user_account (email, display_name, handle, auth_hash) VALUES
+			('Person@Example.com', 'First', 'First_Handle', 'unused'),
+			('person+news@example.com', 'Second', 'second_handle', 'unused'),
+			('PERSON+Other@EXAMPLE.COM', 'Third', 'THIRD_HANDLE', 'unused'),
+			('person@other.example', 'Fourth', NULL, 'unused'),
+			('another@example.com', 'Fifth', NULL, 'unused');`); err != nil {
+		t.Fatal(err)
+	}
+	for _, query := range []string{"person@example.com", "PERSON@EXAMPLE.COM", "  Person@Example.com  "} {
+		users, total, err := pocket.SearchAdminUsers(db, query, "", 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if total != 3 || len(users) != 3 {
+			t.Fatalf("query %q: total=%d, returned=%d, want 3", query, total, len(users))
+		}
+		for _, user := range users {
+			if user.ID > 3 {
+				t.Errorf("query %q matched unrelated email %q", query, user.Email)
+			}
+			for _, query := range []string{"first", "FIRST", "  FiRsT  ", "first_handle", "FIRST_HANDLE", "FiRsT_HaNdLe"} {
+				users, total, err := pocket.SearchAdminUsers(db, query, "", 0)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if total != 1 || len(users) != 1 || users[0].ID != 1 {
+					t.Fatalf("query %q: total=%d, users=%+v, want only first user", query, total, users)
+				}
+			}
+		}
+	}
+}
 
 func TestAccountValidation(t *testing.T) {
 	for _, name := range []string{"", " \n ", "Name\tHere", "Name\u200b", strings.Repeat("a", 51)} {
