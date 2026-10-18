@@ -3,7 +3,7 @@
 	<p>JPEG, PNG, or static WebP, up to 10 MiB. Automatically resized and AI-moderated.</p>
 	<input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" :disabled="disabled" @change="selectImage"/>
 	<p v-if="error" class="form-field-error" role="alert">{{error}}</p>
-	<img v-if="preview" :src="preview" alt="Post image preview"/>
+	<img v-if="preview" :src="preview" alt="Post image preview" @error="previewFailed"/>
 	<p v-else-if="currentImage && removeCurrent">The current image will be deleted when you save.</p>
 	<div class="flex-row-sm">
 		<el-button v-if="preview" :disabled="disabled" @click="removeImage">Remove image</el-button>
@@ -24,26 +24,50 @@ export default {
 	},
 	emits: ['update:modelValue', 'update:removeCurrent'],
 	data() {
-		return {objectURL: '', error: ''};
+		return {previewURL: '', reader: null, error: ''};
 	},
 	computed: {
 		preview() {
-			return this.objectURL || (!this.removeCurrent ? this.currentImage : '');
+			return this.modelValue ? this.previewURL : (!this.removeCurrent ? this.currentImage : '');
 		},
 	},
 	watch: {
 		modelValue: {
 			immediate: true,
 			handler(file) {
-				if (this.objectURL) URL.revokeObjectURL(this.objectURL);
-				this.objectURL = file ? URL.createObjectURL(file) : '';
+				if (this.reader) this.reader.abort();
+				this.reader = null;
+				this.previewURL = '';
+				if (!file) return;
+				const reader = new FileReader();
+				this.reader = reader;
+				reader.onload = () => {
+					if (this.reader !== reader) return;
+					this.reader = null;
+					if (typeof reader.result !== 'string') {
+						this.previewFailed();
+						return;
+					}
+					this.previewURL = reader.result;
+				};
+				reader.onerror = () => {
+					if (this.reader !== reader) return;
+					this.reader = null;
+					console.error('Unable to read post image preview', reader.error);
+					this.previewFailed();
+				};
+				reader.readAsDataURL(file);
 			},
 		},
 	},
 	beforeUnmount() {
-		if (this.objectURL) URL.revokeObjectURL(this.objectURL);
+		if (this.reader) this.reader.abort();
+		this.reader = null;
 	},
 	methods: {
+		previewFailed() {
+			this.error = 'Unable to preview this image. Try selecting it again or choosing another image.';
+		},
 		selectImage(event) {
 			const file = event.target.files[0];
 			if (!file) return;
@@ -75,8 +99,9 @@ export default {
 .post-image-input {
 	img {
 		display: block;
-		max-width: 100%;
+		max-width: calc(100% - 24px);
 		max-height: 400px;
+		margin: 12px;
 		object-fit: contain;
 		align-self: center;
 	}
