@@ -58,7 +58,7 @@
 
 			<h3>Top topics in this space</h3>
 
-			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" class="top-topics flex-row-md">
+			<div v-if="selectedTopics.length > 0 || topTopics.length > 0" ref="topicsList" class="top-topics flex-row-md">
 				<topic
 					v-for="topic in selectedTopics"
 					:key="'selected-' + topic.id"
@@ -99,7 +99,9 @@
 			<p v-if="topSubPosts.length > 0" class="total-posts">{{totalSubPosts}} matching posts</p>
 
 			<div v-if="topSubPosts.length" class="top-sub-posts flex-column-md">
-				<post-widget v-for="subPost in uniqueTopSubPosts" :key="subPost.id" :post="subPost" clickable size="medium" @click="openPost(subPost.id)" />
+				<post-widget v-for="subPost in uniqueTopSubPosts" :key="subPost.id" :post="subPost"
+					topic-selectable :selected-topics="selectedTopics" @select-topic="selectPostTopic"
+					clickable size="medium" @click="openPost(subPost.id)" />
 				<el-button v-if="showLoadMoreSubPosts" @click="loadMoreSubPosts()" type="primary">
 					Load more
 				</el-button>
@@ -214,6 +216,16 @@ export default {
 		},
 	},
 	methods: {
+		selectPostTopic(topic) {
+			if (this.selectedTopics.some(selected => selected.id === topic.id)) {
+				this.uncheckTopic(topic);
+			} else {
+				this.checkTopic(topic);
+			}
+			if (this.$store.getters.isMobile) {
+				this.$nextTick(() => this.$refs.topicsList?.scrollIntoView({behavior: 'smooth', block: 'start'}));
+			}
+		},
 		load() {
 			this.loading = true;
 			ajaxGet('/ajax/post', {
@@ -306,7 +318,7 @@ export default {
 			return this.selectedTopics.map(topic => topic.id).join(',');
 		},
 		checkTopic(topic) {
-			if (this.topicSelectionLimitReached) {
+			if (this.topicSelectionLimitReached || this.selectedTopics.some(selected => selected.id === topic.id)) {
 				return;
 			}
 			this.topTopics = this.topTopics.filter(t => t.id !== topic.id);

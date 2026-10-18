@@ -1344,9 +1344,21 @@ div.center {
 .topic.checkable {
   cursor: pointer;
 }
-.topic.checked {
+.topic.checked, .topic.selected {
   outline: 2px solid white;
   outline-offset: 1px;
+}
+.topic .topic-name-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.topic .topic-name-button:hover {
+  text-decoration: underline;
 }
 .topic .topic-author {
   font-size: 1.1em;

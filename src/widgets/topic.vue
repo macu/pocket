@@ -1,14 +1,21 @@
 <template>
-<div class="topic" :class="[sizeClass, {negative: negative, checkable: checkable, checked: checked}]" @click="toggleCheck()">
+<div class="topic" :class="[sizeClass, {negative: negative, checkable: checkable, checked: checked, selected}]" @click="toggleCheck()">
 	<material-icon
 		v-if="checkable"
 		class="topic-checkbox"
 		:icon="checked ? 'check_box' : 'check_box_outline_blank'"
 		:fill="checked"/>
 	<el-tooltip v-if="authorUpvoted" content="Up-voted by the author" placement="top">
-		<material-icon class="topic-author" icon="signature"/>
+		<button v-if="nameSelectable" type="button" class="topic-name-button"
+			aria-label="Toggle topic filter (up-voted by the author)" :aria-pressed="selected"
+			@click.stop="$emit('select')">
+			<material-icon class="topic-author" icon="signature"/>
+		</button>
+		<material-icon v-else class="topic-author" icon="signature"/>
 	</el-tooltip>
-	<span class="topic-name"><slot/></span>
+	<button v-if="nameSelectable" type="button" class="topic-name topic-name-button"
+		:aria-pressed="selected" @click.stop="$emit('select')"><slot/></button>
+	<span v-else class="topic-name"><slot/></span>
 	<span v-if="votable && authenticated" class="topic-votes" :class="{'is-pending': votePending}"
 		:aria-busy="votePending" :aria-disabled="votePending" @click.stop>
 		<material-icon
@@ -35,8 +42,10 @@ export default {
 	components: {
 		MaterialIcon,
 	},
-	emits: ['vote', 'check'],
+	emits: ['vote', 'check', 'select'],
 	props: {
+		nameSelectable: Boolean,
+		selected: Boolean,
 		size: {
 			type: String,
 			default: 'medium',
@@ -144,9 +153,24 @@ export default {
 		cursor: pointer;
 	}
 
-	&.checked {
+	&.checked,
+	&.selected {
 		outline: 2px solid white;
 		outline-offset: 1px;
+	}
+
+	.topic-name-button {
+		border: 0;
+		padding: 0;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		text-align: inherit;
+		cursor: pointer;
+
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 
 	.topic-author {

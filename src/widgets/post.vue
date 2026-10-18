@@ -36,7 +36,10 @@
 		</small>
 	</div>
 	<div v-if="showTopics" class="topic-list flex-row">
-		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum" votable :vote-pending="pendingVotes.has(topic)" :user-vote="topic.userVote" :author-upvoted="topic.authorUpvoted" @vote="vote(topic, $event)">
+		<topic v-for="topic in post.topics" :key="topic.id" :size="size" :count="topic.sum"
+			:name-selectable="topicSelectable" :selected="selectedTopics.some(selected => selected.id === topic.id)"
+			@select="$emit('select-topic', topic)"
+			votable :vote-pending="pendingVotes.has(topic)" :user-vote="topic.userVote" :author-upvoted="topic.authorUpvoted" @vote="vote(topic, $event)">
 			{{topic.name}}
 		</topic>
 		<el-button v-if="showLoadMoreTopics" @click.stop="loadMoreTopics()" type="primary" size="small">
@@ -58,8 +61,13 @@ export default {
 	components: {
 		MaterialIcon,
 	},
-	emits: ['click'],
+	emits: ['click', 'select-topic'],
 	props: {
+		topicSelectable: Boolean,
+		selectedTopics: {
+			type: Array,
+			default: () => [],
+		},
 		post: {
 			type: Object,
 			required: true,

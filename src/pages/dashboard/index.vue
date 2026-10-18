@@ -128,6 +128,9 @@
 						v-for="post in uniqueTopPosts"
 						:key="post.id"
 						:post="post"
+						topic-selectable
+						:selected-topics="selectedTopics"
+						@select-topic="selectPostTopic"
 						clickable
 						:expandable="false"
 						size="medium"
@@ -264,6 +267,16 @@ export default {
 		}
 	},
 	methods: {
+		selectPostTopic(topic) {
+			if (this.selectedTopics.some(selected => selected.id === topic.id)) {
+				this.uncheckTopic(topic);
+			} else {
+				this.checkTopic(topic);
+			}
+			if (this.isMobile) {
+				this.$nextTick(() => this.$refs.topicsList?.scrollIntoView({behavior: 'smooth', block: 'start'}));
+			}
+		},
 		selectedTopicIds() {
 			return this.selectedTopics.map(topic => topic.id).join(',');
 		},
@@ -329,7 +342,7 @@ export default {
 			});
 		},
 		checkTopic(topic) {
-			if (this.topicSelectionLimitReached) {
+			if (this.topicSelectionLimitReached || this.selectedTopics.some(selected => selected.id === topic.id)) {
 				return;
 			}
 			this.topTopics = this.topTopics.filter(t => t.id !== topic.id);
