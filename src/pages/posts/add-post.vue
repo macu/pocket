@@ -7,11 +7,16 @@
 		</div>
 	</form-field>
 
-	<form-field title="Post text" required>
+	<form-field title="Post text">
+		<p>Add text, an image, or both.</p>
 		<el-input v-model="text" type="textarea" size="large"
 			:maxlength="$const.postMaxLength"
 			show-word-limit
 			autocapitalize="sentences" :rows="6"/>
+	</form-field>
+
+	<form-field title="Image">
+		<post-image-input v-model="image" :disabled="loading"/>
 	</form-field>
 
 	<form-field title="Topics">
@@ -30,6 +35,8 @@
 <script>
 import PostWidget from '@/widgets/post.vue';
 import TopicsInput from '@/widgets/topics-input.vue';
+import PostImageInput from '@/widgets/post-image-input.vue';
+import {postErrors} from '@/utils/post.js';
 
 import {
 	ajaxGet,
@@ -47,10 +54,12 @@ export default {
 	components: {
 		PostWidget,
 		TopicsInput,
+		PostImageInput,
 	},
 	data() {
 		return {
 			text: '',
+			image: null,
 			topics: [],
 			parentId: null,
 			parentPost: null,
@@ -59,7 +68,7 @@ export default {
 	},
 	computed: {
 		submitDisabled() {
-			return this.loading || !this.text.trim();
+			return this.loading || (!this.text.trim() && !this.image);
 		},
 	},
 	mounted() {
@@ -86,11 +95,10 @@ export default {
 			this.loading = true;
 			ajaxPost('/ajax/post', {
 				text: this.text,
+				image: this.image,
 				topics: JSON.stringify(this.topics),
 				parentId: this.parentId,
-			}, {
-				'invalid-post-text': 'The post text is invalid or too long.',
-			}).then(response => {
+			}, postErrors).then(response => {
 				const newPostId = response && response.post ? response.post.id : null;
 				if (newPostId) {
 					this.$router.push({name: 'post', params: {id: newPostId}});

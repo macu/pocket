@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"pocket/pkg/images"
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/db"
 )
@@ -18,12 +19,16 @@ type Post struct {
 	AuthorDisplayName string    `json:"authorDisplayName,omitempty"`
 	AuthorHandle      string    `json:"authorHandle,omitempty"`
 	PostText          string    `json:"postText"`
+	ImageObject       string    `json:"-"`
+	ImageURL          string    `json:"imageUrl,omitempty"`
 	CreatedAt         time.Time `json:"createdAt"`
 	Topics            []Topic   `json:"topics,omitempty"`
 	SubPostCount      int       `json:"subPostCount"`
 	Sum               int       `json:"sum"`
 	UserVote          *string   `json:"userVote"`
 }
+
+var ErrEmptyPostContent = errors.New("invalid post content")
 
 // PostScope restricts a set of posts to the sub-posts of ParentPostID and/or
 // the posts written by AuthorID. The zero value matches all posts.
@@ -117,7 +122,7 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 
 	if len(selectedTopicIDs) == 0 {
 		query = `
-			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.image_object, p.created_at,
 				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type,
 				(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id) AS sub_post_count
 			FROM post p
@@ -131,7 +136,7 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
 		query = `
-			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.image_object, p.created_at,
 				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type,
 				(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id) AS sub_post_count
 			FROM post p
@@ -163,9 +168,10 @@ func LoadTopPosts(conn *sql.DB, auth *ajax.Auth, offset uint, selectedTopicIDs [
 		var displayName sql.NullString
 		var handle sql.NullString
 		var userVote sql.NullString
-		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.Sum, &userVote, &post.SubPostCount); err != nil {
+		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.ImageObject, &post.CreatedAt, &post.Sum, &userVote, &post.SubPostCount); err != nil {
 			continue
 		}
+		post.ImageURL = images.PublicURL(post.ImageObject)
 		if userVote.Valid {
 			v := userVote.String
 			post.UserVote = &v
@@ -244,7 +250,7 @@ func loadScopedPosts(conn *sql.DB, auth *ajax.Auth, scope PostScope, offset uint
 
 	if len(selectedTopicIDs) == 0 {
 		query = `
-			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.image_object, p.created_at,
 				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type,
 				(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id) AS sub_post_count
 			FROM post p
@@ -258,7 +264,7 @@ func loadScopedPosts(conn *sql.DB, auth *ajax.Auth, scope PostScope, offset uint
 		selectedClause := db.In("topic_id", &args, selectedTopicIDs)
 		selectedCount := db.Arg(&args, len(selectedTopicIDs))
 		query = `
-			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
+			SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.image_object, p.created_at,
 				COALESCE(pvs.sum, 0) AS vote_sum, uv.vote_type,
 				(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id) AS sub_post_count
 			FROM post p
@@ -291,9 +297,10 @@ func loadScopedPosts(conn *sql.DB, auth *ajax.Auth, scope PostScope, offset uint
 		var displayName sql.NullString
 		var handle sql.NullString
 		var userVote sql.NullString
-		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.Sum, &userVote, &post.SubPostCount); err != nil {
+		if err := rows.Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.ImageObject, &post.CreatedAt, &post.Sum, &userVote, &post.SubPostCount); err != nil {
 			continue
 		}
+		post.ImageURL = images.PublicURL(post.ImageObject)
 		if userVote.Valid {
 			v := userVote.String
 			post.UserVote = &v
@@ -434,12 +441,12 @@ func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 	var handle sql.NullString
 
 	err := db.QueryRow(`
-		SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.created_at,
+		SELECT p.id, p.parent_post_id, p.author, u.display_name, u.handle, p.post_text, p.image_object, p.created_at,
 			(SELECT COUNT(*) FROM post c WHERE c.parent_post_id = p.id)
 		FROM post p
 		LEFT JOIN user_account u ON u.id = p.author
 		WHERE p.id = $1
-	`, postID).Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.CreatedAt, &post.SubPostCount)
+	`, postID).Scan(&post.ID, &parentID, &post.AuthorID, &displayName, &handle, &post.PostText, &post.ImageObject, &post.CreatedAt, &post.SubPostCount)
 	if err != nil {
 		return nil, fmt.Errorf("loading post %d: %w", postID, err)
 	}
@@ -448,6 +455,7 @@ func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 		v := uint(parentID.Int64)
 		post.ParentPostID = &v
 	}
+	post.ImageURL = images.PublicURL(post.ImageObject)
 	if displayName.Valid {
 		post.AuthorDisplayName = displayName.String
 	}
@@ -467,10 +475,20 @@ func LoadPost(db *sql.DB, postID uint, userID *uint) (*Post, error) {
 }
 
 func CreatePost(conn *sql.DB, parentPostID *uint, authorID uint, text string, topicNames []string) (*Post, error) {
+	return CreatePostWithImage(conn, parentPostID, authorID, text, topicNames, "")
+}
 
+func ValidatePostContent(text, imageObject string) error {
+	if imageObject != "" && NormalizePostText(text) == "" {
+		return nil
+	}
+	return ValidatePostText(text)
+}
+
+func CreatePostWithImage(conn *sql.DB, parentPostID *uint, authorID uint, text string, topicNames []string, imageObject string) (*Post, error) {
 	text = NormalizePostText(text)
 
-	if err := ValidatePostText(text); err != nil {
+	if err := ValidatePostContent(text, imageObject); err != nil {
 		return nil, fmt.Errorf("validating post text: %w", err)
 	}
 
@@ -478,10 +496,10 @@ func CreatePost(conn *sql.DB, parentPostID *uint, authorID uint, text string, to
 
 	err := db.InTransaction(conn, func(tx *sql.Tx) error {
 		err := tx.QueryRow(`
-			INSERT INTO post (parent_post_id, author, post_text, created_at)
-			VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+			INSERT INTO post (parent_post_id, author, post_text, image_object, image_change, created_at)
+			VALUES ($1, $2, $3, $4, CASE WHEN $4 <> '' THEN 'added' ELSE '' END, CURRENT_TIMESTAMP)
 			RETURNING id
-		`, parentPostID, authorID, text).Scan(&postID)
+		`, parentPostID, authorID, text, imageObject).Scan(&postID)
 		if err != nil {
 			return err
 		}
@@ -530,12 +548,12 @@ func CreatePost(conn *sql.DB, parentPostID *uint, authorID uint, text string, to
 // authorID matches the post's author. Returns sql.ErrNoRows if the post
 // doesn't exist or isn't owned by authorID.
 func UpdatePostText(conn *sql.DB, postID uint, authorID uint, text string) (*Post, error) {
+	return UpdatePostContent(conn, postID, authorID, text, nil)
+}
 
+// A nil imageObject preserves the current image; an empty string removes it.
+func UpdatePostContent(conn *sql.DB, postID uint, authorID uint, text string, imageObject *string) (*Post, error) {
 	text = NormalizePostText(text)
-
-	if err := ValidatePostText(text); err != nil {
-		return nil, fmt.Errorf("validating post text: %w", err)
-	}
 
 	tx, err := conn.Begin()
 	if err != nil {
@@ -543,10 +561,10 @@ func UpdatePostText(conn *sql.DB, postID uint, authorID uint, text string) (*Pos
 	}
 	defer tx.Rollback()
 
-	var oldText string
+	var oldText, oldImage, oldImageChange string
 	err = tx.QueryRow(`
-		SELECT post_text FROM post WHERE id = $1 AND author = $2 FOR UPDATE
-	`, postID, authorID).Scan(&oldText)
+		SELECT post_text, image_object, image_change FROM post WHERE id = $1 AND author = $2 FOR UPDATE
+	`, postID, authorID).Scan(&oldText, &oldImage, &oldImageChange)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
@@ -554,15 +572,34 @@ func UpdatePostText(conn *sql.DB, postID uint, authorID uint, text string) (*Pos
 		return nil, fmt.Errorf("locking post %d: %w", postID, err)
 	}
 
-	if oldText != text {
+	nextImage := oldImage
+	if imageObject != nil {
+		nextImage = *imageObject
+	}
+	if err := ValidatePostContent(text, nextImage); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrEmptyPostContent, err)
+	}
+	imageChange := ""
+	if oldImage != nextImage {
+		switch {
+		case oldImage == "":
+			imageChange = "added"
+		case nextImage == "":
+			imageChange = "deleted"
+		default:
+			imageChange = "updated"
+		}
+	}
+	if oldText != text || oldImage != nextImage {
 		_, err = tx.Exec(`
-			INSERT INTO post_revision (post_id, post_text, replaced_at) VALUES ($1, $2, NOW())
-		`, postID, oldText)
+			INSERT INTO post_revision (post_id, post_text, image_change, replaced_at) VALUES ($1, $2, $3, NOW())
+		`, postID, oldText, oldImageChange)
 		if err != nil {
 			return nil, fmt.Errorf("recording revision of post %d: %w", postID, err)
 		}
 
-		_, err = tx.Exec(`UPDATE post SET post_text = $1 WHERE id = $2`, text, postID)
+		_, err = tx.Exec(`UPDATE post SET post_text = $1, image_object = $2, image_change = $3 WHERE id = $4`,
+			text, nextImage, imageChange, postID)
 		if err != nil {
 			return nil, fmt.Errorf("updating post %d: %w", postID, err)
 		}
@@ -680,9 +717,10 @@ func ensureUserUpvote(conn db.DBConn, postID uint, topicID uint, userID uint) er
 // PostRevision is one version of a post's text. CreatedAt is when this
 // version became current.
 type PostRevision struct {
-	PostText  string    `json:"postText"`
-	CreatedAt time.Time `json:"createdAt"`
-	Current   bool      `json:"current"`
+	PostText    string    `json:"postText"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Current     bool      `json:"current"`
+	ImageChange string    `json:"imageChange,omitempty"`
 }
 
 const PostRevisionPageSize = 20
@@ -704,23 +742,23 @@ func LoadPostRevisions(conn *sql.DB, postID uint, offset uint) ([]PostRevision, 
 
 	rows, err := conn.Query(`
 		WITH revision_versions AS (
-			SELECT pr.post_text,
+			SELECT pr.post_text, pr.image_change,
 				LAG(pr.replaced_at, 1, $2) OVER (ORDER BY pr.replaced_at, pr.id) AS created_at,
 				ROW_NUMBER() OVER (ORDER BY pr.replaced_at DESC, pr.id DESC) AS position,
 				FALSE AS current
 			FROM post_revision pr
 			WHERE pr.post_id = $1
 		), versions AS (
-			SELECT p.post_text,
+			SELECT p.post_text, p.image_change,
 				COALESCE((SELECT MAX(pr.replaced_at) FROM post_revision pr WHERE pr.post_id = p.id), p.created_at) AS created_at,
 				0 AS position,
 				TRUE AS current
 			FROM post p
 			WHERE p.id = $1
 			UNION ALL
-			SELECT post_text, created_at, position, current FROM revision_versions
+			SELECT post_text, image_change, created_at, position, current FROM revision_versions
 		)
-		SELECT post_text, created_at, current FROM versions
+		SELECT post_text, created_at, current, image_change FROM versions
 		ORDER BY position
 		LIMIT $3 OFFSET $4
 	`, postID, createdAt, PostRevisionPageSize+1, offset)
@@ -732,7 +770,7 @@ func LoadPostRevisions(conn *sql.DB, postID uint, offset uint) ([]PostRevision, 
 	revisions := make([]PostRevision, 0, PostRevisionPageSize+1)
 	for rows.Next() {
 		var revision PostRevision
-		if err := rows.Scan(&revision.PostText, &revision.CreatedAt, &revision.Current); err != nil {
+		if err := rows.Scan(&revision.PostText, &revision.CreatedAt, &revision.Current, &revision.ImageChange); err != nil {
 			return nil, 0, fmt.Errorf("scanning revision of post %d: %w", postID, err)
 		}
 		revisions = append(revisions, revision)

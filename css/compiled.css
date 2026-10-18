@@ -773,13 +773,23 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/post.vue?vue&type=style&index=0&id=d2d2ff4e&lang=scss ***!
   \**********************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .top-post {
-  padding: 12px;
+  --post-padding: 12px;
+  padding: var(--post-padding);
   border-radius: 10px;
   background-color: rgba(255, 255, 255, 0.1);
   border: thin solid rgba(255, 255, 255, 0.15);
   display: flex;
   flex-direction: column;
   row-gap: 16px;
+}
+.top-post .top-post-image {
+  margin-inline: calc(-1 * var(--post-padding));
+}
+.top-post .top-post-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
 }
 .top-post .top-post-header {
   align-items: center;
@@ -861,7 +871,7 @@ div.center {
   cursor: pointer;
 }
 .top-post.size-small {
-  padding: 8px;
+  --post-padding: 8px;
   row-gap: 10px;
   font-size: 0.85em;
 }
@@ -870,7 +880,7 @@ div.center {
   border-radius: 10px;
 }
 .top-post.size-medium {
-  padding: 12px;
+  --post-padding: 12px;
   row-gap: 16px;
   font-size: 1em;
 }
@@ -879,7 +889,7 @@ div.center {
   border-radius: 11px;
 }
 .top-post.size-large {
-  padding: 20px;
+  --post-padding: 20px;
   row-gap: 28px;
   font-size: 1.3em;
 }
@@ -946,6 +956,19 @@ div.center {
 .topics-input .topics-input-tag .remove-btn {
   cursor: pointer;
   font-size: 18px;
+}
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/post-image-input.vue?vue&type=style&index=0&id=7205c038&lang=scss ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.post-image-input img {
+  display: block;
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  align-self: center;
+}
+.post-image-input input[type=file] {
+  max-width: 100%;
 }
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/posts/add-post.vue?vue&type=style&index=0&id=738a608c&lang=scss ***!

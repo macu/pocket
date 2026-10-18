@@ -20,6 +20,7 @@ MAINTENANCE_MODE=false
 VERSION_STAMP=
 RECAPTCHA_KEY=
 GOOGLE_CLOUD_PROJECT=
+POST_IMAGE_BUCKET=
 MAILJET_API_KEY=
 MAILJET_SECRET=
 MAILJET_FROM_EMAIL=
@@ -39,7 +40,43 @@ account updates) are checked with the OpenAI moderation API
 (`omni-moderation-latest`). Profile display names are trimmed, repeated spaces
 are collapsed, and non-printable characters are rejected. Passwords are not trimmed.
 Set `OPENAI_SECRET_KEY` to enable moderation; when unset,
-moderation is skipped locally and requests fail in App Engine.
+text moderation is skipped locally and requests fail in App Engine.
+Image moderation is always required, including locally, before any image is uploaded.
+
+## Post images
+
+Posts support one public image, with or without text; completely empty posts are
+rejected. Upload JPEG, PNG, or static WebP files up to 10 MiB and 20 megapixels,
+at least 100 x 100 pixels. Animated PNG/WebP and other formats are rejected.
+The server applies JPEG orientation, fits images within 1200 x 1200 without upscaling, strips metadata,
+and preserves the format (PNG transparency is retained). Every upload gets a
+new UUID filename. The processed pixels are checked by OpenAI moderation before
+uploading to Google Cloud Storage.
+
+Set `POST_IMAGE_BUCKET` in `.env` and `app.yaml` to a dedicated image bucket. Enable
+`storage.googleapis.com` and give the app's service account
+`roles/storage.objectAdmin` on this dedicated bucket. Images are public through
+an `allUsers` binding for `roles/storage.objectViewer`; do not store private
+files in this bucket. Local uploads use Application Default Credentials with
+the same bucket permission and require `OPENAI_SECRET_KEY`.
+
+Apply `sql/migrations/20261018_post_images.pgsql` before deploying. Saving an
+edit can remove or replace the current image; "Restore current image" discards
+that pending change. Revisions store only text and an "Image added", "Image
+updated", or "Image deleted" flag, never previous images or image URLs.
+
+Deploy the cleanup schedule alongside the app:
+
+```bash
+gcloud app deploy app.yaml cron.yaml
+```
+
+Database triggers queue replaced/deleted images, including images in deleted
+sub-posts. The cron job removes up to 20 queued objects every 15 minutes and
+retries failures. Abandoned uploads are eligible after one hour. Cloud Storage
+and browser caches can retain deleted images temporarily (cache lifetime is one
+hour); bucket soft-delete retention may also apply. Monitor cleanup failures
+in the application logs.
 
 ## reCAPTCHA and local testing
 
@@ -160,6 +197,7 @@ env_variables:
   DB_NAME: ""
   DB_PASS_SECRET: ""
   DOMAIN: ""
+  POST_IMAGE_BUCKET: ""
   VERSION_STAMP: 20261016204052
   RECAPTCHA_KEY: ""
   OPENAI_SECRET_KEY_SECRET: ""

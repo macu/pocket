@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"pocket/pkg/auth"
+	"pocket/pkg/images"
 	"pocket/pkg/user"
 	"pocket/pkg/utils/ajax"
 	"pocket/pkg/utils/logging"
@@ -70,6 +71,17 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 }
 
 func AjaxHandler(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, images.MaxUploadBytes+(1<<20))
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+			if err := r.ParseMultipartForm(1 << 20); err != nil {
+				logging.LogError(r, auth, fmt.Errorf("parsing multipart request: %w", err))
+				http.Error(w, "Upload is too large or invalid.", http.StatusRequestEntityTooLarge)
+				return
+			}
+			defer r.MultipartForm.RemoveAll()
+		}
+	}
 	// var rt = NewResponseTracker(w)
 
 	var handle = func(handler func() (interface{}, int)) {

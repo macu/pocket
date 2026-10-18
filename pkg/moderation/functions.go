@@ -3,6 +3,7 @@ package moderation
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -52,12 +53,13 @@ func (e *RejectedError) Unwrap() error {
 
 type moderationRequest struct {
 	Model string `json:"model"`
-	Input string `json:"input"`
+	Input any    `json:"input"`
 }
 
 type moderationResponse struct {
 	Results []struct {
 		CategoryScores map[string]float64 `json:"category_scores"`
+		Flagged        bool               `json:"flagged"`
 	} `json:"results"`
 }
 
@@ -68,9 +70,22 @@ func CheckText(ctx context.Context, text string) error {
 	if strings.TrimSpace(text) == "" {
 		return nil
 	}
+	return check(ctx, text, false)
+}
+
+// CheckImage fails closed even locally: unmoderated images must never be public.
+func CheckImage(ctx context.Context, data []byte, contentType string) error {
+	input := []map[string]any{{
+		"type":      "image_url",
+		"image_url": map[string]string{"url": "data:" + contentType + ";base64," + base64.StdEncoding.EncodeToString(data)},
+	}}
+	return check(ctx, input, true)
+}
+
+func check(ctx context.Context, input any, required bool) error {
 	apiKey := env.GetOpenAISecretKey()
 	if apiKey == "" {
-		if env.IsLocal() {
+		if env.IsLocal() && !required {
 			skipWarning.Do(func() {
 				log.Println("WARNING: OPENAI_SECRET_KEY not set; skipping AI moderation")
 			})
@@ -79,7 +94,7 @@ func CheckText(ctx context.Context, text string) error {
 		return fmt.Errorf("OpenAI secret key undefined")
 	}
 
-	payload, err := json.Marshal(moderationRequest{Model: Model, Input: text})
+	payload, err := json.Marshal(moderationRequest{Model: Model, Input: input})
 	if err != nil {
 		return fmt.Errorf("encoding moderation request: %w", err)
 	}
@@ -113,6 +128,12 @@ func CheckText(ctx context.Context, text string) error {
 
 	exceeded := map[string]float64{}
 	for _, r := range result.Results {
+		if required && len(r.CategoryScores) == 0 {
+			return fmt.Errorf("moderation response contained no category scores")
+		}
+		if required && r.Flagged {
+			return &RejectedError{Categories: r.CategoryScores}
+		}
 		for category, score := range r.CategoryScores {
 			if score > ScoreThreshold {
 				exceeded[category] = score

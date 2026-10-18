@@ -94,7 +94,15 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 ) (any, int) {
 
 	text := strings.TrimSpace(r.FormValue("text"))
-	if err := pocket.ValidatePostText(text); err != nil {
+	img, err := readPostImage(r)
+	if err != nil {
+		return postImageFailure(r, &auth, err)
+	}
+	imagePlaceholder := ""
+	if img != nil {
+		imagePlaceholder = "pending"
+	}
+	if err := pocket.ValidatePostContent(text, imagePlaceholder); err != nil {
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-post-text"}, http.StatusBadRequest
 	}
 
@@ -119,8 +127,18 @@ func AjaxCreatePost(db *sql.DB, auth ajax.Auth,
 	if payload, status, ok := moderationFailure(r, &auth, moderation.CheckPost(r.Context(), topicNames, text)); !ok {
 		return payload, status
 	}
+	if err := moderatePostImage(r, img); err != nil {
+		return postImageFailure(r, &auth, err)
+	}
+	imageObject := ""
+	if img != nil {
+		imageObject, err = uploadPostImage(r, db, img)
+		if err != nil {
+			return postImageFailure(r, &auth, err)
+		}
+	}
 
-	post, err := pocket.CreatePost(db, parentPostID, auth.UserID, text, topicNames)
+	post, err := pocket.CreatePostWithImage(db, parentPostID, auth.UserID, text, topicNames, imageObject)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -162,16 +180,53 @@ func AjaxUpdatePost(db *sql.DB, auth ajax.Auth,
 	}
 
 	text := strings.TrimSpace(r.FormValue("text"))
-	if err := pocket.ValidatePostText(text); err != nil {
+	// Verify ownership before decoding, moderating, or uploading an image.
+	var currentImage string
+	if err := db.QueryRowContext(r.Context(), `SELECT image_object FROM post WHERE id = $1 AND author = $2`,
+		id, auth.UserID).Scan(&currentImage); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, http.StatusNotFound
+		}
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+	img, err := readPostImage(r)
+	if err != nil {
+		return postImageFailure(r, &auth, err)
+	}
+	removeImage := r.FormValue("removeImage") == "true"
+	if img != nil {
+		currentImage = "pending"
+	} else if removeImage {
+		currentImage = ""
+	}
+	if err := pocket.ValidatePostContent(text, currentImage); err != nil {
 		return ajax.AjaxErrorPayload{ErrorCode: "invalid-post-text"}, http.StatusBadRequest
 	}
 
 	if payload, status, ok := moderationFailure(r, &auth, moderation.CheckText(r.Context(), text)); !ok {
 		return payload, status
 	}
+	if err := moderatePostImage(r, img); err != nil {
+		return postImageFailure(r, &auth, err)
+	}
+	var imageObject *string
+	if img != nil {
+		object, err := uploadPostImage(r, db, img)
+		if err != nil {
+			return postImageFailure(r, &auth, err)
+		}
+		imageObject = &object
+	} else if removeImage {
+		empty := ""
+		imageObject = &empty
+	}
 
-	post, err := pocket.UpdatePostText(db, id, auth.UserID, text)
+	post, err := pocket.UpdatePostContent(db, id, auth.UserID, text, imageObject)
 	if err != nil {
+		if errors.Is(err, pocket.ErrEmptyPostContent) {
+			return ajax.AjaxErrorPayload{ErrorCode: "invalid-post-text"}, http.StatusBadRequest
+		}
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound
 		}

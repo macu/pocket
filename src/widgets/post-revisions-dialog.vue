@@ -8,6 +8,7 @@
 		<div v-for="(revision, index) in visibleRevisions" :key="index" class="revision flex-column-sm"
 			:class="{current: revision.current}">
 			<small>{{revision.current ? 'Current revision' : 'Revision'}} &middot; <moment :time="revision.createdAt" ago/></small>
+			<small v-if="revision.imageChange">Image {{revision.imageChange}}</small>
 			<div class="revision-diff">
 				<template v-if="index < revisions.length - 1">
 					<template v-for="(part, partIndex) in diffParts(index)" :key="partIndex">

@@ -14,6 +14,7 @@ import (
 	"pocket/pkg/auth"
 	"pocket/pkg/database"
 	"pocket/pkg/env"
+	"pocket/pkg/pocket"
 	"pocket/pkg/utils/logging"
 	"pocket/pkg/utils/secrets"
 	"pocket/pkg/utils/types"
@@ -74,6 +75,19 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+
+	r.HandleFunc("/cron/post-images", func(w http.ResponseWriter, r *http.Request) {
+		if !env.IsAppEngine() || r.Header.Get("X-Appengine-Cron") != "true" {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		if err := pocket.CleanupPostImages(r.Context(), db); err != nil {
+			logging.LogError(r, nil, err)
+			http.Error(w, "Image cleanup failed", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}).Methods(http.MethodGet)
 
 	if env.IsAppEngine() {
 		// Set up AppEngine cron handlers

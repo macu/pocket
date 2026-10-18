@@ -43,7 +43,10 @@
 			Load More
 		</el-button>
 	</div>
-	<div class="top-post-text" :class="{expanded}" @click.stop="toggleExpanded($event)">{{post.postText}}</div>
+	<div v-if="post.imageUrl" class="top-post-image">
+		<img :src="post.imageUrl" alt="Post image" loading="lazy"/>
+	</div>
+	<div v-if="post.postText" class="top-post-text" :class="{expanded}" @click.stop="toggleExpanded($event)">{{post.postText}}</div>
 </div>
 </template>
 
@@ -183,13 +186,24 @@ export default {
 @import '@/styles/vars.scss';
 
 .top-post {
-	padding: 12px;
+	--post-padding: 12px;
+	padding: var(--post-padding);
 	border-radius: 10px;
 	background-color: rgba(255, 255, 255, 0.1);
 	border: thin solid rgba(255, 255, 255, 0.15);
 	display: flex;
 	flex-direction: column;
 	row-gap: 16px;
+
+	.top-post-image {
+		margin-inline: calc(-1 * var(--post-padding));
+		img {
+			display: block;
+			max-width: 100%;
+			height: auto;
+			margin-inline: auto;
+		}
+	}
 
 	.top-post-header {
 		align-items: center;
@@ -277,7 +291,7 @@ export default {
 	}
 
 	&.size-small {
-		padding: 8px;
+		--post-padding: 8px;
 		row-gap: 10px;
 		font-size: 0.85em;
 
@@ -290,7 +304,7 @@ export default {
 	}
 
 	&.size-medium {
-		padding: 12px;
+		--post-padding: 12px;
 		row-gap: 16px;
 		font-size: 1em;
 
@@ -303,7 +317,7 @@ export default {
 	}
 
 	&.size-large {
-		padding: 20px;
+		--post-padding: 20px;
 		row-gap: 28px;
 		font-size: 1.3em;
 

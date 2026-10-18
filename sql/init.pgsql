@@ -13,6 +13,8 @@ DROP TABLE IF EXISTS post_topic_vote CASCADE;
 DROP TABLE IF EXISTS post_topic CASCADE;
 DROP TABLE IF EXISTS post_revision CASCADE;
 DROP TABLE IF EXISTS post CASCADE;
+DROP TABLE IF EXISTS post_image_cleanup;
+DROP FUNCTION IF EXISTS queue_post_image_cleanup();
 DROP TYPE IF EXISTS vote_type;
 
 DROP INDEX IF EXISTS user_account_handle_idx;
@@ -115,7 +117,10 @@ CREATE TABLE post (
 	parent_post_id INTEGER REFERENCES post (id) ON DELETE CASCADE, -- null for topics
 	author INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
 	post_text TEXT COLLATE case_insensitive NOT NULL, -- written story, joke, etc.
-	created_at TIMESTAMPTZ NOT NULL
+	image_object TEXT NOT NULL DEFAULT '',
+	image_change TEXT NOT NULL DEFAULT '' CHECK (image_change IN ('', 'added', 'updated', 'deleted')),
+	created_at TIMESTAMPTZ NOT NULL,
+	CONSTRAINT post_content_required CHECK (btrim(post_text) <> '' OR image_object <> '')
 );
 
 CREATE INDEX post_text_fulltext_idx ON post USING GIN (to_tsvector('simple', post_text));
@@ -125,10 +130,32 @@ CREATE TABLE post_revision (
 	id SERIAL PRIMARY KEY,
 	post_id INTEGER NOT NULL REFERENCES post (id) ON DELETE CASCADE,
 	post_text TEXT NOT NULL, -- content before the edit
+	image_change TEXT NOT NULL DEFAULT '' CHECK (image_change IN ('', 'added', 'updated', 'deleted')),
 	replaced_at TIMESTAMPTZ NOT NULL -- when this content was replaced
 );
 
 CREATE INDEX post_revision_post_idx ON post_revision (post_id, replaced_at);
+
+CREATE TABLE post_image_cleanup (
+	object_name TEXT PRIMARY KEY,
+	not_before TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE FUNCTION queue_post_image_cleanup() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+	IF OLD.image_object <> '' THEN
+		INSERT INTO post_image_cleanup (object_name) VALUES (OLD.image_object)
+			ON CONFLICT (object_name) DO UPDATE SET not_before = now();
+	END IF;
+	RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER post_image_deleted AFTER DELETE ON post
+	FOR EACH ROW EXECUTE FUNCTION queue_post_image_cleanup();
+CREATE TRIGGER post_image_replaced AFTER UPDATE OF image_object ON post
+	FOR EACH ROW WHEN (OLD.image_object IS DISTINCT FROM NEW.image_object)
+	EXECUTE FUNCTION queue_post_image_cleanup();
 
 CREATE TYPE vote_type AS ENUM (
 	'upvote',

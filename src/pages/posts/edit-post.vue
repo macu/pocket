@@ -3,10 +3,16 @@
 
 	<loading-message v-if="loading"/>
 
-	<template v-else>
-		<form-field title="Post text" required>
+	<template v-else-if="post">
+		<form-field title="Post text">
+			<p>Add text, an image, or both.</p>
 			<el-input v-model="text" type="textarea" size="large" :maxlength="$const.postMaxLength"
 				autocapitalize="sentences" :rows="6"/>
+		</form-field>
+
+		<form-field title="Image">
+			<post-image-input v-model="image" v-model:remove-current="removeImage"
+				:current-image="post.imageUrl || ''" :disabled="saving || deleting"/>
 		</form-field>
 
 		<form-actions>
@@ -28,12 +34,17 @@ import {
 import {
 	alertSuccess,
 } from '@/utils/notify.js';
+import PostImageInput from '@/widgets/post-image-input.vue';
+import {postErrors} from '@/utils/post.js';
 
 export default {
+	components: {PostImageInput},
 	data() {
 		return {
 			post: null,
 			text: '',
+			image: null,
+			removeImage: false,
 			loading: true,
 			saving: false,
 			deleting: false,
@@ -44,7 +55,8 @@ export default {
 			return this.$route.params.id;
 		},
 		submitDisabled() {
-			return this.saving || this.deleting || !this.text.trim();
+			return this.saving || this.deleting ||
+				(!this.text.trim() && !this.image && !(this.post?.imageUrl && !this.removeImage));
 		},
 		isOwnPost() {
 			return !!this.post && this.post.authorId === this.$store.getters.currentUserId;
@@ -106,9 +118,9 @@ export default {
 				ajaxPost('/ajax/post/edit', {
 					id: this.postId,
 					text: this.text,
-				}, {
-					'invalid-post-text': 'The post text is invalid or too long.',
-				}).then(() => {
+					image: this.image,
+					removeImage: this.removeImage,
+				}, postErrors).then(() => {
 					alertSuccess('Post updated.');
 					this.$router.push({name: 'post', params: {id: this.postId}});
 				}).finally(() => {
