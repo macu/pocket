@@ -42,6 +42,9 @@ are collapsed, and non-printable characters are rejected. Passwords are not trim
 Set `OPENAI_SECRET_KEY` to enable moderation; when unset,
 text moderation is skipped locally and requests fail in App Engine.
 Image moderation is always required, including locally, before any image is uploaded.
+All content types are rejected when OpenAI returns `flagged: true`; category
+scores are diagnostic only, with no custom score cutoff. Missing or invalid
+moderation decisions fail the request.
 
 ## Post images
 

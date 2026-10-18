@@ -21,9 +21,6 @@ import (
 const (
 	Model = "omni-moderation-latest"
 
-	// ScoreThreshold is the maximum allowed score for any moderation category.
-	ScoreThreshold = 0.5
-
 	requestTimeout = 10 * time.Second
 )
 
@@ -59,12 +56,12 @@ type moderationRequest struct {
 type moderationResponse struct {
 	Results []struct {
 		CategoryScores map[string]float64 `json:"category_scores"`
-		Flagged        bool               `json:"flagged"`
+		Flagged        *bool              `json:"flagged"`
 	} `json:"results"`
 }
 
 // CheckText sends text to the OpenAI moderation API and returns a *RejectedError
-// (matching ErrRejected) if any category score exceeds ScoreThreshold.
+// (matching ErrRejected) if OpenAI flags the content.
 // Other errors indicate the check could not be performed.
 func CheckText(ctx context.Context, text string) error {
 	if strings.TrimSpace(text) == "" {
@@ -126,22 +123,13 @@ func check(ctx context.Context, input any, required bool) error {
 		return fmt.Errorf("moderation response contained no results")
 	}
 
-	exceeded := map[string]float64{}
 	for _, r := range result.Results {
-		if required && len(r.CategoryScores) == 0 {
-			return fmt.Errorf("moderation response contained no category scores")
+		if r.Flagged == nil {
+			return fmt.Errorf("moderation response contained no flagged decision")
 		}
-		if required && r.Flagged {
+		if *r.Flagged {
 			return &RejectedError{Categories: r.CategoryScores}
 		}
-		for category, score := range r.CategoryScores {
-			if score > ScoreThreshold {
-				exceeded[category] = score
-			}
-		}
-	}
-	if len(exceeded) > 0 {
-		return &RejectedError{Categories: exceeded}
 	}
 	return nil
 }
