@@ -7,7 +7,7 @@
 		<form-field title="Post text">
 			<p>Add text, an image, or both.</p>
 			<el-input v-model="text" type="textarea" size="large" :maxlength="$const.postMaxLength"
-				autocapitalize="sentences" :rows="6"/>
+				autocapitalize="sentences" :autosize="{minRows: 6}"/>
 		</form-field>
 
 		<form-field title="Image">

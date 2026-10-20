@@ -12,7 +12,7 @@
 		<el-input v-model="text" type="textarea" size="large"
 			:maxlength="$const.postMaxLength"
 			show-word-limit
-			autocapitalize="sentences" :rows="6"/>
+			autocapitalize="sentences" :autosize="{minRows: 6}"/>
 	</form-field>
 
 	<form-field title="Image">
