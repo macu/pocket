@@ -81,6 +81,14 @@ and browser caches can retain deleted images temporarily (cache lifetime is one
 hour); bucket soft-delete retention may also apply. Monitor cleanup failures
 in the application logs.
 
+## Expired auth records
+
+The `/cron/auth-cleanup` job runs hourly, deleting expired signup, email-change,
+and password-reset requests (one-hour token lifetime) and sessions whose
+`expires` time has passed. Active requests and sessions are preserved. The
+endpoint only accepts App Engine cron requests; failures are logged and retried.
+Deploy it with `gcloud app deploy app.yaml cron.yaml`.
+
 ## reCAPTCHA and local testing
 
 Leave `RECAPTCHA_KEY` empty in your local `.env` to bypass reCAPTCHA in both the

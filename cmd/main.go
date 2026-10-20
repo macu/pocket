@@ -76,6 +76,19 @@ func main() {
 
 	r := mux.NewRouter()
 
+	r.HandleFunc("/cron/auth-cleanup", func(w http.ResponseWriter, r *http.Request) {
+		if !env.IsAppEngine() || r.Header.Get("X-Appengine-Cron") != "true" {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		if err := auth.CleanupExpiredRecords(r.Context(), db); err != nil {
+			logging.LogError(r, nil, err)
+			http.Error(w, "Auth cleanup failed", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}).Methods(http.MethodGet)
+
 	r.HandleFunc("/cron/post-images", func(w http.ResponseWriter, r *http.Request) {
 		if !env.IsAppEngine() || r.Header.Get("X-Appengine-Cron") != "true" {
 			http.Error(w, "Forbidden", http.StatusForbidden)

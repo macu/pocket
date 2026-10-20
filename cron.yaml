@@ -1,4 +1,10 @@
 cron:
+- description: Remove expired auth requests and sessions
+  url: /cron/auth-cleanup
+  schedule: every 60 minutes
+  retry_parameters:
+    min_backoff_seconds: 60
+    max_doublings: 3
 - description: Remove unused post images
   url: /cron/post-images
   schedule: every 15 minutes

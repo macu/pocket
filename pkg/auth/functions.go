@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -79,7 +80,11 @@ func clearCookie(w http.ResponseWriter) {
 }
 
 func DeleteExpiredSessions(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM user_session WHERE expires <= $1", time.Now())
+	return deleteExpiredSessions(context.Background(), db, time.Now())
+}
+
+func deleteExpiredSessions(ctx context.Context, db *sql.DB, now time.Time) error {
+	_, err := db.ExecContext(ctx, "DELETE FROM user_session WHERE expires <= $1", now)
 	if err != nil {
 		return fmt.Errorf("deleting expired sessions: %w", err)
 	}
