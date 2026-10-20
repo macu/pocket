@@ -49,7 +49,7 @@
 	<div v-if="post.imageUrl" class="top-post-image">
 		<img :src="post.imageUrl" alt="Post image" loading="lazy"/>
 	</div>
-	<div v-if="post.postText" class="top-post-text" :class="{expanded}" @click.stop="toggleExpanded($event)">{{post.postText}}</div>
+	<div v-if="post.postText" class="top-post-text" :class="{expanded, interactive: expandable || clickable}" @click.stop="toggleExpanded($event)">{{post.postText}}</div>
 </div>
 </template>
 
@@ -278,7 +278,6 @@ export default {
 	}
 
 	.top-post-text {
-		cursor: pointer;
 		font-size: 1.08em;
 		line-height: 1.5;
 		white-space: pre-wrap;
@@ -288,6 +287,9 @@ export default {
 		-webkit-line-clamp: 5;
 		line-clamp: 5;
 		overflow: hidden;
+		&.interactive {
+			cursor: pointer;
+		}
 		&.expanded {
 			-webkit-line-clamp: unset;
 			line-clamp: unset;

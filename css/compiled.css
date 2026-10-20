@@ -856,7 +856,6 @@ div.center {
   gap: 6px;
 }
 .top-post .top-post-text {
-  cursor: pointer;
   font-size: 1.08em;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -866,6 +865,9 @@ div.center {
   -webkit-line-clamp: 5;
   line-clamp: 5;
   overflow: hidden;
+}
+.top-post .top-post-text.interactive {
+  cursor: pointer;
 }
 .top-post .top-post-text.expanded {
   -webkit-line-clamp: unset;

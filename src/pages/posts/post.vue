@@ -11,7 +11,7 @@
 		</div>
 
 		<div class="post-card">
-			<post-widget :post="post" default-expanded size="large" />
+			<post-widget :post="post" default-expanded :expandable="false" size="large" />
 		</div>
 
 		<post-revisions-dialog v-model="revisionsVisible" :post-id="postId"/>
