@@ -26,6 +26,10 @@
 	color: $app-fg-color;
 }
 
+.el-textarea, .el-textarea__inner {
+	font-size: inherit;
+}
+
 .el-input__inner::placeholder,
 .el-textarea__inner::placeholder,
 .el-select__placeholder.is-transparent {
