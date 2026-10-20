@@ -786,26 +786,14 @@ div.center {
   flex-direction: column;
   row-gap: 16px;
 }
-.top-post .top-post-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
 .top-post .top-post-image {
-  display: block;
-  width: calc(100% + var(--post-padding) + var(--post-padding));
   margin-inline: calc(-1 * var(--post-padding));
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  text-align: inherit;
 }
 .top-post .top-post-image img {
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
+  margin-inline: auto;
 }
 .top-post .top-post-header {
   align-items: center;
@@ -912,47 +900,6 @@ div.center {
 .top-post.size-large .top-post-header .top-post-score {
   padding: 4px 12px;
   border-radius: 12px;
-}
-@media (min-width: 768px) {
-.top-post-content.has-image {
-    flex-direction: row;
-    align-items: flex-start;
-}
-.top-post-content.has-image .top-post-image {
-    flex: 0 0 40%;
-    width: 40%;
-    max-width: min(40%, 420px);
-    margin-inline: 0;
-    cursor: zoom-in;
-}
-.top-post-content.has-image .top-post-text {
-    flex: 1;
-    min-width: 0;
-}
-.top-post-content.has-image:not(.has-text) {
-    justify-content: center;
-}
-.top-post-content.has-image:not(.has-text) .top-post-image {
-    flex-basis: auto;
-    width: min(60%, 420px);
-    max-width: 420px;
-    margin-inline: auto;
-}
-.top-post-content.has-image.is-image-expanded {
-    flex-direction: column;
-    align-items: stretch;
-}
-.top-post-content.has-image.is-image-expanded .top-post-image,
-  .top-post-content.has-image:not(.has-text).is-image-expanded .top-post-image {
-    flex: 0 1 auto;
-    width: min(100%, 640px);
-    max-width: 640px;
-    margin-inline: auto;
-    cursor: zoom-out;
-}
-.top-post-content.has-image.is-image-expanded .top-post-text {
-    width: 100%;
-}
 }
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/topic-search.vue?vue&type=style&index=0&id=4ef89882&lang=scss ***!

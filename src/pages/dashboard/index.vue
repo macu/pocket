@@ -132,6 +132,7 @@
 						:selected-topics="selectedTopics"
 						@select-topic="selectPostTopic"
 						clickable
+						:expandable="false"
 						size="medium"
 						@click="openPost(post.id)"
 					/>

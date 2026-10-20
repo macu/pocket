@@ -1,7 +1,7 @@
 <template>
 <div class="top-post" :class="[sizeClass, {clickable}]" @click="$emit('click', $event)">
 	<div class="top-post-header flex-row-md">
-		<span class="top-post-votes">
+		<span class="top-post-votes" @click.stop>
 			<span v-if="authenticated" class="vote-buttons" :class="{'is-pending': pendingVotes.has(post)}"
 				:aria-busy="pendingVotes.has(post)" :aria-disabled="pendingVotes.has(post)">
 				<material-icon
@@ -9,13 +9,13 @@
 					icon="thumb_up" class="vote-btn upvote"
 					:fill="post.userVote === 'upvote'"
 					:class="{active: post.userVote === 'upvote'}"
-					@click.stop="votePost('upvote')"/>
+					@click="votePost('upvote')"/>
 				<material-icon
 					v-if="!post.userVote || post.userVote === 'downvote'"
 					icon="thumb_down" class="vote-btn downvote"
 					:fill="post.userVote === 'downvote'"
 					:class="{active: post.userVote === 'downvote'}"
-					@click.stop="votePost('downvote')"/>
+					@click="votePost('downvote')"/>
 			</span>
 			<el-tooltip content="Post votes" placement="top">
 				<span class="top-post-score">{{post.sum}}</span>
@@ -46,15 +46,10 @@
 			Load More
 		</el-button>
 	</div>
-	<div v-if="post.imageUrl || post.postText" class="top-post-content"
-		:class="{'has-image': post.imageUrl, 'has-text': post.postText, 'is-image-expanded': imageExpanded}">
-		<button v-if="post.imageUrl" type="button" class="top-post-image"
-			:aria-label="imageExpanded ? 'Show image beside text' : 'Show image full width'"
-			@click="toggleImageLayout($event)">
-			<img :src="post.imageUrl" alt="Post image" loading="lazy"/>
-		</button>
-		<div v-if="post.postText" class="top-post-text" :class="{expanded}" @click.stop="toggleExpanded($event)">{{post.postText}}</div>
+	<div v-if="post.imageUrl" class="top-post-image">
+		<img :src="post.imageUrl" alt="Post image" loading="lazy"/>
 	</div>
+	<div v-if="post.postText" class="top-post-text" :class="{expanded}" @click.stop="toggleExpanded($event)">{{post.postText}}</div>
 </div>
 </template>
 
@@ -98,7 +93,6 @@ export default {
 	data() {
 		return {
 			expanded: this.defaultExpanded,
-			imageExpanded: false,
 			hasMoreTopics: true,
 			pendingVotes: new Set(),
 		};
@@ -192,13 +186,6 @@ export default {
 				this.expanded = false;
 			}
 		},
-		toggleImageLayout(event) {
-			if (!window.matchMedia('(min-width: 768px)').matches) {
-				return;
-			}
-			event.stopPropagation();
-			this.imageExpanded = !this.imageExpanded;
-		},
 	},
 };
 </script>
@@ -216,27 +203,13 @@ export default {
 	flex-direction: column;
 	row-gap: 16px;
 
-	.top-post-content {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		min-width: 0;
-	}
-
 	.top-post-image {
-		display: block;
-		width: calc(100% + var(--post-padding) + var(--post-padding));
 		margin-inline: calc(-1 * var(--post-padding));
-		padding: 0;
-		border: 0;
-		background: transparent;
-		color: inherit;
-		text-align: inherit;
-
 		img {
 			display: block;
-			width: 100%;
+			max-width: 100%;
 			height: auto;
+			margin-inline: auto;
 		}
 	}
 
@@ -364,54 +337,5 @@ export default {
 		}
 	}
 
-}
-
-@media (min-width: 768px) {
-	.top-post-content.has-image {
-		flex-direction: row;
-		align-items: flex-start;
-	}
-
-	.top-post-content.has-image .top-post-image {
-		flex: 0 0 40%;
-		width: 40%;
-		max-width: min(40%, 420px);
-		margin-inline: 0;
-		cursor: zoom-in;
-	}
-
-	.top-post-content.has-image .top-post-text {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.top-post-content.has-image:not(.has-text) {
-		justify-content: center;
-	}
-
-	.top-post-content.has-image:not(.has-text) .top-post-image {
-		flex-basis: auto;
-		width: min(60%, 420px);
-		max-width: 420px;
-		margin-inline: auto;
-	}
-
-	.top-post-content.has-image.is-image-expanded {
-		flex-direction: column;
-		align-items: stretch;
-	}
-
-	.top-post-content.has-image.is-image-expanded .top-post-image,
-	.top-post-content.has-image:not(.has-text).is-image-expanded .top-post-image {
-		flex: 0 1 auto;
-		width: min(100%, 640px);
-		max-width: 640px;
-		margin-inline: auto;
-		cursor: zoom-out;
-	}
-
-	.top-post-content.has-image.is-image-expanded .top-post-text {
-		width: 100%;
-	}
 }
 </style>
