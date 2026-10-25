@@ -21,10 +21,10 @@
 		</form-field>
 		<form-actions>
 			<el-button @click="request" :disabled="saving || !email.trim()" :loading="saving">Send reset link</el-button>
+			<router-link :to="{name: 'login'}">Log in</router-link>
 		</form-actions>
 		<el-alert v-if="sent" title="If an active account exists for this address, a reset link has been sent. Check your email." type="success" :closable="false"/>
 	</template>
-	<router-link :to="{name: 'login'}">Log in</router-link>
 </form-layout>
 </template>
 
