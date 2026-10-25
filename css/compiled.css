@@ -85,15 +85,15 @@
 
 .el-button--primary {
   --el-button-text-color: white;
-  --el-button-bg-color: rgb(86, 86, 211);
-  --el-button-border-color: rgb(120, 120, 235);
+  --el-button-bg-color: rgb(7, 94, 170);
+  --el-button-border-color: rgb(39, 137, 213);
   --el-button-hover-text-color: white;
-  --el-button-hover-bg-color: rgb(110, 110, 230);
-  --el-button-hover-border-color: rgb(120, 120, 235);
+  --el-button-hover-bg-color: rgb(20, 118, 199);
+  --el-button-hover-border-color: rgb(39, 137, 213);
   --el-button-active-text-color: white;
-  --el-button-active-bg-color: rgb(110, 110, 230);
-  --el-button-active-border-color: rgb(120, 120, 235);
-  --el-button-outline-color: rgb(120, 120, 235);
+  --el-button-active-bg-color: rgb(20, 118, 199);
+  --el-button-active-border-color: rgb(39, 137, 213);
+  --el-button-outline-color: rgb(39, 137, 213);
   --el-button-disabled-text-color: rgba(255, 255, 255, 0.3);
   --el-button-disabled-bg-color: rgba(255, 255, 255, 0.05);
   --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
@@ -102,12 +102,12 @@
 .el-button--primary.is-plain,
 .el-button--primary.is-text,
 .el-button--primary.is-link {
-  --el-button-text-color: rgb(120, 120, 235);
+  --el-button-text-color: rgb(39, 137, 213);
   --el-button-bg-color: transparent;
   --el-button-hover-text-color: white;
-  --el-button-hover-bg-color: rgb(86, 86, 211);
+  --el-button-hover-bg-color: rgb(7, 94, 170);
   --el-button-active-text-color: white;
-  --el-button-active-bg-color: rgb(110, 110, 230);
+  --el-button-active-bg-color: rgb(20, 118, 199);
 }
 
 .el-button--primary.is-text,
@@ -116,7 +116,7 @@
   --el-button-hover-border-color: transparent;
   --el-button-active-border-color: transparent;
   --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
-  --el-button-hover-text-color: rgb(110, 110, 230);
+  --el-button-hover-text-color: rgb(20, 118, 199);
   --el-button-active-bg-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -271,14 +271,14 @@
 .el-button--default,
 .el-button:not([class*=el-button--]) {
   --el-button-text-color: white;
-  --el-button-bg-color: rgba(255, 255, 255, 0.08);
-  --el-button-border-color: rgba(255, 255, 255, 0.3);
+  --el-button-bg-color: rgb(21, 63, 107);
+  --el-button-border-color: rgb(45, 105, 157);
   --el-button-hover-text-color: white;
-  --el-button-hover-bg-color: rgba(255, 255, 255, 0.18);
-  --el-button-hover-border-color: rgba(255, 255, 255, 0.3);
+  --el-button-hover-bg-color: rgb(29, 86, 139);
+  --el-button-hover-border-color: rgb(45, 105, 157);
   --el-button-active-text-color: white;
-  --el-button-active-bg-color: rgba(255, 255, 255, 0.18);
-  --el-button-active-border-color: rgba(255, 255, 255, 0.3);
+  --el-button-active-bg-color: rgb(29, 86, 139);
+  --el-button-active-border-color: rgb(45, 105, 157);
   --el-button-disabled-text-color: rgba(255, 255, 255, 0.3);
   --el-button-disabled-bg-color: rgba(255, 255, 255, 0.05);
   --el-button-disabled-border-color: rgba(255, 255, 255, 0.1);
@@ -296,7 +296,7 @@
   --el-pagination-button-bg-color: transparent;
   --el-pagination-button-disabled-color: rgba(255, 255, 255, 0.3);
   --el-pagination-button-disabled-bg-color: transparent;
-  --el-pagination-hover-color: rgb(110, 110, 230);
+  --el-pagination-hover-color: rgb(20, 118, 199);
   color: white;
 }
 .el-pagination .btn-prev, .el-pagination .btn-next {
@@ -306,7 +306,7 @@
   background-color: transparent;
 }
 .el-pagination .el-pager li.is-active {
-  color: rgb(110, 110, 230);
+  color: rgb(20, 118, 199);
 }
 
 .el-message.el-message {
