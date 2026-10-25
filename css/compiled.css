@@ -563,6 +563,9 @@ div.center {
 .flex-row > .align-end, .flex-row-sm > .align-end, .flex-row-md > .align-end, .flex-row-lg > .align-end {
   align-self: flex-end;
 }
+.flex-row.justify-end, .flex-row-sm.justify-end, .flex-row-md.justify-end, .flex-row-lg.justify-end {
+  justify-content: flex-end;
+}
 
 .flex-row {
   row-gap: 10px;

@@ -1,7 +1,7 @@
 <template>
 <div class="pocket-app" :class="{'is-mobile': isMobile}">
 
-	<header class="flex-row-md">
+	<header class="flex-row-md justify-end">
 		<h1 class="flex-1">
 			<span v-if="onDashboard">Pocket</span>
 			<router-link v-else :to="{name: 'dashboard'}">Pocket</router-link>

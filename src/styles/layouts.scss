@@ -30,6 +30,9 @@
 	>.align-end {
 		align-self: flex-end;
 	}
+	&.justify-end {
+		justify-content: flex-end;
+	}
 }
 
 .flex-row {
