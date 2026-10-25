@@ -2,18 +2,21 @@
 <div class="topics-input flex-column-sm">
 	<topic-search ref="search"
 		v-model="pendingValue"
-		:disabled="atMax"
+		:disabled="disabled || atMax"
 		:placeholder="atMax ? 'Max topics reached' : 'Add a topic'"
 		@select="selectSuggestion"
 		@submit="addPending()">
 			<template #append>
-				<el-button @click="submitPending()" type="primary" :disabled="addDisabled">Add</el-button>
+				<el-button @click="submitPending()" type="primary" :disabled="disabled || addDisabled">Add</el-button>
 			</template>
 	</topic-search>
 	<div v-if="modelValue.length" class="topics-input-tags flex-row-sm">
 		<span v-for="(name, index) in modelValue" :key="name" class="topics-input-tag">
 			{{name}}
-			<material-icon icon="close" class="remove-btn" @click.stop="removeAt(index)"/>
+			<button type="button" class="remove-btn" :disabled="disabled" :aria-label="'Remove topic ' + name"
+				@click.stop="removeAt(index)">
+				<material-icon icon="close"/>
+			</button>
 		</span>
 	</div>
 </div>
@@ -35,6 +38,10 @@ export default {
 			type: Number,
 			default: null,
 		},
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['update:modelValue'],
 	data() {
@@ -47,7 +54,7 @@ export default {
 			return this.max !== null && this.modelValue.length >= this.max;
 		},
 		addDisabled() {
-			return this.atMax || !this.pendingValue.trim();
+			return this.disabled || this.atMax || !this.pendingValue.trim();
 		},
 	},
 	methods: {
@@ -68,7 +75,7 @@ export default {
 			this.addName(topic.name);
 		},
 		addName(rawName) {
-			if (this.atMax) {
+			if (this.disabled || this.atMax) {
 				return;
 			}
 			const name = rawName.trim();
@@ -80,6 +87,9 @@ export default {
 			this.pendingValue = '';
 		},
 		removeAt(index) {
+			if (this.disabled) {
+				return;
+			}
 			const updated = [...this.modelValue];
 			updated.splice(index, 1);
 			this.$emit('update:modelValue', updated);
@@ -108,8 +118,21 @@ export default {
 		white-space: nowrap;
 
 		.remove-btn {
+			display: inline-flex;
+			align-items: center;
+			border: 0;
+			padding: 0;
+			background: transparent;
+			color: inherit;
+			font: inherit;
 			cursor: pointer;
-			font-size: 18px;
+			&:disabled {
+				cursor: not-allowed;
+				opacity: 0.5;
+			}
+			.material-symbols-outlined {
+				font-size: 18px;
+			}
 		}
 	}
 }

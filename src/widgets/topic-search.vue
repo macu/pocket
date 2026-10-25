@@ -68,6 +68,15 @@ export default {
 			return this.searchResults.filter(topic => !excludedIds.has(topic.id));
 		},
 	},
+	watch: {
+		disabled(disabled) {
+			if (disabled) {
+				clearTimeout(this.searchTimeout);
+				this.searchRequestId++;
+				this.showSuggestions = false;
+			}
+		},
+	},
 	beforeUnmount() {
 		clearTimeout(this.searchTimeout);
 	},
@@ -78,6 +87,9 @@ export default {
 			}
 		},
 		scheduleSearch(value) {
+			if (this.disabled) {
+				return;
+			}
 			this.$emit('update:modelValue', value);
 			clearTimeout(this.searchTimeout);
 			const requestId = ++this.searchRequestId;
@@ -118,6 +130,9 @@ export default {
 			}, 150);
 		},
 		selectSuggestion(topic) {
+			if (this.disabled) {
+				return;
+			}
 			clearTimeout(this.searchTimeout);
 			this.searchRequestId++;
 			this.searchResults = [];
@@ -126,6 +141,9 @@ export default {
 			this.$emit('select', topic);
 		},
 		submit() {
+			if (this.disabled) {
+				return;
+			}
 			if (this.activeSuggestionIndex >= 0 && this.suggestions[this.activeSuggestionIndex]) {
 				this.selectSuggestion(this.suggestions[this.activeSuggestionIndex]);
 				return;

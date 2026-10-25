@@ -12,6 +12,7 @@
 				<form-field title="Topic name">
 					<template #tip><small>Create a topic for others to use on their posts.</small></template>
 					<el-input v-model="newTopicName" type="text" :maxlength="$const.maxTopicLength"
+						:disabled="addTopicLoading"
 						autocapitalize="words"
 						@input="scheduleTopicSearch()"
 						@keyup.enter.native="submitAddTopic()"

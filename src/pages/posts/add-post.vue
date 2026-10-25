@@ -10,6 +10,7 @@
 	<form-field title="Post text">
 		<p>Add text, an image, or both.</p>
 		<el-input v-model="text" type="textarea" size="large"
+			:disabled="loading"
 			:maxlength="$const.postMaxLength"
 			show-word-limit
 			autocapitalize="sentences" :autosize="{minRows: 6}"/>
@@ -21,12 +22,12 @@
 
 	<form-field title="Topics">
 		<template #tip><small>Add topics to this post (max {{ $const.maxNewPostTopics }}).</small></template>
-		<topics-input v-model="topics" :max="$const.maxNewPostTopics"/>
+		<topics-input v-model="topics" :max="$const.maxNewPostTopics" :disabled="loading"/>
 	</form-field>
 
 	<form-actions>
 		<el-button @click="submit()" type="primary" :disabled="submitDisabled">Post</el-button>
-		<el-button @click="cancel()">Cancel</el-button>
+		<el-button @click="cancel()" :disabled="loading">Cancel</el-button>
 	</form-actions>
 
 </form-layout>

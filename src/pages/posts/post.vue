@@ -19,11 +19,11 @@
 		<form-layout v-if="showAddTopicForm" title="Add topics" class="add-topic-form">
 			<form-field title="Topic names">
 				<template #tip><small>Add topics to this post (max {{ $const.maxNewPostTopics }}).</small></template>
-				<topics-input ref="addTopicInput" v-model="newTopics" :max="$const.maxNewPostTopics"/>
+				<topics-input ref="addTopicInput" v-model="newTopics" :max="$const.maxNewPostTopics" :disabled="addTopicLoading"/>
 			</form-field>
 			<form-actions>
-				<el-button @click="addTopic()" type="primary" :disabled="addTopicDisabled">Add topics</el-button>
-				<el-button @click="toggleAddTopicForm()" type="default">Cancel</el-button>
+				<el-button @click="addTopic()" type="primary" :disabled="addTopicDisabled" :loading="addTopicLoading">Add topics</el-button>
+				<el-button @click="toggleAddTopicForm()" type="default" :disabled="addTopicLoading">Cancel</el-button>
 			</form-actions>
 		</form-layout>
 
@@ -154,6 +154,7 @@ export default {
 			totalSubPosts: 0,
 			loading: true,
 			newTopics: [],
+			addTopicLoading: false,
 			subPostText: '',
 			showAddTopicForm: false,
 			revisionsVisible: false,
@@ -172,7 +173,7 @@ export default {
 			return !!this.post && this.post.authorId === this.$store.getters.currentUserId;
 		},
 		addTopicDisabled() {
-			return this.newTopics.length === 0;
+			return this.addTopicLoading || this.newTopics.length === 0;
 		},
 		addSubPostDisabled() {
 			return !this.subPostText.trim();
@@ -273,6 +274,9 @@ export default {
 			});
 		},
 		toggleAddTopicForm() {
+			if (this.addTopicLoading) {
+				return;
+			}
 			this.showAddTopicForm = !this.showAddTopicForm;
 			if (this.showAddTopicForm) {
 				this.focusAddTopicInput();
@@ -374,6 +378,7 @@ export default {
 			if (this.addTopicDisabled) {
 				return;
 			}
+			this.addTopicLoading = true;
 			ajaxPost('/ajax/post/topic', {
 				postId: this.post.id,
 				topics: JSON.stringify(this.newTopics),
@@ -382,6 +387,8 @@ export default {
 				this.post = response.post || this.post;
 				this.showAddTopicForm = false;
 				alertSuccess('Topics added. Thanks!');
+			}).finally(() => {
+				this.addTopicLoading = false;
 			});
 		},
 		goToAddSubPost() {

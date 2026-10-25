@@ -960,7 +960,20 @@ div.center {
   white-space: nowrap;
 }
 .topics-input .topics-input-tag .remove-btn {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
+}
+.topics-input .topics-input-tag .remove-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.topics-input .topics-input-tag .remove-btn .material-symbols-outlined {
   font-size: 18px;
 }
 /*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
