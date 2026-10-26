@@ -104,8 +104,7 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to, from, failure) => {
 	store.commit('setLoading', false);
 	if (!failure && typeof window.gtag === 'function' &&
-		window.localStorage.getItem('pocketCookieConsent') === 'accepted' &&
-		window.localStorage.getItem('pocketTrackingDisabled') !== 'true') {
+		window.localStorage.getItem('pocketCookieConsent') === 'accepted') {
 		window.gtag('event', 'page_view', {
 			page_path: to.fullPath,
 			page_title: document.title,
