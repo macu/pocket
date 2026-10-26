@@ -10,8 +10,7 @@
 
 {{if .GAMeasurementID}}
 <script>
-if (window.localStorage.getItem('pocketCookieConsent') === 'accepted' &&
-	window.localStorage.getItem('pocketTrackingDisabled') !== 'true') {
+if (window.localStorage.getItem('pocketCookieConsent') === 'accepted') {
 	window.dataLayer = window.dataLayer || [];
 	window.gtag = function() { window.dataLayer.push(arguments); };
 	window.gtag('js', new Date());
@@ -64,8 +63,7 @@ window.appConstants = {
 (function() {
 	const consentKey = 'pocketCookieConsent';
 	const banner = document.getElementById('cookie-consent');
-	if (window.localStorage.getItem(consentKey) ||
-		window.localStorage.getItem('pocketTrackingDisabled') === 'true') {
+	if (window.localStorage.getItem(consentKey)) {
 		banner.hidden = true;
 	}
 	banner.querySelectorAll('button[data-consent]').forEach(function(button) {

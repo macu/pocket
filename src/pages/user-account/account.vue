@@ -90,7 +90,7 @@ export default {
 	mounted() {
 		ajaxGet('/ajax/account').then(profile => {
 			Object.assign(this, profile);
-			this.trackingDisabled = window.localStorage.getItem('pocketTrackingDisabled') === 'true';
+			this.trackingDisabled = window.localStorage.getItem('pocketCookieConsent') === 'rejected';
 			this.currentEmail = profile.email;
 			this.email = profile.pendingEmail || profile.email;
 			this.loaded = true;
@@ -104,7 +104,7 @@ export default {
 		save() {
 			if (this.saveDisabled) return;
 			const trackingPreferenceChanged = this.trackingDisabled !==
-				(window.localStorage.getItem('pocketTrackingDisabled') === 'true');
+				(window.localStorage.getItem('pocketCookieConsent') === 'rejected');
 			this.saving = true;
 			ajaxPost('/ajax/account', {
 				displayName: normalizeName(this.displayName), handle: this.handle.trim(), email: this.email.trim(),
@@ -124,7 +124,7 @@ export default {
 					params: {identifier: this.$store.getters.currentUserHandle || String(this.$store.getters.currentUserId)},
 				};
 				if (trackingPreferenceChanged) {
-					window.localStorage.setItem('pocketTrackingDisabled', String(this.trackingDisabled));
+					window.localStorage.setItem('pocketCookieConsent', this.trackingDisabled ? 'rejected' : 'accepted');
 				}
 				await this.$router.push(profileRoute);
 				if (trackingPreferenceChanged) {
