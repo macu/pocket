@@ -435,6 +435,7 @@ div.center {
   overflow-x: auto;
 }
 
+button,
 .el-button > span,
 .el-tag__content,
 .el-dropdown-menu__item,
@@ -446,6 +447,7 @@ div.center {
   align-items: center;
   column-gap: 10px;
 }
+button > .material-icons,
 .el-button > span > .material-icons,
 .el-tag__content > .material-icons,
 .el-dropdown-menu__item > .material-icons,
