@@ -19,6 +19,9 @@
 			<p>A new address takes effect only after confirmation.</p>
 			<p v-if="pendingEmail">Awaiting confirmation: {{pendingEmail}}. Your current address is {{currentEmail}}. Save your current address to cancel.</p>
 		</form-field>
+		<el-checkbox class="change-analytics" v-model="trackingDisabled" :disabled="saving">
+			Disable analytics and tracking cookies
+		</el-checkbox>
 		<el-checkbox class="change-password" v-model="changePassword" @change="clearPasswords">Change password</el-checkbox>
 		<template v-if="changePassword">
 			<form-field title="Old password" required>
@@ -57,6 +60,7 @@ export default {
 		return {
 			loading: true, loaded: false, saving: false,
 			displayName: '', handle: '', email: '', currentEmail: '', pendingEmail: null,
+			trackingDisabled: false,
 			changePassword: false, oldPassword: '', newPassword: '', confirmPassword: '',
 			passwordTouched: false, confirmPasswordTouched: false,
 		};
@@ -86,6 +90,7 @@ export default {
 	mounted() {
 		ajaxGet('/ajax/account').then(profile => {
 			Object.assign(this, profile);
+			this.trackingDisabled = window.localStorage.getItem('pocketTrackingDisabled') === 'true';
 			this.currentEmail = profile.email;
 			this.email = profile.pendingEmail || profile.email;
 			this.loaded = true;
@@ -98,6 +103,8 @@ export default {
 		},
 		save() {
 			if (this.saveDisabled) return;
+			const trackingPreferenceChanged = this.trackingDisabled !==
+				(window.localStorage.getItem('pocketTrackingDisabled') === 'true');
 			this.saving = true;
 			ajaxPost('/ajax/account', {
 				displayName: normalizeName(this.displayName), handle: this.handle.trim(), email: this.email.trim(),
@@ -112,10 +119,18 @@ export default {
 					await ajaxPost('/ajax/account/confirm-email', {token: response.token}, accountErrors);
 				}
 				await this.$store.dispatch('loadLogin');
-				await this.$router.push({
+				const profileRoute = {
 					name: 'user',
 					params: {identifier: this.$store.getters.currentUserHandle || String(this.$store.getters.currentUserId)},
-				});
+				};
+				if (trackingPreferenceChanged) {
+					window.localStorage.setItem('pocketTrackingDisabled', String(this.trackingDisabled));
+				}
+				await this.$router.push(profileRoute);
+				if (trackingPreferenceChanged) {
+					window.location.reload();
+					return;
+				}
 				alertSuccess(response.emailPending && !bypassEmail ?
 					'Saved. Check your new email address for a confirmation link.' : 'Account settings saved.');
 			}).catch(() => {}).finally(() => { this.saving = false; });
@@ -125,7 +140,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.change-password {
+.change-analytics, .change-password {
 	margin-left: 10px;
 }
 </style>

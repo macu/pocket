@@ -9,13 +9,16 @@
 <title>Pocket</title>
 
 {{if .GTMID}}
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+<script>
+if (window.localStorage.getItem('pocketCookieConsent') === 'accepted' &&
+	window.localStorage.getItem('pocketTrackingDisabled') !== 'true') {
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','{{.GTMID}}');</script>
-<!-- End Google Tag Manager -->
+})(window,document,'script','dataLayer','{{.GTMID}}');
+}
+</script>
 {{end}}
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.8.2/theme-chalk/index.min.css" integrity="sha512-Kpaxv77wr+LmDnHMPDhcyl3VgtrvR6n7Lw17PaD8VVzzHE0RMd8/sGrACS/BetY4LM4foQKBQEtlUNxyYa/wYA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -45,10 +48,35 @@ window.appConstants = {
 <body>
 
 {{if .GTMID}}
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{.GTMID}}"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+<aside id="cookie-consent" class="cookie-consent" aria-label="Cookie notice">
+	<div class="cookie-consent__content">
+		<p>We use optional cookies to understand how this site is used. You can accept or reject them.</p>
+		<div class="cookie-consent__actions">
+			<button class="cookie-consent__button cookie-consent__button--accept" type="button" data-consent="accepted">Accept</button>
+			<button class="cookie-consent__button cookie-consent__button--reject" type="button" data-consent="rejected">Reject</button>
+		</div>
+	</div>
+</aside>
+<script>
+(function() {
+	const consentKey = 'pocketCookieConsent';
+	const banner = document.getElementById('cookie-consent');
+	if (window.localStorage.getItem(consentKey) ||
+		window.localStorage.getItem('pocketTrackingDisabled') === 'true') {
+		banner.hidden = true;
+	}
+	banner.querySelectorAll('button[data-consent]').forEach(function(button) {
+		button.addEventListener('click', function() {
+			window.localStorage.setItem(consentKey, button.dataset.consent);
+			if (button.dataset.consent === 'accepted') {
+				window.location.reload();
+			} else {
+				banner.hidden = true;
+			}
+		});
+	});
+})();
+</script>
 {{end}}
 
 <div id="app"></div>

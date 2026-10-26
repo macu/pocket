@@ -123,6 +123,94 @@ div.center {
 	}
 }
 
+.cookie-consent {
+	position: fixed;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 10000;
+	padding: 16px 24px calc(16px + env(safe-area-inset-bottom));
+	background-color: $app-header-bg-color;
+	border-top: 2px solid $app-separator-color;
+	box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+	color: $app-fg-color;
+
+	&__content {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 20px;
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+
+	p {
+		margin: 0;
+		line-height: 1.5;
+	}
+
+	&__actions {
+		display: flex;
+		flex: 0 0 auto;
+		gap: 10px;
+	}
+
+	&__button {
+		min-width: 96px;
+		min-height: 44px;
+		padding: 10px 16px;
+		border: 1px solid transparent;
+		border-radius: $border-radius;
+		color: $button-solid-fg-color;
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 3px solid white;
+			outline-offset: 2px;
+		}
+
+		&--accept {
+			background-color: $button-success-bg-color;
+			border-color: $button-success-border-color;
+
+			&:hover {
+				background-color: $button-success-hover-bg-color;
+			}
+		}
+
+		&--reject {
+			background-color: $button-default-bg-color;
+			border-color: $button-default-border-color;
+
+			&:hover {
+				background-color: $button-default-hover-bg-color;
+			}
+		}
+	}
+}
+
+@media (max-width: 600px) {
+	.cookie-consent {
+		padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+
+		&__content {
+			align-items: stretch;
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		&__actions {
+			width: 100%;
+		}
+
+		&__button {
+			flex: 1 1 0;
+		}
+	}
+}
+
 .spin {
 	animation-name: spin;
 	animation-duration: 2000ms;
