@@ -8,15 +8,18 @@
 
 <title>Pocket</title>
 
-{{if .GTMID}}
+{{if .GAMeasurementID}}
 <script>
 if (window.localStorage.getItem('pocketCookieConsent') === 'accepted' &&
 	window.localStorage.getItem('pocketTrackingDisabled') !== 'true') {
-(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','{{.GTMID}}');
+	window.dataLayer = window.dataLayer || [];
+	window.gtag = function() { window.dataLayer.push(arguments); };
+	window.gtag('js', new Date());
+	window.gtag('config', '{{.GAMeasurementID}}', {send_page_view: false});
+	const analyticsScript = document.createElement('script');
+	analyticsScript.async = true;
+	analyticsScript.src = 'https://www.googletagmanager.com/gtag/js?id={{.GAMeasurementID}}';
+	document.head.appendChild(analyticsScript);
 }
 </script>
 {{end}}
@@ -47,7 +50,7 @@ window.appConstants = {
 </head>
 <body>
 
-{{if .GTMID}}
+{{if .GAMeasurementID}}
 <aside id="cookie-consent" class="cookie-consent" aria-label="Cookie notice">
 	<div class="cookie-consent__content">
 		<p>We use optional cookies to understand how this site is used. You can accept or reject them.</p>

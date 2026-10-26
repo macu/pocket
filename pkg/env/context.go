@@ -64,8 +64,8 @@ func GetRecaptchaKey() string {
 	return os.Getenv("RECAPTCHA_KEY")
 }
 
-func GetGTMID() string {
-	return os.Getenv("GTM_ID")
+func GetGAMeasurementID() string {
+	return os.Getenv("GA_MEASUREMENT_ID")
 }
 
 func GetMailjetApiKey() string {

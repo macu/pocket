@@ -101,8 +101,16 @@ router.beforeEach((to, from, next) => {
 	next();
 });
 
-router.afterEach(() => {
+router.afterEach((to, from, failure) => {
 	store.commit('setLoading', false);
+	if (!failure && typeof window.gtag === 'function' &&
+		window.localStorage.getItem('pocketCookieConsent') === 'accepted' &&
+		window.localStorage.getItem('pocketTrackingDisabled') !== 'true') {
+		window.gtag('event', 'page_view', {
+			page_path: to.fullPath,
+			page_title: document.title,
+		});
+	}
 });
 
 export default router;

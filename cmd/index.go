@@ -27,7 +27,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		MaxNewPostTopics       int
 		MaxTopicSelectionCount int
 		RecaptchaKey           string
-		GTMID                  string
+		GAMeasurementID        string
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
@@ -40,6 +40,6 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		pocket.MaxNewPostTopics,
 		pocket.MaxTopicSelectionCount,
 		env.GetRecaptchaKey(),
-		env.GetGTMID(),
+		env.GetGAMeasurementID(),
 	})
 }
