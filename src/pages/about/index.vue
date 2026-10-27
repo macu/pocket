@@ -30,6 +30,8 @@
 
 	<p>Emails are sent through Mailjet.</p>
 
+	<p>Google Analytics is used to track page views and country of origin for visitors who accept. This data is very valuable so please consider accepting the tracking cookies.</p>
+
 	<p>The source code is available publicly on <a href="https://github.com/macu/pocket" target="_blank">GitHub</a>.</p>
 
 </form-layout>

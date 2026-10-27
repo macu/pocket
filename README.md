@@ -33,6 +33,22 @@ Links in emails are built from `DOMAIN` (host with optional port, e.g.
 `localhost:2026`), using `http` locally and `https` on App Engine. Include a
 scheme (e.g. `https://dev.example`) to override this.
 
+## Google Analytics
+
+Set `GA_MEASUREMENT_ID` to your GA4 web stream measurement ID to enable optional
+analytics. Tracking only starts after cookie consent is accepted. Successful
+route navigations, including the initial page, send manual `page_view` events
+with the full route URL in `page_location`, which GA4 uses for page-path reports.
+Each route defines a `meta.title` sent as `page_title` so page-title reports can
+also distinguish pages.
+
+In the stream's Enhanced Measurement page-view settings, disable **Page changes
+based on browser history events** to avoid duplicate views alongside the router's
+manual events. To see routes in **Reports > Engagement > Pages and screens**,
+select **Page path and screen class** instead of the page-title dimension.
+
+Run the router tracking regression tests with `node --test src/router.test.cjs`.
+
 ## AI moderation
 
 New topics, posts, post edits, and user handles and display names (on signup and

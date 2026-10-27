@@ -26,71 +26,85 @@ const router = createRouter({
 		{
 			path: '/',
 			name: 'dashboard',
+			meta: { title: 'Dashboard' },
 			component: DashboardPage,
 		},
 		{
 			path: '/about',
 			name: 'about',
+			meta: { title: 'About' },
 			component: AboutPage,
 		},
 		{
 			path: '/login',
 			name: 'login',
+			meta: { title: 'Log in' },
 			component: LoginPage,
 		},
 		{
 			path: '/signup',
 			name: 'signup',
+			meta: { title: 'Sign up' },
 			component: SignupPage,
 		},
 		{
 			path: '/verify-signup',
 			name: 'signup-verify',
+			meta: { title: 'Verify signup' },
 			component: SignupVerifyPage,
 		},
 		{
 			path: '/account',
 			name: 'account',
+			meta: { title: 'Account' },
 			component: AccountPage,
 		},
 		{
 			path: '/confirm-email',
 			name: 'confirm-email',
+			meta: { title: 'Confirm email' },
 			component: ConfirmEmailPage,
 		},
 		{
 			path: '/reset-password',
 			name: 'reset-password',
+			meta: { title: 'Reset password' },
 			component: ResetPasswordPage,
 		},
 		{
 			path: '/add-post',
 			name: 'add-post',
+			meta: { title: 'Add post' },
 			component: AddPostPage,
 		},
 		{
 			path: '/admin',
 			name: 'admin',
+			meta: { title: 'Admin dashboard' },
 			component: AdminPage,
 		},
 		{
 			path: '/admin/user/:id',
 			name: 'admin-user',
+			meta: { title: 'Admin manage user' },
 			component: AdminUserPage,
 		},
 		{
 			path: '/user/:identifier',
 			name: 'user',
+			meta: { title: 'User profile' },
 			component: UserPage,
 		},
 		{
 			path: '/post/:id',
 			name: 'post',
+			meta: { title: 'View post' },
 			component: PostPage,
 		},
 		{
 			path: '/post/:id/edit',
 			name: 'edit-post',
+			meta: { title: 'Edit post' },
 			component: EditPostPage,
 		},
 	],
@@ -107,7 +121,8 @@ router.afterEach((to, from, failure) => {
 		window.localStorage.getItem('pocketCookieConsent') === 'accepted') {
 		window.gtag('event', 'page_view', {
 			page_path: to.fullPath,
-			page_title: document.title,
+			page_location: window.location.origin + to.fullPath,
+			page_title: to.meta.title || document.title,
 		});
 	}
 });
