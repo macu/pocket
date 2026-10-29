@@ -3,18 +3,18 @@
 
 	<p>Welcome to Pocket, the creation of web developer Matt C from Halifax, Nova Scotia.</p>
 
-	<p>This project is the latest rendition of a dream I've had for several years. It's about organizing user-generated content into a library that uses community curation, making it easy to find specific kinds of content. This version of the project is far simpler than previous versions, so I feel it is ready to put online.</p>
+	<p>This project is the latest rendition of a dream I've had for several years. It's about organizing user-generated content into a library that uses community curation, making it easy to explore and find specific kinds of content. This version of the project is far simpler than previous versions, so I feel it is ready to put online.</p>
 
 	<p>The basic flow is as follows:</p>
 
 	<ul>
-		<li>Users create posts with a set of topics.</li>
+		<li>Users create posts with a set of topics (like tags).</li>
 		<li>Users can add topics, and upvote or downvote the topics on posts, and upvote or downvote the posts themselves.</li>
-		<li>Posts eventually end up with a descriptive set of topics with community support.</li>
+		<li>Posts eventually end up with a descriptive set of topics ranked by the sum of votes on each one.</li>
 		<li>Users can then search for content by selecting a set of topics to find posts at the intersection of those combined topics.</li>
 	</ul>
 
-	<p>I always wanted to place to put my most inspired thoughts and observations throughout the years. I will be interested to see what others contribute to this gallery.</p>
+	<p>I believe the approach to organizing content on this site is unique across social media, and I will be interested to see the topics and posts that others contribute.</p>
 
 </form-layout>
 
@@ -30,7 +30,7 @@
 
 	<p>Emails are sent through Mailjet.</p>
 
-	<p>Google Analytics is used to track page views and country of origin for visitors who accept. This data is very valuable so please consider accepting the tracking cookies.</p>
+	<p>Google Analytics is used to track page views and country of origin for visitors who accept. This data is interesting to me, but not required. Obtaining consent to use tracking cookies is required by law.</p>
 
 	<p>The source code is available publicly on <a href="https://github.com/macu/pocket" target="_blank">GitHub</a>.</p>
 
