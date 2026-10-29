@@ -159,7 +159,7 @@ export default {
 			showAddTopicForm: false,
 			revisionsVisible: false,
 			showAddSubPostForm: false,
-			timeframe: getStorage(TIMEFRAME_STORAGE_KEY, '24h'),
+			timeframe: getStorage(TIMEFRAME_STORAGE_KEY, '7d'),
 		};
 	},
 	computed: {

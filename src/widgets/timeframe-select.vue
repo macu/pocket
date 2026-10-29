@@ -17,7 +17,7 @@ export default {
 	props: {
 		modelValue: {
 			type: String,
-			default: 'all',
+			default: '7d',
 		},
 	},
 	emits: ['update:modelValue'],

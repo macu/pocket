@@ -189,7 +189,7 @@ export default {
 	data() {
 		return {
 			loading: true,
-			timeframe: getStorage(TIMEFRAME_STORAGE_KEY, '24h'),
+			timeframe: getStorage(TIMEFRAME_STORAGE_KEY, '7d'),
 			topPosts: [],
 			totalPosts: 0,
 			topTopics: [],
