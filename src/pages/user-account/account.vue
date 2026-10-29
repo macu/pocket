@@ -46,7 +46,8 @@
 			<el-button @click="save" :disabled="saveDisabled" :loading="saving">Save</el-button>
 		</form-actions>
 	</template>
-	<el-alert v-if="!loading && !loaded" title="Unable to load account settings. Please log in and try again." type="error" :closable="false"/>
+	<el-alert v-if="!loading && !loaded" class="account-load-error" title="Unable to load - please log in"
+		type="error" effect="dark" :closable="false"/>
 </form-layout>
 </template>
 
@@ -140,6 +141,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/vars.scss';
+
+.account-load-error {
+	background-color: $message-bg-color;
+	color: $message-fg-color;
+	border: thin solid $message-error-color;
+}
+
 .change-analytics, .change-password {
 	margin-left: 10px;
 }

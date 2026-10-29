@@ -497,7 +497,12 @@ func stubProfileModeration(t *testing.T, check func(context.Context, string, str
 	t.Cleanup(func() { moderateAccountProfile = original })
 }
 
-func TestSaveAccountModerationFailure(t *testing.T) {
+func TestSaveAccountModerationFailurePostgres(t *testing.T) {
+	db := accountTestDB(t)
+	if _, err := db.Exec(`INSERT INTO user_account (email, handle, display_name, auth_hash)
+		VALUES ('user@example.com', 'original', 'Original', 'unused')`); err != nil {
+		t.Fatal(err)
+	}
 	t.Setenv("APP_ENGINE", "0")
 	for _, test := range []struct {
 		name   string
@@ -518,7 +523,7 @@ func TestSaveAccountModerationFailure(t *testing.T) {
 				return test.err
 			})
 			params := url.Values{"displayName": {"  Matt   Smith  "}, "handle": {" Matt_99 "}, "email": {" user@example.com "}}
-			payload, status := AjaxSaveAccount(nil, ajax.Auth{UserID: 1}, httptest.NewRecorder(), accountRequest(params))
+			payload, status := AjaxSaveAccount(db, ajax.Auth{UserID: 1}, httptest.NewRecorder(), accountRequest(params))
 			if !called || status != test.status {
 				t.Fatalf("called=%v, status=%d, want %d", called, status, test.status)
 			}
@@ -627,10 +632,204 @@ func TestValidHandle(t *testing.T) {
 			t.Errorf("valid handle rejected: %q", handle)
 		}
 	}
+
 	for _, handle := range []string{"", "_matt", "9matt", "matt smith", "matt-smith", "matt\n", "m\u00e9tt", "matt\u200b",
 		"a" + strings.Repeat("b", userHandleMaxLength)} {
 		if validHandle(handle) {
 			t.Errorf("invalid handle accepted: %q", handle)
 		}
+	}
+}
+
+func TestAccountUpdatesOnlyModifiedValuesPostgres(t *testing.T) {
+	db := accountTestDB(t)
+	t.Setenv("APP_ENGINE", "0")
+	t.Setenv("MAILJET_API_KEY", "")
+	t.Setenv("MAILJET_SECRET", "")
+	hash, err := bcrypt.GenerateFromPassword([]byte("old-password"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO user_account (email, handle, display_name, auth_hash)
+			VALUES ('Original@Example.com', 'original', 'Original Name', $1)`, string(hash)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`
+			CREATE TABLE account_updates (field TEXT NOT NULL);
+			CREATE FUNCTION record_account_update() RETURNS trigger LANGUAGE plpgsql AS $$
+			BEGIN
+				INSERT INTO account_updates VALUES (TG_ARGV[0]);
+				RETURN NEW;
+			END $$;
+			CREATE TRIGGER name_update AFTER UPDATE OF display_name ON user_account
+				FOR EACH ROW EXECUTE FUNCTION record_account_update('display_name');
+			CREATE TRIGGER handle_update AFTER UPDATE OF handle ON user_account
+				FOR EACH ROW EXECUTE FUNCTION record_account_update('handle');
+			CREATE TRIGGER password_update AFTER UPDATE OF auth_hash ON user_account
+				FOR EACH ROW EXECUTE FUNCTION record_account_update('auth_hash');
+			INSERT INTO user_session VALUES ('original-session', 1, now() + interval '1 hour');
+			INSERT INTO password_reset_request (user_id, sent_to_address, token, created_at)
+				VALUES (1, 'Original@Example.com', 'reset-token', now());`); err != nil {
+		t.Fatal(err)
+	}
+	moderationCalls := 0
+	var moderationErr error
+	stubProfileModeration(t, func(context.Context, string, string) error {
+		moderationCalls++
+		return moderationErr
+	})
+	originalSend := sendAccountEmail
+	sendAccountEmail = func(string, emailpkg.Message) error {
+		t.Fatal("unchanged pending email must not send another message")
+		return nil
+	}
+	t.Cleanup(func() { sendAccountEmail = originalSend })
+	auth := ajax.Auth{UserID: 1, Role: "user"}
+	params := url.Values{
+		"displayName": {"  Original   Name  "}, "handle": {" original "}, "email": {" ORIGINAL@example.com "},
+	}
+	save := func(wantStatus int) (interface{}, *httptest.ResponseRecorder) {
+		t.Helper()
+		w := httptest.NewRecorder()
+		payload, status := AjaxSaveAccount(db, auth, w, accountRequest(params))
+		if status != wantStatus {
+			t.Fatalf("status=%d payload=%+v, want %d", status, payload, wantStatus)
+		}
+		return payload, w
+	}
+	checkUpdates := func(want ...string) {
+		t.Helper()
+		rows, err := db.Query(`SELECT field FROM account_updates ORDER BY field`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+		var got []string
+		for rows.Next() {
+			var field string
+			if err := rows.Scan(&field); err != nil {
+				t.Fatal(err)
+			}
+			got = append(got, field)
+		}
+		if err := rows.Err(); err != nil {
+			t.Fatal(err)
+		}
+		if strings.Join(got, ",") != strings.Join(want, ",") {
+			t.Fatalf("updated columns=%v, want %v", got, want)
+		}
+	}
+	moderationErr = errors.New("moderation should not run for unchanged profile")
+	save(http.StatusOK)
+	checkUpdates()
+	params.Set("changePassword", "true")
+	params.Set("oldPassword", "incorrect")
+	params.Set("confirmPassword", "ignored-without-new-password")
+	save(http.StatusOK)
+	checkUpdates()
+	params.Set("newPassword", "old-password")
+	params.Set("confirmPassword", "old-password")
+	payload, _ := save(http.StatusBadRequest)
+	if payload.(ajax.AjaxErrorPayload).ErrorCode != "incorrect-password" {
+		t.Fatalf("unchanged password still requires valid old password: %+v", payload)
+	}
+	params.Set("oldPassword", "old-password")
+	_, w := save(http.StatusOK)
+	checkUpdates()
+	if moderationCalls != 0 || len(w.Result().Cookies()) != 0 {
+		t.Fatal("unchanged values invoked moderation or rotated the session")
+	}
+	var storedHash string
+	var sessions, resets int
+	if err := db.QueryRow(`SELECT auth_hash,
+			(SELECT count(*) FROM user_session WHERE token = 'original-session'),
+			(SELECT count(*) FROM password_reset_request WHERE token = 'reset-token')
+			FROM user_account WHERE id = 1`).Scan(&storedHash, &sessions, &resets); err != nil {
+		t.Fatal(err)
+	}
+	if storedHash != string(hash) || sessions != 1 || resets != 1 {
+		t.Fatal("unchanged password modified hash, sessions, or reset requests")
+	}
+	params.Set("changePassword", "false")
+	params.Del("oldPassword")
+	params.Del("newPassword")
+	params.Del("confirmPassword")
+	params.Set("displayName", "Changed Name")
+	moderationErr = nil
+	save(http.StatusOK)
+	checkUpdates("display_name")
+	params.Set("handle", "changed_handle")
+	save(http.StatusOK)
+	checkUpdates("display_name", "handle")
+	if moderationCalls != 2 {
+		t.Fatalf("moderation calls=%d, want 2", moderationCalls)
+	}
+	params.Set("changePassword", "false")
+	params.Set("oldPassword", "old-password")
+	params.Set("newPassword", "new-password")
+	params.Set("confirmPassword", "new-password")
+	for _, flag := range []string{"false", ""} {
+		params.Set("changePassword", flag)
+		_, w = save(http.StatusOK)
+		checkUpdates("display_name", "handle")
+		if len(w.Result().Cookies()) != 0 {
+			t.Fatal("password change without explicit flag rotated the session")
+		}
+	}
+	params.Set("changePassword", "true")
+	_, w = save(http.StatusOK)
+	checkUpdates("auth_hash", "display_name", "handle")
+	if len(w.Result().Cookies()) != 1 || moderationCalls != 2 {
+		t.Fatal("changed password must rotate session without profile moderation")
+	}
+	params.Set("changePassword", "false")
+	params.Del("oldPassword")
+	params.Del("newPassword")
+	params.Del("confirmPassword")
+	params.Set("email", "pending@example.com")
+	payload, _ = save(http.StatusOK)
+	token := responseToken(t, payload)
+	if token == "" {
+		t.Fatal("changed email must create a confirmation token")
+	}
+	var pendingToken string
+	var pendingCreated time.Time
+	if err := db.QueryRow(`SELECT token, created_at FROM user_email_change_request WHERE user_id = 1`).
+		Scan(&pendingToken, &pendingCreated); err != nil {
+		t.Fatal(err)
+	}
+	for _, production := range []bool{false, true} {
+		if production {
+			t.Setenv("APP_ENGINE", "1")
+		}
+		params.Set("email", " PENDING@example.com ")
+		payload, _ = save(http.StatusOK)
+		if responseToken(t, payload) != "" {
+			t.Fatal("unchanged pending email generated a new token")
+		}
+		raw, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var result struct {
+			EmailPending bool `json:"emailPending"`
+		}
+		if err := json.Unmarshal(raw, &result); err != nil || !result.EmailPending {
+			t.Fatalf("unchanged pending email must remain pending: %s %v", raw, err)
+		}
+		var gotToken string
+		var gotCreated time.Time
+		if err := db.QueryRow(`SELECT token, created_at FROM user_email_change_request WHERE user_id = 1`).
+			Scan(&gotToken, &gotCreated); err != nil || gotToken != pendingToken || !gotCreated.Equal(pendingCreated) {
+			t.Fatalf("unchanged pending request modified: tokenChanged=%v timeChanged=%v err=%v",
+				gotToken != pendingToken, !gotCreated.Equal(pendingCreated), err)
+		}
+	}
+	checkUpdates("auth_hash", "display_name", "handle")
+	params.Set("email", "original@example.com")
+	save(http.StatusOK)
+	var pendingCount int
+	if err := db.QueryRow(`SELECT count(*) FROM user_email_change_request WHERE user_id = 1`).Scan(&pendingCount); err != nil || pendingCount != 0 {
+		t.Fatalf("saving current email did not cancel pending request: count=%d err=%v", pendingCount, err)
 	}
 }

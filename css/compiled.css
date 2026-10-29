@@ -1358,6 +1358,11 @@ button > .material-icons,
 /*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/user-account/account.vue?vue&type=style&index=0&id=0d07404d&lang=scss&scoped=true ***!
   \************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.account-load-error[data-v-0d07404d] {
+  background-color: rgb(28, 28, 36);
+  color: white;
+  border: thin solid rgb(235, 125, 125);
+}
 .change-analytics[data-v-0d07404d], .change-password[data-v-0d07404d] {
   margin-left: 10px;
 }
